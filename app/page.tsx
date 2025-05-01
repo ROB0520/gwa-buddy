@@ -13,7 +13,7 @@ export default function Home() {
           GWA Buddy
         </h1>
       </div>
-      <p className="leading-7 text-center">
+      <p className="leading-7 text-center max-w-2xl">
         A web application that helps NEUST students calculate their General Weighted Average (GWA) based on their grades.
       </p>
       <Card className="w-full max-w-2xl">
