@@ -58,20 +58,17 @@ export default function GwaCalculator() {
 	const { courses, programs } = data as Data;
 	const addSubjectButton = useRef<HTMLButtonElement | null>(null);
 	const [selectedProgram, setSelectedProgram] = useState<keyof typeof data.programs | undefined>(undefined);
-	const [subjects, setSubjects] = useState<string[]>([]);
 	const [enteredGrades, setEnteredGrades] = useState<EnteredGrades[]>([{ code: '', grade: undefined }]);
 	const [gwa, setGwa] = useState<number | null>(null);
 
 	useEffect(() => {
-		if (subjects.length > 0) {
-			const newEnteredGrades = subjects.map((subject) => ({ code: subject, grade: undefined }));
-			setEnteredGrades(newEnteredGrades);
-		}
-	}, [subjects])
-
-	useEffect(() => {
 		setGwa(null);
 	}, [enteredGrades, selectedProgram])
+
+	useEffect(() => {
+		console.log(enteredGrades);
+	}, [enteredGrades])
+		
 
 	const calculateGwa = () => {
 		if (selectedProgram) {
@@ -142,7 +139,7 @@ export default function GwaCalculator() {
 																							const yearCourses = programCourses.filter(
 																								course => (course.major === undefined || course.major === major.code) && course.year === year && course.semester === 1
 																							).map(course => course.code);
-																							setSubjects(yearCourses);
+																							setEnteredGrades(yearCourses.map((subject) => ({ code: subject, grade: undefined })));
 																						}}
 																					>
 																						<span className="pl-8">{major.code}  - First Semester</span>
@@ -157,7 +154,7 @@ export default function GwaCalculator() {
 																		const yearCourses = programCourses.filter(
 																			course => course.year === year && course.semester === 2
 																		).map(course => course.code);
-																		setSubjects(yearCourses);
+																		setEnteredGrades(yearCourses.map((subject) => ({ code: subject, grade: undefined })));
 																	}}
 																>
 																	<span className="pl-8">Year {year} - Second Semester</span>
@@ -174,7 +171,7 @@ export default function GwaCalculator() {
 																			const yearCourses = programCourses.filter(
 																				course => course.year === year && course.semester === 1
 																			).map(course => course.code);
-																			setSubjects(yearCourses);
+																			setEnteredGrades(yearCourses.map((subject) => ({ code: subject, grade: undefined })));
 																		}}
 																	>
 																		<span className="pl-8">Year {year} - First Semester</span>
@@ -191,7 +188,7 @@ export default function GwaCalculator() {
 																							const yearCourses = programCourses.filter(
 																								course => (course.major === undefined || course.major === major.code) && course.year === year && course.semester === 2
 																							).map(course => course.code);
-																							setSubjects(yearCourses);
+																							setEnteredGrades(yearCourses.map((subject) => ({ code: subject, grade: undefined })));
 																						}}
 																					>
 																						<span className="pl-8">{major.code} - Second Semester</span>
@@ -219,14 +216,14 @@ export default function GwaCalculator() {
 																				{hasMajorCoursesInFirstSem && (
 																					<DropdownMenuItem
 																						onClick={() => {
-																							const majorCourses = programCourses.filter(
+																							const yearCourses = programCourses.filter(
 																								course => (
 																									(course.major === major.code || course.major === undefined) &&
 																									course.semester === 1 &&
 																									course.year === year
 																								)
 																							).map(course => course.code);
-																							setSubjects(majorCourses);
+																							setEnteredGrades(yearCourses.map((subject) => ({ code: subject, grade: undefined })));
 																						}}
 																					>
 																						<span className="pl-8">{major.name} - First Semester</span>
@@ -236,14 +233,14 @@ export default function GwaCalculator() {
 																				{hasMajorCoursesInSecondSem && (
 																					<DropdownMenuItem
 																						onClick={() => {
-																							const majorCourses = programCourses.filter(
+																							const yearCourses = programCourses.filter(
 																								course => (
 																									(course.major === major.code || course.major === undefined) &&
 																									course.semester === 2 &&
 																									course.year === year
 																								)
 																							).map(course => course.code);
-																							setSubjects(majorCourses);
+																							setEnteredGrades(yearCourses.map((subject) => ({ code: subject, grade: undefined })));
 																						}}
 																					>
 																						<span className="pl-8">{major.name} - Second Semester</span>
@@ -265,7 +262,7 @@ export default function GwaCalculator() {
 																	const yearCourses = programCourses.filter(
 																		course => course.year === year && course.semester === 1
 																	).map(course => course.code);
-																	setSubjects(yearCourses);
+																	setEnteredGrades(yearCourses.map((subject) => ({ code: subject, grade: undefined })));
 																}}
 															>
 																<span className="pl-8">Year {year} - First Semester</span>
@@ -276,7 +273,7 @@ export default function GwaCalculator() {
 																	const yearCourses = programCourses.filter(
 																		course => course.year === year && course.semester === 2
 																	).map(course => course.code);
-																	setSubjects(yearCourses);
+																	setEnteredGrades(yearCourses.map((subject) => ({ code: subject, grade: undefined })));
 																}}
 															>
 																<span className="pl-8">Year {year} - Second Semester</span>
@@ -376,7 +373,6 @@ export default function GwaCalculator() {
 					onClick={() => {
 						setEnteredGrades([{ code: '', grade: undefined }]);
 						setGwa(null);
-						setSubjects([]);
 						setSelectedProgram(undefined);
 					}}
 				>
@@ -537,6 +533,7 @@ function SubjectRow({ selectedProgram, enteredGrade, index, enteredGrades, setEn
 											onSelect={() => {
 												const newEnteredGrades = [...enteredGrades];
 												newEnteredGrades[index].code = course.code;
+												newEnteredGrades[index].grade = undefined; // Reset grade when course changes
 												setEnteredGrades(newEnteredGrades);
 												setOpenCourseChoices(false);
 											}}
@@ -627,6 +624,7 @@ function SubjectRow({ selectedProgram, enteredGrade, index, enteredGrades, setEn
 			<div className="flex flex-col gap-1 overflow-x-hidden p-1">
 				<p className="text-sm font-medium">Grades</p>
 				<Select
+					value={enteredGrade.grade !== undefined ? enteredGrade.grade.toFixed(2).toString() : ""}
 					onValueChange={(value) => {
 						const newEnteredGrades = [...enteredGrades];
 						newEnteredGrades[index].grade = parseFloat(value);
