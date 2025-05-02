@@ -446,9 +446,13 @@ export default function GwaCalculator() {
 																	)
 																})}
 															</span>
-															<span className="text-xs text-muted-foreground">
-																(Sum of the units for all courses)
-															</span>
+															{
+																enteredGrades.length > 1 && (
+																	<span className="text-xs text-muted-foreground">
+																		(Sum of the units for all courses)
+																	</span>
+																)
+															}
 														</span>
 													</div></li>
 
