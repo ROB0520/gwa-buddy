@@ -48,6 +48,7 @@ import { Input } from "./ui/input";
 import React from "react";
 import { Separator } from "./ui/separator";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "./ui/dialog";
 
 type EnteredGrades = {
 	code: string;
@@ -68,7 +69,7 @@ export default function GwaCalculator() {
 	useEffect(() => {
 		console.log(enteredGrades);
 	}, [enteredGrades])
-		
+
 
 	const calculateGwa = () => {
 		if (selectedProgram) {
@@ -94,7 +95,7 @@ export default function GwaCalculator() {
 	}
 
 	return (
-		<Card className="w-full max-w-2xl">
+		<Card className="w-full max-w-3xl">
 			<CardHeader>
 				<CardTitle>Enter your courses and grades</CardTitle>
 				<CardDescription>Calculate your General Weighted Average (GWA)</CardDescription>
@@ -120,6 +121,7 @@ export default function GwaCalculator() {
 												const programCourses = courses[program.code] || [];
 												const hasMajorCoursesInFirstSem = [...new Set(programCourses.filter(c => c.year === year && c.semester === 1).map(course => course.major))].length > 1;
 												const hasMajorCoursesInSecondSem = [...new Set(programCourses.filter(c => c.year === year && c.semester === 2).map(course => course.major))].length > 1;
+												const hasSummer = programCourses.filter(c => c.year === year && c.semester === 3).length > 0;
 
 												if ((hasMajorCoursesInFirstSem || hasMajorCoursesInSecondSem) && program.majors) {
 													if (hasMajorCoursesInFirstSem && !hasMajorCoursesInSecondSem) {
@@ -159,6 +161,18 @@ export default function GwaCalculator() {
 																>
 																	<span className="pl-8">Year {year} - Second Semester</span>
 																</DropdownMenuItem>
+																{hasSummer && (
+																	<DropdownMenuItem
+																		onClick={() => {
+																			const yearCourses = programCourses.filter(
+																				course => course.year === year && course.semester === 3
+																			).map(course => course.code);
+																			setEnteredGrades(yearCourses.map((subject) => ({ code: subject, grade: undefined })));
+																		}}
+																	>
+																		<span className="pl-8">Year {year} - Summer</span>
+																	</DropdownMenuItem>
+																)}
 															</React.Fragment>
 														)
 													} else if (!hasMajorCoursesInFirstSem && hasMajorCoursesInSecondSem) {
@@ -197,7 +211,20 @@ export default function GwaCalculator() {
 																			)
 																		})
 																	}
+																	{hasSummer && (
+																		<DropdownMenuItem
+																			onClick={() => {
+																				const yearCourses = programCourses.filter(
+																					course => course.year === year && course.semester === 3
+																				).map(course => course.code);
+																				setEnteredGrades(yearCourses.map((subject) => ({ code: subject, grade: undefined })));
+																			}}
+																		>
+																			<span className="pl-8">Year {year} - Summer</span>
+																		</DropdownMenuItem>
+																	)}
 																</DropdownMenuGroup>
+
 															</React.Fragment>
 														)
 													} else if (hasMajorCoursesInFirstSem && hasMajorCoursesInSecondSem) {
@@ -248,9 +275,21 @@ export default function GwaCalculator() {
 																				)}
 																			</React.Fragment>
 																		);
-																	}).filter(Boolean)}
+																	})}
+																{hasSummer && (
+																	<DropdownMenuItem
+																		onClick={() => {
+																			const yearCourses = programCourses.filter(
+																				course => course.year === year && course.semester === 3
+																			).map(course => course.code);
+																			setEnteredGrades(yearCourses.map((subject) => ({ code: subject, grade: undefined })));
+																		}}
+																	>
+																		<span className="pl-8">Year {year} - Summer</span>
+																	</DropdownMenuItem>
+																)}
 															</DropdownMenuGroup>
-														)
+														);
 													}
 												} else {
 													return (
@@ -278,8 +317,21 @@ export default function GwaCalculator() {
 															>
 																<span className="pl-8">Year {year} - Second Semester</span>
 															</DropdownMenuItem>
+															{hasSummer && (
+																<DropdownMenuItem
+																	key={`year-${year}-summer`}
+																	onClick={() => {
+																		const yearCourses = programCourses.filter(
+																			course => course.year === year && course.semester === 3
+																		).map(course => course.code);
+																		setEnteredGrades(yearCourses.map((subject) => ({ code: subject, grade: undefined })));
+																	}}
+																>
+																	<span className="pl-8">Year {year} - Summer</span>
+																</DropdownMenuItem>
+															)}
 														</DropdownMenuGroup>
-													)
+													);
 												}
 											})
 										}
@@ -340,12 +392,136 @@ export default function GwaCalculator() {
 										{gwa.toFixed(2)}
 									</h1>
 								</CardContent>
+								<CardFooter className="justify-end">
+									<Dialog>
+										<DialogTrigger asChild>
+											<Button variant="outline" className="w-full md:w-auto">How GWA is Calculated</Button>
+										</DialogTrigger>
+										<DialogContent>
+											<DialogHeader>
+												<DialogTitle>
+													GWA Formula
+												</DialogTitle>
+											</DialogHeader>
+											<div className="flex flex-col gap-2">
+												<p className="opacity-80">GWA = <div className="inline-block relative align-middle text-center *:block *:p-0.5">
+													<span>
+														Σ(Units x Grade)
+													</span>
+													<Separator className="bg-foreground" />
+													<span>
+														Σ(Units)
+													</span>
+												</div>
+												</p>
+												<h3 className="scroll-m-20 text-lg font-medium tracking-tight">
+													Solution
+												</h3>
+												<ol className="list-decimal pl-5 opacity-80 space-y-2">
+													<li><div className="inline-block relative align-middle text-center *:p-0.5">
+														<span className="block">
+															{enteredGrades.map((eg, index) => {
+																const course = courses[selectedProgram as string].find(course => course.code === eg.code);
+																if (!course || !eg.grade) return null;
+																return (
+																	<React.Fragment key={index}>
+																		<span className="relative inline-flex justify-center">
+																			({course.units} x {eg.grade.toFixed(2)})
+																			<span className="absolute -top-3 text-xs text-muted-foreground">
+																				{course?.code}
+																			</span>
+																		</span>
+																		{index < enteredGrades.length - 1 ? ' + ' : ''}
+																	</React.Fragment>
+																)
+															})}
+														</span>
+														<Separator className="bg-foreground block" />
+														<span className="flex flex-col justify-center">
+															<span>
+																{enteredGrades.map((eg, index) => {
+																	const course = courses[selectedProgram as string].find(course => course.code === eg.code);
+																	return (
+																		<React.Fragment key={index}>
+																			{course?.units}{index < enteredGrades.length - 1 ? ' + ' : ''}
+																		</React.Fragment>
+																	)
+																})}
+															</span>
+															<span className="text-xs text-muted-foreground">
+																(Sum of the units for all courses)
+															</span>
+														</span>
+													</div></li>
+
+													<li><div className="inline-block relative align-middle text-center *:p-0.5">
+														<span className="block">
+															{enteredGrades.map((eg, index) => {
+																const course = courses[selectedProgram as string].find(course => course.code === eg.code);
+																if (!course || !eg.grade) return null;
+																return (
+																	<React.Fragment key={index}>
+																		{course?.units * Number(eg.grade.toFixed(2))}
+																		{index < enteredGrades.length - 1 ? ' + ' : ''}
+																	</React.Fragment>
+																)
+															})}
+														</span>
+														<Separator className="bg-foreground block" />
+														<span>
+															{enteredGrades.map((eg, index) => {
+																const course = courses[selectedProgram as string].find(course => course.code === eg.code);
+																return (
+																	<React.Fragment key={index}>
+																		{course?.units}
+																		{index < enteredGrades.length - 1 ? ' + ' : ''}
+																	</React.Fragment>
+																)
+															})}
+														</span>
+													</div></li>
+
+													<li><div className="inline-block relative align-middle text-center *:p-0.5">
+														<span className="block">
+															{enteredGrades.reduce((acc, eg) => {
+																const course = courses[selectedProgram as string].find(course => course.code === eg.code);
+																if (!course || !eg.grade) return acc;
+																return acc + (course?.units * Number(eg.grade.toFixed(2)));
+															}, 0)}
+														</span>
+														<Separator className="bg-foreground block" />
+														<span>
+															{enteredGrades.reduce((acc, eg) => {
+																const course = courses[selectedProgram as string].find(course => course.code === eg.code);
+																if (!course) return acc;
+																return acc + course.units;
+															}, 0)}
+														</span>
+													</div></li>
+
+													<li>
+														<div className={cn(
+															"px-3 py-1 rounded font-bold text-lg w-fit",
+															gwa >= 4 && 'bg-red-500 dark:bg-red-700 text-white',
+															gwa >= 3 && gwa < 4 && 'bg-orange-500 dark:bg-orange-700 text-white',
+															gwa >= 2 && gwa < 3 && 'bg-yellow-500 dark:bg-yellow-700 text-white',
+															gwa > 1.5 && gwa < 2 && 'bg-lime-500 dark:bg-lime-700 text-white',
+															gwa <= 1.5 && 'bg-green-500 dark:bg-green-700 text-white',
+														)}>
+															{gwa}
+														</div>
+													</li>
+												</ol>
+											</div>
+										</DialogContent>
+									</Dialog>
+								</CardFooter>
 							</Card>
 						)
 					}
 
-				</div>
-			</CardContent>
+				</div >
+			</CardContent >
 			<Separator />
 			<CardFooter className="flex flex-col-reverse md:flex-row justify-end items-center gap-2">
 				<Button
@@ -390,7 +566,7 @@ export default function GwaCalculator() {
 					Calculate GWA
 				</Button>
 			</CardFooter>
-		</Card>
+		</Card >
 	)
 }
 
@@ -498,8 +674,8 @@ function SubjectRow({ selectedProgram, enteredGrade, index, enteredGrades, setEn
 	const courseChoices = courses[selectedProgram as string] || [];
 	const course = courseChoices.find(course => course.code === enteredGrade.code);
 	const groupedChoices = courseChoices.reduce((acc, course) => {
-		const yearKey = `Year ${course.year}`;
-		const semesterKey = `${course.semester === 1 ? 'First' : 'Second'} Semester`;
+		const yearKey = course.year < 0 ? `Year ${Math.abs(course.year)}` : `Year ${course.year}`;
+		const semesterKey = course.year > 0 ? `${course.semester === 1 ? 'First' : 'Second'} Semester` : 'Summer';
 
 		if (!acc[yearKey]) {
 			acc[yearKey] = {};
@@ -530,6 +706,7 @@ function SubjectRow({ selectedProgram, enteredGrade, index, enteredGrades, setEn
 										<CommandItem
 											key={course.code}
 											value={course.code + ' - ' + course.name}
+											disabled={enteredGrades.some(eg => eg.code === course.code)}
 											onSelect={() => {
 												const newEnteredGrades = [...enteredGrades];
 												newEnteredGrades[index].code = course.code;
