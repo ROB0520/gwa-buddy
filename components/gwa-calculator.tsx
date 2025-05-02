@@ -507,7 +507,7 @@ export default function GwaCalculator() {
 															gwa > 1.5 && gwa < 2 && 'bg-lime-500 dark:bg-lime-700 text-white',
 															gwa <= 1.5 && 'bg-green-500 dark:bg-green-700 text-white',
 														)}>
-															{gwa}
+															{gwa.toFixed(2)}
 														</div>
 													</li>
 												</ol>
