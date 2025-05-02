@@ -670,7 +670,7 @@ function SubjectRow({ selectedProgram, enteredGrade, index, enteredGrades, setEn
 	const course = courseChoices.find(course => course.code === enteredGrade.code);
 	const groupedChoices = courseChoices.reduce((acc, course) => {
 		const yearKey = course.year < 0 ? `Year ${Math.abs(course.year)}` : `Year ${course.year}`;
-		const semesterKey = course.year > 0 ? `${course.semester === 1 ? 'First' : 'Second'} Semester` : 'Summer';
+		const semesterKey = course.semester === 1 ? `First Semester` : course.semester === 2 ? `Second Semester` : `Summer`;
 
 		if (!acc[yearKey]) {
 			acc[yearKey] = {};
