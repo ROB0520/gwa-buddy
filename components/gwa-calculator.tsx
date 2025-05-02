@@ -458,7 +458,7 @@ function ProgramSelect({ selectedProgram, setSelectedProgram }: { selectedProgra
 						<DrawerTitle>Select program</DrawerTitle>
 						<DrawerDescription>Select a program to view the courses and enter your grades.</DrawerDescription>
 					</DrawerHeader>
-					<div className="mt-4 border-t max-h-52">
+					<div className="mt-4 border-t">
 						<ProgramsList />
 					</div>
 				</DrawerContent>
@@ -490,8 +490,6 @@ function ProgramSelect({ selectedProgram, setSelectedProgram }: { selectedProgra
 			</PopoverContent>
 		</Popover>
 	)
-
-
 }
 
 function SubjectRow({ selectedProgram, enteredGrade, index, enteredGrades, setEnteredGrades }: {
@@ -504,7 +502,6 @@ function SubjectRow({ selectedProgram, enteredGrade, index, enteredGrades, setEn
 	const { courses } = data as Data;
 	const courseChoices = courses[selectedProgram as string] || [];
 	const course = courseChoices.find(course => course.code === enteredGrade.code);
-	const [openCourseChoices, setOpenCourseChoices] = useState(false);
 	const groupedChoices = courseChoices.reduce((acc, course) => {
 		const yearKey = `Year ${course.year}`;
 		const semesterKey = `${course.semester === 1 ? 'First' : 'Second'} Semester`;
@@ -521,18 +518,52 @@ function SubjectRow({ selectedProgram, enteredGrade, index, enteredGrades, setEn
 		return acc;
 	}, {} as Record<string, Record<string, typeof courseChoices>>);
 
-	return (
-		<div key={index} className="bg-card p-3 border rounded-md flex flex-col md:grid md:grid-cols-subgrid md:col-span-4 md:items-center gap-4 md:gap-2 w-full overflow-hidden">
-			<div className="flex flex-col gap-1 overflow-x-hidden p-1">
-				<p className="text-sm font-medium">Course {index + 1}</p>
-				<Popover open={openCourseChoices} onOpenChange={setOpenCourseChoices}>
-					<PopoverTrigger asChild>
-						<Button
-							variant="outline"
-							role="combobox"
-							aria-expanded={openCourseChoices}
-							className="w-full justify-between overflow-hidden"
-						>
+	const CourseSelect = () => {
+		const [openCourseChoices, setOpenCourseChoices] = useState(false);
+		const isMobile = useIsMobile()
+
+		const CoursesList = () => (
+			<Command>
+				<CommandInput placeholder="Search course..." />
+				<CommandList>
+					<CommandEmpty>No course found.</CommandEmpty>
+					{
+						Object.entries(groupedChoices).map(([yearKey, semesters]) => (
+							Object.entries(semesters).map(([semesterKey, courses]) => (
+								<CommandGroup key={`${yearKey}-${semesterKey}`} heading={`${yearKey} - ${semesterKey}`}>
+									{courses.map((course) => (
+										<CommandItem
+											key={course.code}
+											value={course.code + ' - ' + course.name}
+											onSelect={() => {
+												const newEnteredGrades = [...enteredGrades];
+												newEnteredGrades[index].code = course.code;
+												setEnteredGrades(newEnteredGrades);
+												setOpenCourseChoices(false);
+											}}
+										>
+											<Check
+												className={cn(
+													"mr-2 h-4 w-4",
+													enteredGrade.code === course.code ? "opacity-100" : "opacity-0"
+												)}
+											/>
+											{course.code} - {course.name}
+										</CommandItem>
+									))}
+								</CommandGroup>
+							))
+						))
+					}
+				</CommandList>
+			</Command>
+		)
+
+		if (isMobile) {
+			return (
+				<Drawer open={openCourseChoices} onOpenChange={setOpenCourseChoices}>
+					<DrawerTrigger asChild>
+						<Button variant="outline" className="w-full justify-between">
 							<p className="flex-grow overflow-hidden text-ellipsis whitespace-nowrap text-left">
 								{course?.code
 									? courses[selectedProgram as string].find((course) => course.code === enteredGrade.code)?.code + ' - ' + courses[selectedProgram as string].find((course) => course.code === enteredGrade.code)?.name
@@ -540,44 +571,49 @@ function SubjectRow({ selectedProgram, enteredGrade, index, enteredGrades, setEn
 							</p>
 							<ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
 						</Button>
-					</PopoverTrigger>
-					<PopoverContent className="w-[var(--radix-popover-trigger-width)] p-0" align="center" collisionPadding={5}>
-						<Command>
-							<CommandInput placeholder="Search course..." />
-							<CommandList>
-								<CommandEmpty>No course found.</CommandEmpty>
-								{
-									Object.entries(groupedChoices).map(([yearKey, semesters]) => (
-										Object.entries(semesters).map(([semesterKey, courses]) => (
-											<CommandGroup key={`${yearKey}-${semesterKey}`} heading={`${yearKey} - ${semesterKey}`}>
-												{courses.map((course) => (
-													<CommandItem
-														key={course.code}
-														value={course.code + ' - ' + course.name}
-														onSelect={() => {
-															const newEnteredGrades = [...enteredGrades];
-															newEnteredGrades[index].code = course.code;
-															setEnteredGrades(newEnteredGrades);
-															setOpenCourseChoices(false);
-														}}
-													>
-														<Check
-															className={cn(
-																"mr-2 h-4 w-4",
-																enteredGrade.code === course.code ? "opacity-100" : "opacity-0"
-															)}
-														/>
-														{course.code} - {course.name}
-													</CommandItem>
-												))}
-											</CommandGroup>
-										))
-									))
-								}
-							</CommandList>
-						</Command>
-					</PopoverContent>
-				</Popover>
+					</DrawerTrigger>
+					<DrawerContent>
+						<DrawerHeader className="flex flex-col gap-1.5 p-4">
+							<DrawerTitle>Choose course</DrawerTitle>
+							<DrawerDescription>Select a course to add to your grade calculation.</DrawerDescription>
+						</DrawerHeader>
+						<div className="mt-4 border-t">
+							<CoursesList />
+						</div>
+					</DrawerContent>
+				</Drawer>
+			)
+		}
+
+		return (
+			<Popover open={openCourseChoices} onOpenChange={setOpenCourseChoices}>
+				<PopoverTrigger asChild>
+					<Button
+						variant="outline"
+						role="combobox"
+						aria-expanded={openCourseChoices}
+						className="w-full justify-between overflow-hidden"
+					>
+						<p className="flex-grow overflow-hidden text-ellipsis whitespace-nowrap text-left">
+							{course?.code
+								? courses[selectedProgram as string].find((course) => course.code === enteredGrade.code)?.code + ' - ' + courses[selectedProgram as string].find((course) => course.code === enteredGrade.code)?.name
+								: "Select course..."}
+						</p>
+						<ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+					</Button>
+				</PopoverTrigger>
+				<PopoverContent className="w-[var(--radix-popover-trigger-width)] p-0" align="center" collisionPadding={5}>
+					<CoursesList />
+				</PopoverContent>
+			</Popover>
+		)
+	}
+
+	return (
+		<div key={index} className="bg-card p-3 border rounded-md flex flex-col md:grid md:grid-cols-subgrid md:col-span-4 md:items-center gap-4 md:gap-2 w-full overflow-hidden">
+			<div className="flex flex-col gap-1 overflow-x-hidden p-1">
+				<p className="text-sm font-medium">Course {index + 1}</p>
+				<CourseSelect />
 			</div>
 			<div className="flex flex-col gap-1 overflow-x-hidden p-1">
 				<p className="text-sm font-medium">Units</p>
