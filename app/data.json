@@ -464,6 +464,7 @@
 				"code": "IT-OJT01",
 				"name": "Practicum (OJT)",
 				"units": 3,
+				"semester": 2,
 				"year": 4
 			}
 		]

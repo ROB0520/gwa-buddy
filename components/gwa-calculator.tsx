@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import {
 	DropdownMenu,
@@ -18,7 +18,15 @@ import {
 	SelectTrigger,
 	SelectValue,
 } from "@/components/ui/select"
-import { Check, ChevronsUpDown, Trash2 } from "lucide-react"
+import {
+	Drawer,
+	DrawerContent,
+	DrawerDescription,
+	DrawerHeader,
+	DrawerTitle,
+	DrawerTrigger,
+} from "@/components/ui/drawer"
+import { Check, ChevronsUpDown, Sparkles, Trash2, TrendingDown, TrendingUp, TrendingUpDown, TriangleAlert } from "lucide-react"
 
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
@@ -40,6 +48,7 @@ import { Data, ProgramsBSIT } from "@/lib/types";
 import { Input } from "./ui/input";
 import React from "react";
 import { Separator } from "./ui/separator";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 type EnteredGrades = {
 	code: string;
@@ -48,8 +57,7 @@ type EnteredGrades = {
 
 export default function GwaCalculator() {
 	const { courses, programs } = data as Data;
-
-	const [openProgram, setOpenProgram] = useState(false)
+	const addSubjectButton = useRef<HTMLButtonElement | null>(null);
 	const [selectedProgram, setSelectedProgram] = useState<keyof typeof programs | undefined>(undefined);
 	const [subjects, setSubjects] = useState<string[]>([]);
 	const [enteredGrades, setEnteredGrades] = useState<EnteredGrades[]>([{ code: '', grade: undefined }]);
@@ -61,6 +69,10 @@ export default function GwaCalculator() {
 			setEnteredGrades(newEnteredGrades);
 		}
 	}, [subjects])
+
+	useEffect(() => {
+		setGwa(null);
+	}, [enteredGrades, selectedProgram])
 
 	const calculateGwa = () => {
 		if (selectedProgram) {
@@ -76,7 +88,6 @@ export default function GwaCalculator() {
 				}
 				return acc;
 			}, 0);
-			console.log(totalPoints, totalUnits);
 
 			if (totalUnits > 0) {
 				setGwa(totalPoints / totalUnits);
@@ -94,53 +105,7 @@ export default function GwaCalculator() {
 			</CardHeader>
 			<CardContent>
 				<div className="flex flex-col gap-4 md:gap-6">
-					<Popover open={openProgram} onOpenChange={setOpenProgram}>
-						<PopoverTrigger asChild>
-							<Button
-								variant="outline"
-								role="combobox"
-								aria-expanded={openProgram}
-								className="w-full justify-between"
-							>
-								<p className="flex-grow overflow-hidden text-ellipsis whitespace-nowrap text-left">
-									{
-										selectedProgram
-											? programs[selectedProgram].code + ' - ' + programs[selectedProgram].name
-											: "Select program..."
-									}
-								</p>
-								<ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
-							</Button>
-						</PopoverTrigger>
-						<PopoverContent className="w-[var(--radix-popover-trigger-width)] p-0" align="center" collisionPadding={5}>
-							<Command>
-								<CommandInput placeholder="Search program..." />
-								<CommandList>
-									<CommandEmpty>No program found.</CommandEmpty>
-									<CommandGroup>
-										{Object.entries(programs).map(([key, program]) => (
-											<CommandItem
-												key={key}
-												value={program.code + ' - ' + program.name}
-												onSelect={() => {
-													setSelectedProgram(key as keyof typeof programs);
-													setOpenProgram(false);
-												}}
-											>
-												<Check
-													className={cn(
-														"mr-2 h-4 w-4",
-														selectedProgram === key ? "opacity-100" : "opacity-0"
-													)}
-												/>
-												{program.code + ' - ' + program.name}
-											</CommandItem>
-										))}
-									</CommandGroup>
-								</CommandList>
-							</Command>
-						</PopoverContent>
-					</Popover>
+					<ProgramSelect selectedProgram={selectedProgram} setSelectedProgram={setSelectedProgram} />
 					<DropdownMenu>
 						<DropdownMenuTrigger asChild>
 							<Button variant="outline" className="w-full justify-between" disabled={!selectedProgram}>
@@ -148,7 +113,7 @@ export default function GwaCalculator() {
 							</Button>
 						</DropdownMenuTrigger>
 						<DropdownMenuContent className="w-[var(--radix-dropdown-menu-trigger-width)] p-0" align="center" collisionPadding={25}>
-							<DropdownMenuLabel>{selectedProgram ? programs[selectedProgram].name : "No program selected"}</DropdownMenuLabel>
+							<DropdownMenuLabel className="bg-secondary text-secondary-foreground font-bold">{selectedProgram ? programs[selectedProgram].name : "No program selected"}</DropdownMenuLabel>
 							{
 								selectedProgram ? (
 									<>
@@ -157,57 +122,140 @@ export default function GwaCalculator() {
 											programs[selectedProgram].year.map((year) => {
 												const program = programs[selectedProgram] as ProgramsBSIT;
 												const programCourses = courses[program.code] || [];
-												if (program.majors.find((major) => major.year.includes(year))) {
-													return (
-														<DropdownMenuGroup key={year}>
-															<DropdownMenuLabel className="bg-secondary text-secondary-foreground">Year {year}</DropdownMenuLabel>
-															{program.majors
-																.filter(major => major.year.includes(year))
-																.map((major) => (
-																	<React.Fragment key={`${year}-major-${major.code}`}>
-																		<DropdownMenuLabel className="bg-secondary/50 text-secondary-foreground pl-6">
-																			{major.name}
-																		</DropdownMenuLabel>
-																		<DropdownMenuItem
-																			onClick={() => {
-																				// Get courses for this major's first semester
-																				const majorCourses = programCourses.filter(
-																					course => (
-																						(
-																							course.major === major.code ||
-																							course.major === undefined
-																						) &&
-																						course.semester === 1 &&
-																						course.year === year
-																					)
-																				).map(course => course.code);
-																				setSubjects(majorCourses);
-																			}}
-																		>
-																			<span className="pl-8">{major.name} - First Semester</span>
-																		</DropdownMenuItem>
-																		<DropdownMenuItem
-																			onClick={() => {
-																				// Get courses for this major's second semester
-																				const majorCourses = programCourses.filter(
-																					course => (
-																						(
-																							course.major === major.code ||
-																							course.major === undefined
-																						) &&
-																						course.semester === 2 &&
-																						course.year === year
-																					)
-																				).map(course => course.code);
-																				setSubjects(majorCourses);
-																			}}
-																		>
-																			<span className="pl-8">{major.name} - Second Semester</span>
-																		</DropdownMenuItem>
-																	</React.Fragment>
-																))}
-														</DropdownMenuGroup>
-													)
+												const hasMajorCoursesInFirstSem = [...new Set(programCourses.filter(c => c.year === year && c.semester === 1).map(course => course.major))].length > 1;
+												const hasMajorCoursesInSecondSem = [...new Set(programCourses.filter(c => c.year === year && c.semester === 2).map(course => course.major))].length > 1;
+
+												if (hasMajorCoursesInFirstSem || hasMajorCoursesInSecondSem) {
+													if (hasMajorCoursesInFirstSem && !hasMajorCoursesInSecondSem) {
+														return (
+															<React.Fragment key={year}>
+																<DropdownMenuGroup key={year}>
+																	<DropdownMenuLabel className="bg-secondary text-secondary-foreground">Year {year}</DropdownMenuLabel>
+																	{
+																		program.majors.map((major) => {
+																			return (
+																				<React.Fragment key={major.code + '-' + year}>
+																					<DropdownMenuLabel className="bg-secondary/50 text-secondary-foreground pl-6">
+																						{major.name}
+																					</DropdownMenuLabel>
+																					<DropdownMenuItem
+																						onClick={() => {
+																							const yearCourses = programCourses.filter(
+																								course => (course.major === undefined || course.major === major.code) && course.year === year && course.semester === 1
+																							).map(course => course.code);
+																							setSubjects(yearCourses);
+																						}}
+																					>
+																						<span className="pl-8">{major.code}  - First Semester</span>
+																					</DropdownMenuItem>
+																				</React.Fragment>
+																			)
+																		})
+																	}
+																</DropdownMenuGroup>
+																<DropdownMenuItem
+																	onClick={() => {
+																		const yearCourses = programCourses.filter(
+																			course => course.year === year && course.semester === 2
+																		).map(course => course.code);
+																		setSubjects(yearCourses);
+																	}}
+																>
+																	<span className="pl-8">Year {year} - Second Semester</span>
+																</DropdownMenuItem>
+															</React.Fragment>
+														)
+													} else if (!hasMajorCoursesInFirstSem && hasMajorCoursesInSecondSem) {
+														return (
+															<React.Fragment key={year}>
+																<DropdownMenuGroup key={year}>
+																	<DropdownMenuLabel className="bg-secondary text-secondary-foreground">Year {year}</DropdownMenuLabel>
+																	<DropdownMenuItem
+																		onClick={() => {
+																			const yearCourses = programCourses.filter(
+																				course => course.year === year && course.semester === 1
+																			).map(course => course.code);
+																			setSubjects(yearCourses);
+																		}}
+																	>
+																		<span className="pl-8">Year {year} - First Semester</span>
+																	</DropdownMenuItem>
+																	{
+																		program.majors.map((major) => {
+																			return (
+																				<React.Fragment key={major.code + '-' + year}>
+																					<DropdownMenuLabel className="bg-secondary/50 text-secondary-foreground pl-6">
+																						{major.name}
+																					</DropdownMenuLabel>
+																					<DropdownMenuItem
+																						onClick={() => {
+																							const yearCourses = programCourses.filter(
+																								course => (course.major === undefined || course.major === major.code) && course.year === year && course.semester === 2
+																							).map(course => course.code);
+																							setSubjects(yearCourses);
+																						}}
+																					>
+																						<span className="pl-8">{major.code} - Second Semester</span>
+																					</DropdownMenuItem>
+																				</React.Fragment>
+																			)
+																		})
+																	}
+																</DropdownMenuGroup>
+															</React.Fragment>
+														)
+													} else if (hasMajorCoursesInFirstSem && hasMajorCoursesInSecondSem) {
+														return (
+															<DropdownMenuGroup key={year}>
+																<DropdownMenuLabel className="bg-secondary text-secondary-foreground">Year {year}</DropdownMenuLabel>
+																{program.majors
+																	.filter(major => major.year.includes(year))
+																	.map((major) => {
+																		return (
+																			<React.Fragment key={`${year}-major-${major.code}`}>
+																				<DropdownMenuLabel className="bg-secondary/50 text-secondary-foreground pl-6">
+																					{major.name}
+																				</DropdownMenuLabel>
+
+																				{hasMajorCoursesInFirstSem && (
+																					<DropdownMenuItem
+																						onClick={() => {
+																							const majorCourses = programCourses.filter(
+																								course => (
+																									(course.major === major.code || course.major === undefined) &&
+																									course.semester === 1 &&
+																									course.year === year
+																								)
+																							).map(course => course.code);
+																							setSubjects(majorCourses);
+																						}}
+																					>
+																						<span className="pl-8">{major.name} - First Semester</span>
+																					</DropdownMenuItem>
+																				)}
+
+																				{hasMajorCoursesInSecondSem && (
+																					<DropdownMenuItem
+																						onClick={() => {
+																							const majorCourses = programCourses.filter(
+																								course => (
+																									(course.major === major.code || course.major === undefined) &&
+																									course.semester === 2 &&
+																									course.year === year
+																								)
+																							).map(course => course.code);
+																							setSubjects(majorCourses);
+																						}}
+																					>
+																						<span className="pl-8">{major.name} - Second Semester</span>
+																					</DropdownMenuItem>
+																				)}
+																			</React.Fragment>
+																		);
+																	}).filter(Boolean)}
+															</DropdownMenuGroup>
+														)
+													}
 												} else {
 													return (
 														<DropdownMenuGroup key={year}>
@@ -215,7 +263,6 @@ export default function GwaCalculator() {
 															<DropdownMenuItem
 																key={`year-${year}-first`}
 																onClick={() => {
-																	// Get courses for this year's first semester
 																	const yearCourses = programCourses.filter(
 																		course => course.year === year && course.semester === 1
 																	).map(course => course.code);
@@ -227,7 +274,6 @@ export default function GwaCalculator() {
 															<DropdownMenuItem
 																key={`year-${year}-second`}
 																onClick={() => {
-																	// Get courses for this year's second semester
 																	const yearCourses = programCourses.filter(
 																		course => course.year === year && course.semester === 2
 																	).map(course => course.code);
@@ -269,15 +315,31 @@ export default function GwaCalculator() {
 					{
 						gwa !== null && selectedProgram && (
 							<Card className={cn(
-								"w-full gap-4 shadow-none",
-								gwa < 2 && 'bg-green-400 dark:bg-green-700 text-white',
-								gwa >= 2 && gwa < 3 && 'bg-yellow-400 dark:bg-yellow-700 text-white',
-								gwa >= 3 && 'bg-red-400 dark:bg-red-700 text-white'
+								"w-full gap-2 shadow-none",
+								gwa >= 4 && 'bg-red-500 dark:bg-red-700 text-white',
+								gwa >= 3 && gwa < 4 && 'bg-orange-500 dark:bg-orange-700 text-white',
+								gwa >= 2 && gwa < 3 && 'bg-yellow-500 dark:bg-yellow-700 text-white',
+								gwa > 1.5 && gwa < 2 && 'bg-lime-500 dark:bg-lime-700 text-white',
+								gwa <= 1.5 && 'bg-green-500 dark:bg-green-700 text-white',
 							)}>
 								<CardHeader>
-									<CardTitle>Your GWA</CardTitle>
+									<CardTitle className="flex items-center gap-2">
+										Your GWA{' '}
+										{gwa >= 4 && <TriangleAlert />}
+										{gwa >= 3 && gwa < 4 && <TrendingDown />}
+										{gwa >= 2 && gwa < 3 && <TrendingUpDown />}
+										{gwa > 1.5 && gwa < 2 && <TrendingUp />}
+										{gwa <= 1.5 && <Sparkles />}
+									</CardTitle>
+									<CardDescription className="text-inherit opacity-85">
+										{gwa >= 4 && 'You are failing. You must study harder!'}
+										{gwa >= 3 && gwa < 4 && 'You are pretty close to failing. Please study harder.'}
+										{gwa >= 2 && gwa < 3 && 'You are doing okay. Keep it up!'}
+										{gwa > 1.5 && gwa < 2 && 'You are doing great! Keep it up!'}
+										{gwa <= 1.5 && 'You are doing excellent! Keep it up!'}
+									</CardDescription>
 								</CardHeader>
-								<CardContent className="flex flex-col gap-4">
+								<CardContent>
 									<h1 className="scroll-m-20 text-4xl font-extrabold tracking-tight lg:text-5xl">
 										{gwa.toFixed(2)}
 									</h1>
@@ -293,8 +355,18 @@ export default function GwaCalculator() {
 				<Button
 					variant='outline'
 					className="w-full md:w-auto"
+					ref={addSubjectButton}
+					disabled={!selectedProgram}
 					onClick={() => {
-						setEnteredGrades(prev => [...prev, { code: '', grade: undefined }]);
+						setEnteredGrades(prev => {
+							const newEnteredGrades = [...prev, { code: '', grade: undefined }];
+							// Use setTimeout to ensure state has updated before scrolling
+							setTimeout(() => {
+								// Scroll the button into view after adding a new element
+								window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' });
+							}, 100);
+							return newEnteredGrades;
+						});
 					}}
 				>
 					Add Subject
@@ -302,6 +374,12 @@ export default function GwaCalculator() {
 				<Button
 					variant='destructive'
 					className="w-full md:w-auto"
+					onClick={() => {
+						setEnteredGrades([{ code: '', grade: undefined }]);
+						setGwa(null);
+						setSubjects([]);
+						setSelectedProgram(undefined);
+					}}
 				>
 					Reset
 				</Button>
@@ -321,6 +399,99 @@ export default function GwaCalculator() {
 	)
 }
 
+function ProgramSelect({ selectedProgram, setSelectedProgram }: { selectedProgram: keyof typeof data.programs | undefined; setSelectedProgram: React.Dispatch<React.SetStateAction<keyof typeof data.programs | undefined>> }) {
+	const [openProgram, setOpenProgram] = useState(false);
+	const { programs: rawPrograms } = data as Data;
+	const isMobile = useIsMobile()
+
+	const programs = Object.entries(rawPrograms).map(([code, program]) => ({
+		code,
+		name: program.name
+	}));
+
+	const ProgramsList = () => (
+		<Command>
+			<CommandInput placeholder="Search program..." />
+			<CommandList>
+				<CommandEmpty>No program found.</CommandEmpty>
+				<CommandGroup>
+					{programs.map(({ code, name }) => (
+						<CommandItem
+							key={code}
+							value={code + ' - ' + name}
+							onSelect={() => {
+								setSelectedProgram(code as keyof typeof rawPrograms);
+								setOpenProgram(false);
+							}}
+						>
+							<Check
+								className={cn(
+									"mr-2 h-4 w-4",
+									selectedProgram === code ? "opacity-100" : "opacity-0"
+								)}
+							/>
+							{code + ' - ' + name}
+						</CommandItem>
+					))}
+				</CommandGroup>
+			</CommandList>
+		</Command>
+	)
+
+	if (isMobile) {
+		return (
+			<Drawer open={openProgram} onOpenChange={setOpenProgram}>
+				<DrawerTrigger asChild>
+					<Button variant="outline" className="w-full justify-between">
+						{
+							selectedProgram
+								? rawPrograms[selectedProgram].code + ' - ' + rawPrograms[selectedProgram].name
+								: "Select program..."
+						}
+						<ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+					</Button>
+				</DrawerTrigger>
+				<DrawerContent>
+					<DrawerHeader className="flex flex-col gap-1.5 p-4">
+						<DrawerTitle>Select program</DrawerTitle>
+						<DrawerDescription>Select a program to view the courses and enter your grades.</DrawerDescription>
+					</DrawerHeader>
+					<div className="mt-4 border-t">
+						<ProgramsList />
+					</div>
+				</DrawerContent>
+			</Drawer>
+		)
+	}
+
+	return (
+		<Popover open={openProgram} onOpenChange={setOpenProgram}>
+			<PopoverTrigger asChild>
+				<Button
+					variant="outline"
+					role="combobox"
+					aria-expanded={openProgram}
+					className="w-full justify-between"
+				>
+					<p className="flex-grow overflow-hidden text-ellipsis whitespace-nowrap text-left">
+						{
+							selectedProgram
+								? rawPrograms[selectedProgram].code + ' - ' + rawPrograms[selectedProgram].name
+								: "Select program..."
+						}
+					</p>
+					<ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+				</Button>
+			</PopoverTrigger>
+			<PopoverContent className="w-[var(--radix-popover-trigger-width)] p-0" align="center" collisionPadding={5}>
+				<ProgramsList />
+			</PopoverContent>
+		</Popover>
+	)
+
+
+}
+
 function SubjectRow({ selectedProgram, enteredGrade, index, enteredGrades, setEnteredGrades }: {
 	selectedProgram: keyof typeof data.programs | undefined;
 	enteredGrade: EnteredGrades;
@@ -332,7 +503,6 @@ function SubjectRow({ selectedProgram, enteredGrade, index, enteredGrades, setEn
 	const courseChoices = courses[selectedProgram as string] || [];
 	const course = courseChoices.find(course => course.code === enteredGrade.code);
 	const [openCourseChoices, setOpenCourseChoices] = useState(false);
-	// Group course choices by year and semester
 	const groupedChoices = courseChoices.reduce((acc, course) => {
 		const yearKey = `Year ${course.year}`;
 		const semesterKey = `${course.semester === 1 ? 'First' : 'Second'} Semester`;
@@ -429,7 +599,7 @@ function SubjectRow({ selectedProgram, enteredGrade, index, enteredGrades, setEn
 					<SelectTrigger className="w-full md:w-24">
 						<SelectValue />
 					</SelectTrigger>
-					<SelectContent className="w-[var(--radix-select-trigger-width)]" align="center" collisionPadding={5}>
+					<SelectContent className="w-[var(--radix-select-trigger-width)] h-52" align="center" collisionPadding={5}>
 						<SelectItem value="1.00">1.00</SelectItem>
 						<SelectItem value="1.25">1.25</SelectItem>
 						<SelectItem value="1.50">1.50</SelectItem>
