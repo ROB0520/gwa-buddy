@@ -66,11 +66,6 @@ export default function GwaCalculator() {
 		setGwa(null);
 	}, [enteredGrades, selectedProgram])
 
-	useEffect(() => {
-		console.log(enteredGrades);
-	}, [enteredGrades])
-
-
 	const calculateGwa = () => {
 		if (selectedProgram) {
 			const programCourses = courses[selectedProgram] || [];
@@ -404,7 +399,7 @@ export default function GwaCalculator() {
 												</DialogTitle>
 											</DialogHeader>
 											<div className="flex flex-col gap-2">
-												<p className="opacity-80">GWA = <div className="inline-block relative align-middle text-center *:block *:p-0.5">
+												<p className="opacity-80">GWA = <span className="inline-block relative align-middle text-center *:block *:p-0.5">
 													<span>
 														Σ(Units x Grade)
 													</span>
@@ -412,7 +407,7 @@ export default function GwaCalculator() {
 													<span>
 														Σ(Units)
 													</span>
-												</div>
+												</span>
 												</p>
 												<h3 className="scroll-m-20 text-lg font-medium tracking-tight">
 													Solution
