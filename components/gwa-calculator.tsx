@@ -395,7 +395,7 @@ export default function GwaCalculator() {
 								<CardFooter className="justify-end">
 									<Dialog>
 										<DialogTrigger asChild>
-											<Button variant="outline" className="w-full md:w-auto">How GWA is Calculated</Button>
+											<Button variant="outline" className="w-full md:w-auto text-foreground">How GWA is Calculated</Button>
 										</DialogTrigger>
 										<DialogContent>
 											<DialogHeader>
