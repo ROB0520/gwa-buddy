@@ -383,7 +383,7 @@ export default function GwaCalculator() {
 									</CardDescription>
 								</CardHeader>
 								<CardContent>
-									<h1 className="scroll-m-20 text-4xl font-extrabold tracking-tight lg:text-5xl">
+									<h1 className="scroll-m-20 text-4xl font-extrabold tracking-tight lg:text-5xl tabular-nums">
 										{gwa.toFixed(2)}
 									</h1>
 								</CardContent>
@@ -421,10 +421,10 @@ export default function GwaCalculator() {
 																return (
 																	<React.Fragment key={index}>
 																		<span className="relative inline-flex justify-center pt-4">
-																			({course.units} × {eg.grade.toFixed(2)})
 																			<span className="absolute top-1 text-xs text-muted-foreground">
 																				{course?.code}
 																			</span>
+																			<span className="tabular-nums">({course.units} × {eg.grade.toFixed(2)})</span>
 																		</span>
 																		{index < enteredGrades.length - 1 ? ' + ' : ''}
 																	</React.Fragment>
@@ -438,7 +438,10 @@ export default function GwaCalculator() {
 																	const course = courses[selectedProgram as string].find(course => course.code === eg.code);
 																	return (
 																		<React.Fragment key={index}>
-																			{course?.units}{index < enteredGrades.length - 1 ? ' + ' : ''}
+																			<span className="tabular-nums">
+																				{course?.units}
+																			</span>
+																			{index < enteredGrades.length - 1 ? ' + ' : ''}
 																		</React.Fragment>
 																	)
 																})}
@@ -458,7 +461,9 @@ export default function GwaCalculator() {
 																		if (!course || !eg.grade) return null;
 																		return (
 																			<React.Fragment key={index}>
-																				{course?.units * Number(eg.grade.toFixed(2))}
+																				<span className="tabular-nums">
+																					{course?.units * Number(eg.grade.toFixed(2))}
+																				</span>
 																				{index < enteredGrades.length - 1 ? ' + ' : ''}
 																			</React.Fragment>
 																		)
@@ -470,7 +475,9 @@ export default function GwaCalculator() {
 																		const course = courses[selectedProgram as string].find(course => course.code === eg.code);
 																		return (
 																			<React.Fragment key={index}>
-																				{course?.units}
+																				<span className="tabular-nums">
+																					{course?.units}
+																				</span>
 																				{index < enteredGrades.length - 1 ? ' + ' : ''}
 																			</React.Fragment>
 																		)
@@ -481,7 +488,7 @@ export default function GwaCalculator() {
 													}
 
 													<li><div className="inline-block relative align-middle text-center">
-														<span className="p-0.5">
+														<span className="p-0.5 tabular-nums">
 															{enteredGrades.reduce((acc, eg) => {
 																const course = courses[selectedProgram as string].find(course => course.code === eg.code);
 																if (!course || !eg.grade) return acc;
@@ -489,7 +496,7 @@ export default function GwaCalculator() {
 															}, 0)}
 														</span>
 														<Separator className="bg-foreground block" />
-														<span className="p-0.5">
+														<span className="p-0.5 tabular-nums">
 															{enteredGrades.reduce((acc, eg) => {
 																const course = courses[selectedProgram as string].find(course => course.code === eg.code);
 																if (!course) return acc;
@@ -500,7 +507,7 @@ export default function GwaCalculator() {
 
 													<li>
 														<div className={cn(
-															"px-3 py-1 rounded font-bold text-lg w-fit",
+															"px-3 py-1 rounded font-bold text-lg w-fit tabular-nums",
 															gwa >= 4 && 'bg-red-500 dark:bg-red-700 text-white',
 															gwa >= 3 && gwa < 4 && 'bg-orange-500 dark:bg-orange-700 text-white',
 															gwa >= 2 && gwa < 3 && 'bg-yellow-500 dark:bg-yellow-700 text-white',
