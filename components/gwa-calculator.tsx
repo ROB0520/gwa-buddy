@@ -44,7 +44,7 @@ import {
 	PopoverTrigger,
 } from "@/components/ui/popover"
 import data from '@/app/data.json'
-import { Data, ProgramsBSIT } from "@/lib/types";
+import { Data } from "@/lib/types";
 import { Input } from "./ui/input";
 import React from "react";
 import { Separator } from "./ui/separator";
@@ -58,7 +58,7 @@ type EnteredGrades = {
 export default function GwaCalculator() {
 	const { courses, programs } = data as Data;
 	const addSubjectButton = useRef<HTMLButtonElement | null>(null);
-	const [selectedProgram, setSelectedProgram] = useState<keyof typeof programs | undefined>(undefined);
+	const [selectedProgram, setSelectedProgram] = useState<keyof typeof data.programs | undefined>(undefined);
 	const [subjects, setSubjects] = useState<string[]>([]);
 	const [enteredGrades, setEnteredGrades] = useState<EnteredGrades[]>([{ code: '', grade: undefined }]);
 	const [gwa, setGwa] = useState<number | null>(null);
@@ -120,12 +120,12 @@ export default function GwaCalculator() {
 										<DropdownMenuSeparator className="my-0" />
 										{
 											programs[selectedProgram].year.map((year) => {
-												const program = programs[selectedProgram] as ProgramsBSIT;
+												const program = programs[selectedProgram];
 												const programCourses = courses[program.code] || [];
 												const hasMajorCoursesInFirstSem = [...new Set(programCourses.filter(c => c.year === year && c.semester === 1).map(course => course.major))].length > 1;
 												const hasMajorCoursesInSecondSem = [...new Set(programCourses.filter(c => c.year === year && c.semester === 2).map(course => course.major))].length > 1;
 
-												if (hasMajorCoursesInFirstSem || hasMajorCoursesInSecondSem) {
+												if ((hasMajorCoursesInFirstSem || hasMajorCoursesInSecondSem) && program.majors) {
 													if (hasMajorCoursesInFirstSem && !hasMajorCoursesInSecondSem) {
 														return (
 															<React.Fragment key={year}>
@@ -420,7 +420,7 @@ function ProgramSelect({ selectedProgram, setSelectedProgram }: { selectedProgra
 							key={code}
 							value={code + ' - ' + name}
 							onSelect={() => {
-								setSelectedProgram(code as keyof typeof rawPrograms);
+								setSelectedProgram(code as keyof typeof data.programs);
 								setOpenProgram(false);
 							}}
 						>

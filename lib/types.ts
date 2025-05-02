@@ -1,40 +1,34 @@
 export interface Data {
     programs: Programs;
-    courses:  Courses;
+    courses: Courses;
 }
 
 export interface Courses {
-    [key: string]: BSITElement[];
+    [key: string]: Course[];
 }
 
-export interface BSITElement {
-    code:      string;
-    name:      string;
-    units:     number;
+export interface Course {
+    code: string;
+    name: string;
+    units: number;
     semester?: number;
-    year:      number;
-    major?:    BSITMajorEnum;
-}
-
-export enum BSITMajorEnum {
-    Dst = "DST",
-    Nst = "NST",
-    Wst = "WST",
+    year: number;
+    major?: string;
 }
 
 export interface Programs {
-    BSIT: ProgramsBSIT;
+    [key: string]: Program;
 }
 
-export interface ProgramsBSIT {
-    code:   string;
-    name:   string;
-	year:  number[];
-    majors: BSITMajorElement[];
+export interface Program {
+    code: string;
+    name: string;
+    year: number[];
+    majors?: Major[];
 }
 
-export interface BSITMajorElement {
-    code: BSITMajorEnum;
+export interface Major {
+    code: string;
     name: string;
     year: number[];
 }
