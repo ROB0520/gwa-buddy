@@ -112,7 +112,7 @@ export default function GwaCalculator() {
 								Select preset... <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
 							</Button>
 						</DropdownMenuTrigger>
-						<DropdownMenuContent className="w-[var(--radix-dropdown-menu-trigger-width)] p-0" align="center" collisionPadding={25}>
+						<DropdownMenuContent className="w-[var(--radix-dropdown-menu-trigger-width)] p-0 max-h-52" align="center" collisionPadding={25}>
 							<DropdownMenuLabel className="bg-secondary text-secondary-foreground font-bold">{selectedProgram ? programs[selectedProgram].name : "No program selected"}</DropdownMenuLabel>
 							{
 								selectedProgram ? (
@@ -443,11 +443,13 @@ function ProgramSelect({ selectedProgram, setSelectedProgram }: { selectedProgra
 			<Drawer open={openProgram} onOpenChange={setOpenProgram}>
 				<DrawerTrigger asChild>
 					<Button variant="outline" className="w-full justify-between">
-						{
-							selectedProgram
-								? rawPrograms[selectedProgram].code + ' - ' + rawPrograms[selectedProgram].name
-								: "Select program..."
-						}
+						<p className="flex-grow overflow-hidden text-ellipsis whitespace-nowrap text-left">
+							{
+								selectedProgram
+									? rawPrograms[selectedProgram].code + ' - ' + rawPrograms[selectedProgram].name
+									: "Select program..."
+							}
+						</p>
 						<ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
 					</Button>
 				</DrawerTrigger>
@@ -456,7 +458,7 @@ function ProgramSelect({ selectedProgram, setSelectedProgram }: { selectedProgra
 						<DrawerTitle>Select program</DrawerTitle>
 						<DrawerDescription>Select a program to view the courses and enter your grades.</DrawerDescription>
 					</DrawerHeader>
-					<div className="mt-4 border-t">
+					<div className="mt-4 border-t max-h-52">
 						<ProgramsList />
 					</div>
 				</DrawerContent>
@@ -483,7 +485,7 @@ function ProgramSelect({ selectedProgram, setSelectedProgram }: { selectedProgra
 					<ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
 				</Button>
 			</PopoverTrigger>
-			<PopoverContent className="w-[var(--radix-popover-trigger-width)] p-0" align="center" collisionPadding={5}>
+			<PopoverContent className="w-[var(--radix-popover-trigger-width)] p-0 max-h-52" align="center" collisionPadding={25}>
 				<ProgramsList />
 			</PopoverContent>
 		</Popover>
