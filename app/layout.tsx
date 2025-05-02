@@ -17,6 +17,11 @@ const geistMono = Geist_Mono({
 export const metadata: Metadata = {
   title: "GWA Buddy",
   description: "A web application that helps NEUST students calculate their General Weighted Average (GWA) based on their grades.",
+  authors: [
+    {
+      name: 'alecz.r'
+    }
+  ],
 };
 
 export default function RootLayout({
