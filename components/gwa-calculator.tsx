@@ -399,29 +399,29 @@ export default function GwaCalculator() {
 												</DialogTitle>
 											</DialogHeader>
 											<div className="flex flex-col gap-2">
-												<p className="opacity-80">GWA = <span className="inline-block relative align-middle text-center *:block *:p-0.5">
-													<span>
-														Σ(Units x Grade)
+												<span className="opacity-80">GWA = <span className="inline-block relative align-middle text-center">
+													<span className="p-0.5">
+														Σ(Units × Grade)
 													</span>
 													<Separator className="bg-foreground" />
-													<span>
+													<span className="p-0.5">
 														Σ(Units)
 													</span>
 												</span>
-												</p>
+												</span>
 												<h3 className="scroll-m-20 text-lg font-medium tracking-tight">
 													Solution
 												</h3>
 												<ol className="list-decimal pl-5 opacity-80 space-y-2">
-													<li><div className="inline-block relative align-middle text-center *:p-0.5">
-														<span className="block">
+													<li><div className="inline-block relative align-middle text-center">
+														<span className="p-0.5">
 															{enteredGrades.map((eg, index) => {
 																const course = courses[selectedProgram as string].find(course => course.code === eg.code);
 																if (!course || !eg.grade) return null;
 																return (
 																	<React.Fragment key={index}>
 																		<span className="relative inline-flex justify-center">
-																			({course.units} x {eg.grade.toFixed(2)})
+																			({course.units} × {eg.grade.toFixed(2)})
 																			<span className="absolute -top-3 text-xs text-muted-foreground">
 																				{course?.code}
 																			</span>
@@ -432,7 +432,7 @@ export default function GwaCalculator() {
 															})}
 														</span>
 														<Separator className="bg-foreground block" />
-														<span className="flex flex-col justify-center">
+														<span className="flex flex-col justify-center p-0.5">
 															<span>
 																{enteredGrades.map((eg, index) => {
 																	const course = courses[selectedProgram as string].find(course => course.code === eg.code);
@@ -449,35 +449,39 @@ export default function GwaCalculator() {
 														</span>
 													</div></li>
 
-													<li><div className="inline-block relative align-middle text-center *:p-0.5">
-														<span className="block">
-															{enteredGrades.map((eg, index) => {
-																const course = courses[selectedProgram as string].find(course => course.code === eg.code);
-																if (!course || !eg.grade) return null;
-																return (
-																	<React.Fragment key={index}>
-																		{course?.units * Number(eg.grade.toFixed(2))}
-																		{index < enteredGrades.length - 1 ? ' + ' : ''}
-																	</React.Fragment>
-																)
-															})}
-														</span>
-														<Separator className="bg-foreground block" />
-														<span>
-															{enteredGrades.map((eg, index) => {
-																const course = courses[selectedProgram as string].find(course => course.code === eg.code);
-																return (
-																	<React.Fragment key={index}>
-																		{course?.units}
-																		{index < enteredGrades.length - 1 ? ' + ' : ''}
-																	</React.Fragment>
-																)
-															})}
-														</span>
-													</div></li>
+													{
+														enteredGrades.length > 1 && (
+															<li><div className="inline-block relative align-middle text-center">
+																<span className="p-0.5">
+																	{enteredGrades.map((eg, index) => {
+																		const course = courses[selectedProgram as string].find(course => course.code === eg.code);
+																		if (!course || !eg.grade) return null;
+																		return (
+																			<React.Fragment key={index}>
+																				{course?.units * Number(eg.grade.toFixed(2))}
+																				{index < enteredGrades.length - 1 ? ' + ' : ''}
+																			</React.Fragment>
+																		)
+																	})}
+																</span>
+																<Separator className="bg-foreground block" />
+																<span className="p-0.5">
+																	{enteredGrades.map((eg, index) => {
+																		const course = courses[selectedProgram as string].find(course => course.code === eg.code);
+																		return (
+																			<React.Fragment key={index}>
+																				{course?.units}
+																				{index < enteredGrades.length - 1 ? ' + ' : ''}
+																			</React.Fragment>
+																		)
+																	})}
+																</span>
+															</div></li>
+														)
+													}
 
-													<li><div className="inline-block relative align-middle text-center *:p-0.5">
-														<span className="block">
+													<li><div className="inline-block relative align-middle text-center">
+														<span className="p-0.5">
 															{enteredGrades.reduce((acc, eg) => {
 																const course = courses[selectedProgram as string].find(course => course.code === eg.code);
 																if (!course || !eg.grade) return acc;
@@ -485,7 +489,7 @@ export default function GwaCalculator() {
 															}, 0)}
 														</span>
 														<Separator className="bg-foreground block" />
-														<span>
+														<span className="p-0.5">
 															{enteredGrades.reduce((acc, eg) => {
 																const course = courses[selectedProgram as string].find(course => course.code === eg.code);
 																if (!course) return acc;
