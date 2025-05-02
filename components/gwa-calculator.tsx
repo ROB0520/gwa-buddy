@@ -44,11 +44,11 @@ import {
 } from "@/components/ui/popover"
 import data from '@/app/data.json'
 import { Data } from "@/lib/types";
-import { Input } from "./ui/input";
+import { Input } from "@/components/ui/input";
 import React from "react";
-import { Separator } from "./ui/separator";
+import { Separator } from "@/components/ui/separator";
 import { useIsMobile } from "@/hooks/use-mobile";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "./ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 
 type EnteredGrades = {
 	code: string;
@@ -420,9 +420,9 @@ export default function GwaCalculator() {
 																if (!course || !eg.grade) return null;
 																return (
 																	<React.Fragment key={index}>
-																		<span className="relative inline-flex justify-center">
+																		<span className="relative inline-flex justify-center pt-4">
 																			({course.units} × {eg.grade.toFixed(2)})
-																			<span className="absolute -top-3 text-xs text-muted-foreground">
+																			<span className="absolute top-1 text-xs text-muted-foreground">
 																				{course?.code}
 																			</span>
 																		</span>
