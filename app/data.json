@@ -1,32 +1,5 @@
 {
 	"programs": {
-		"BSTM": {
-			"code": "BSTM",
-			"name": "Bachelor of Science in Tourism Management",
-			"year": [
-				1
-			]
-		},
-		"BSME": {
-			"code": "BSME",
-			"name": "Bachelor of Science in Mechanical Engineering",
-			"year": [
-				1,
-				2,
-				3,
-				4
-			]
-		},
-		"BSDS": {
-			"code": "BSDS",
-			"name": "Bachelor of Science in Data Science",
-			"year": [
-				1,
-				2,
-				3,
-				4
-			]
-		},
 		"BSIT": {
 			"code": "BSIT",
 			"name": "Bachelor of Science in Information Technology",
@@ -61,6 +34,33 @@
 						4
 					]
 				}
+			]
+		},
+		"BSDS": {
+			"code": "BSDS",
+			"name": "Bachelor of Science in Data Science",
+			"year": [
+				1,
+				2,
+				3,
+				4
+			]
+		},
+		"BSTM": {
+			"code": "BSTM",
+			"name": "Bachelor of Science in Tourism Management",
+			"year": [
+				1
+			]
+		},
+		"BSME": {
+			"code": "BSME",
+			"name": "Bachelor of Science in Mechanical Engineering",
+			"year": [
+				1,
+				2,
+				3,
+				4
 			]
 		}
 	},
