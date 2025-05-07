@@ -49,6 +49,7 @@ import React from "react";
 import { Separator } from "@/components/ui/separator";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Badge } from "./ui/badge";
 
 type EnteredGrades = {
 	code: string;
@@ -731,7 +732,11 @@ function SubjectRow({ selectedProgram, enteredGrade, index, enteredGrades, setEn
 													enteredGrade.code === course.code ? "opacity-100" : "opacity-0"
 												)}
 											/>
-											{course.code} - {course.name}{course.major && ` [${course.major}]`}
+											<span>
+												{course.code} - {course.name}
+												{course.major && <Badge className="ml-2 text-xs">[{course.major}]</Badge>}
+											</span>
+											
 										</CommandItem>
 									))}
 								</CommandGroup>
