@@ -734,7 +734,7 @@ function SubjectRow({ selectedProgram, enteredGrade, index, enteredGrades, setEn
 											/>
 											<span>
 												{course.code} - {course.name}
-												{course.major && <Badge className="ml-2 text-xs">[{course.major}]</Badge>}
+												{course.major && <Badge className="ml-2 text-xs">{course.major}</Badge>}
 											</span>
 											
 										</CommandItem>
