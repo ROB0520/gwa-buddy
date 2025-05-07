@@ -587,7 +587,7 @@ function ProgramSelect({ selectedProgram, setSelectedProgram }: { selectedProgra
 
 	const programs = Object.entries(rawPrograms).map(([code, program]) => ({
 		code,
-		name: program.name
+		name: program.name,
 	}));
 
 	const ProgramsList = () => (
@@ -731,7 +731,7 @@ function SubjectRow({ selectedProgram, enteredGrade, index, enteredGrades, setEn
 													enteredGrade.code === course.code ? "opacity-100" : "opacity-0"
 												)}
 											/>
-											{course.code} - {course.name}
+											{course.code} - {course.name}{course.major && ` [${course.major}]`}
 										</CommandItem>
 									))}
 								</CommandGroup>

@@ -46,6 +46,13 @@
 				4
 			]
 		},
+		"BPA": {
+			"code": "BPA",
+			"name": "Bachelor of Public Administration",
+			"year": [
+				1
+			]
+		},
 		"BSTM": {
 			"code": "BSTM",
 			"name": "Bachelor of Science in Tourism Management",
@@ -65,6 +72,120 @@
 		}
 	},
 	"courses": {
+		"BPA": [
+			{
+				"code": "GE 01",
+				"name": "Understanding the Self",
+				"units": 3,
+				"semester": 1,
+				"year": 1
+			},
+			{
+				"code": "GE 05",
+				"name": "Purposive Communication",
+				"units": 3,
+				"semester": 1,
+				"year": 1
+			},
+			{
+				"code": "GE 04",
+				"name": "Mathematics in the Modern World",
+				"units": 3,
+				"semester": 1,
+				"year": 1
+			},
+			{
+				"code": "GE 02",
+				"name": "Readings in Philippine History",
+				"units": 3,
+				"semester": 1,
+				"year": 1
+			},
+			{
+				"code": "PATHFit 01",
+				"name": "Movement Competency Training",
+				"units": 2,
+				"semester": 1,
+				"year": 1
+			},
+			{
+				"code": "GE Elective 101",
+				"name": "Fundamental Concepts, Principles, Theories of Earth and Life Sciences",
+				"units": 3,
+				"semester": 1,
+				"year": 1
+			},
+			{
+				"code": "GE 10",
+				"name": "Philosophy-Logic",
+				"units": 3,
+				"semester": 1,
+				"year": 1
+			},
+			{
+				"code": "GE 11",
+				"name": "College Writing",
+				"units": 3,
+				"semester": 1,
+				"year": 1
+			},
+			{
+				"code": "PATHFit 02",
+				"name": "Exercise-based Fitness Activities",
+				"units": 2,
+				"semester": 2,
+				"year": 1
+			},
+			{
+				"code": "GE 06",
+				"name": "Art Appreciation",
+				"units": 3,
+				"semester": 2,
+				"year": 1
+			},
+			{
+				"code": "GE 12",
+				"name": "College Algebra",
+				"units": 3,
+				"semester": 2,
+				"year": 1
+			},
+			{
+				"code": "GE 13",
+				"name": "Writing as Thinking",
+				"units": 3,
+				"semester": 2,
+				"year": 1
+			},
+			{
+				"code": "GE 14",
+				"name": "Literature and Society",
+				"units": 3,
+				"semester": 2,
+				"year": 1
+			},
+			{
+				"code": "PA 101",
+				"name": "Introduction to Public Administration",
+				"units": 3,
+				"semester": 2,
+				"year": 1
+			},
+			{
+				"code": "GE Elective 102",
+				"name": "General Chemistry",
+				"units": 3,
+				"semester": 2,
+				"year": 1
+			},
+			{
+				"code": "GE 03",
+				"name": "The Contemporary World",
+				"units": 3,
+				"semester": 2,
+				"year": 1
+			}
+		],
 		"BSTM": [
 			{
 				"code": "ELP",
