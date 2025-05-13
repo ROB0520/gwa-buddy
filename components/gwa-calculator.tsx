@@ -705,7 +705,10 @@ function SubjectRow({ selectedProgram, enteredGrade, index, enteredGrades, setEn
 		const isMobile = useIsMobile()
 
 		const CoursesList = () => (
-			<Command>
+			<Command
+				value={enteredGrade.code + ' - ' + course?.name}
+				
+			>
 				<CommandInput placeholder="Search course..." />
 				<CommandList>
 					<CommandEmpty>No course found.</CommandEmpty>
