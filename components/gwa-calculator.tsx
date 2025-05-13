@@ -336,7 +336,7 @@ export default function GwaCalculator() {
 							}
 						</DropdownMenuContent>
 					</DropdownMenu>
-					<div className="grid md:grid-cols-[1fr_auto_auto_auto] gap-x-2 gap-y-4 w-full">
+					<div className="grid md:grid-cols-[1fr_auto_auto_auto] gap-x-1 gap-y-4 w-full">
 						{selectedProgram ? (
 							<>
 								{
@@ -801,7 +801,7 @@ function SubjectRow({ selectedProgram, enteredGrade, index, enteredGrades, setEn
 	}
 
 	return (
-		<div key={index} className="bg-card p-3 border rounded-md flex flex-col md:grid md:grid-cols-subgrid md:col-span-4 md:items-center gap-4 md:gap-2 w-full overflow-hidden">
+		<div key={index} className="bg-card p-3 border rounded-md flex flex-col md:grid md:grid-cols-subgrid md:col-span-4 md:items-center gap-0 w-full overflow-hidden">
 			<div className="flex flex-col gap-1 overflow-x-hidden p-1">
 				<p className="text-sm font-medium">Course {index + 1}</p>
 				<CourseSelect />
@@ -846,7 +846,7 @@ function SubjectRow({ selectedProgram, enteredGrade, index, enteredGrades, setEn
 			<Button
 				variant="destructive"
 				size='icon'
-				className="ml-auto md:ml-0 md:mt-auto mb-1"
+				className="ml-auto md:ml-1 md:mt-auto mb-1"
 				onClick={() => {
 					setEnteredGrades(prev => prev.filter((_, i) => i !== index));
 				}}
