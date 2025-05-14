@@ -67,6 +67,10 @@ export default function GwaCalculator() {
 		setGwa(null);
 	}, [enteredGrades, selectedProgram])
 
+	useEffect(() => {
+		setEnteredGrades([{ code: '', grade: undefined }]);
+	}, [selectedProgram])
+
 	const calculateGwa = () => {
 		if (selectedProgram) {
 			const programCourses = courses[selectedProgram] || [];
