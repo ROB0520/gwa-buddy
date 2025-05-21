@@ -724,7 +724,7 @@
 			{
 				"code": "PATHFit 01",
 				"name": "Movement Competency Training",
-				"units": 3,
+				"units": 2,
 				"semester": 1,
 				"year": 1
 			},
@@ -773,7 +773,7 @@
 			{
 				"code": "PATHFit 02",
 				"name": "Exercise-based Fitness Activities",
-				"units": 3,
+				"units": 2,
 				"semester": 2,
 				"year": 1
 			}
