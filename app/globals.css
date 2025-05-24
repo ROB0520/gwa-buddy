@@ -115,8 +115,14 @@
 @layer base {
   * {
     @apply border-border font-sans;
+    outline: none !important;
   }
   body {
     @apply bg-background text-foreground;
+  }
+  
+  /* Prevent transitions on page load */
+  .no-transitions-on-load * {
+    transition: none !important;
   }
 }
