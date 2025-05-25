@@ -66,7 +66,8 @@
 			"code": "BSTM",
 			"name": "Bachelor of Science in Tourism Management",
 			"year": [
-				1
+				1,
+				2
 			]
 		},
 		"BSME": {
@@ -776,6 +777,111 @@
 				"units": 2,
 				"semester": 2,
 				"year": 1
+			},
+			{
+				"code": "GE FIL 2",
+				"name": "Dalumat Ng/Sa Filipino",
+				"units": 3,
+				"semester": 1,
+				"year": 2
+			},
+			{
+				"code": "THC 6",
+				"name": "Entrepreneurship in Tourism and Hospitality",
+				"units": 3,
+				"semester": 1,
+				"year": 2
+			},
+			{
+				"code": "THC 7",
+				"name": "Quality Service Management in Tourism and Hospitality",
+				"units": 3,
+				"semester": 1,
+				"year": 2
+			},
+			{
+				"code": "THC 8",
+				"name": "Multicultural Diversity in Workplace for the Tourism Professional",
+				"units": 3,
+				"semester": 1,
+				"year": 2
+			},
+			{
+				"code": "THC 9",
+				"name": "Macro Perspective of Tourism and Hospitality",
+				"units": 3,
+				"semester": 1,
+				"year": 2
+			},
+			{
+				"code": "TPC 2",
+				"name": "Tour and Travel Management",
+				"units": 3,
+				"semester": 1,
+				"year": 2
+			},
+			{
+				"code": "TPC 3",
+				"name": "Transportation Management (Land, Sea and Air)",
+				"units": 3,
+				"semester": 1,
+				"year": 2
+			},
+			{
+				"code": "PATHFit 03",
+				"name": "Menu of Dance, Sports, Martial Arts, Group Exercise, Outdoor and Adventure Activities",
+				"units": 2,
+				"semester": 1,
+				"year": 2
+			},
+			{
+				"code": "GE 03",
+				"name": "The Contemporary World",
+				"units": 3,
+				"semester": 2,
+				"year": 2
+			},
+			{
+				"code": "GE 04",
+				"name": "Mathematics in the Modern World",
+				"units": 3,
+				"semester": 2,
+				"year": 2
+			},
+			{
+				"code": "GE Elec 2",
+				"name": "Gender and Society",
+				"units": 3,
+				"semester": 2,
+				"year": 2
+			},
+			{
+				"code": "TMPE 2",
+				"name": "Tour Guiding",
+				"units": 3,
+				"semester": 2,
+				"year": 2
+			},
+			{
+				"code": "TPC 4",
+				"name": "Sustainable Tourism",
+				"units": 3,
+				"semester": 2,
+				"year": 2
+			},
+			{
+				"code": "TPC 5",
+				"name": "Applied Business Tools and Technologies in Tourism",
+				"units": 3,
+				"semester": 2,
+				"year": 2
+			},
+			{
+				"code": "PATHFit 04",
+				"name": "Menu of Dance, Sports, Martial Arts, Group Exercise, Outdoor and Adventure Activities",
+				"units": 2,
+				"semester": 2,
+				"year": 2
 			}
 		],
 		"BSME": [
