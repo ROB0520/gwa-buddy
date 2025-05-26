@@ -20,7 +20,7 @@ export const metadata: Metadata = {
   description: "A web application that helps NEUST students calculate their General Weighted Average (GWA) based on their grades.",
   authors: [
     {
-      name: 'alecz.r'
+      name: 'alecz.r',
     }
   ],
 };
@@ -31,6 +31,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {  return (
     <html lang="en" suppressHydrationWarning>
+      <meta name="darkreader-lock"></meta>
       <body className={`${geistSans.variable} ${geistMono.variable} antialiased`}>
         <ThemeProvider attribute="class" defaultTheme="system" enableSystem disableTransitionOnChange>
           {children}
