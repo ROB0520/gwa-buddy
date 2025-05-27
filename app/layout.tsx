@@ -23,9 +23,6 @@ export const metadata: Metadata = {
     }
   ],
   metadataBase: new URL('https://gwa.vps.aleczr.link'),
-  alternates: {
-    canonical: '/',
-  },
   openGraph: {
     images: '/og-image.png',
   },
