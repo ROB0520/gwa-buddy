@@ -70,13 +70,6 @@
 				2
 			]
 		},
-		"BSA": {
-			"code": "BSA",
-			"name": "Bachelor of Science in Architecture",
-			"year": [
-				1
-			]
-		},
 		"BSME": {
 			"code": "BSME",
 			"name": "Bachelor of Science in Mechanical Engineering",
@@ -95,6 +88,13 @@
 				2,
 				3,
 				4
+			]
+		},
+		"BSA": {
+			"code": "BSA",
+			"name": "Bachelor of Science in Architecture",
+			"year": [
+				1
 			]
 		}
 	},
