@@ -43,7 +43,7 @@ import {
 	PopoverTrigger,
 } from "@/components/ui/popover"
 import data from '@/app/data.json'
-import { Data } from "@/lib/types";
+import { Data, Course } from "@/lib/types";
 import { Input } from "@/components/ui/input";
 import React from "react";
 import { Separator } from "@/components/ui/separator";
@@ -51,9 +51,9 @@ import { useIsMobile } from "@/hooks/use-mobile";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Badge } from "./ui/badge";
 
-type EnteredGrades = {
-	code: string;
-	grade: number | undefined;
+interface EnteredGrades {
+  code: string;
+  grade: number | undefined;
 }
 
 export default function GwaCalculator() {
@@ -93,6 +93,41 @@ export default function GwaCalculator() {
 			}
 		}
 	}
+
+	// Helper component for rendering preset items
+	interface RenderPresetItemProps {
+	  itemKey: string;
+	  label: string;
+	  coursesForPreset: Course[];
+	  setEnteredGradesState: (grades: EnteredGrades[]) => void;
+	  calculateUnitsFunc: (coursesToSum: Course[]) => number;
+	  spanClassName?: string;
+	}
+
+	const RenderPresetItem: React.FC<RenderPresetItemProps> = ({
+	  itemKey,
+	  label,
+	  coursesForPreset,
+	  setEnteredGradesState,
+	  calculateUnitsFunc,
+	  spanClassName,
+	}) => {
+	  if (coursesForPreset.length === 0) {
+	    return null;
+	  }
+	  return (
+	    <DropdownMenuItem
+	      key={itemKey}
+	      onClick={() => {
+	        setEnteredGradesState(coursesForPreset.map((subject) => ({ code: subject.code, grade: undefined })));
+	      }}
+	    >
+	      <span className={cn("pl-8", spanClassName)}>
+	        {label} <Badge variant="default" className="ml-2">{calculateUnitsFunc(coursesForPreset)} Units</Badge>
+	      </span>
+	    </DropdownMenuItem>
+	  );
+	};
 
 	return (
 		<Card className="w-full max-w-3xl">
@@ -138,42 +173,39 @@ export default function GwaCalculator() {
 																					<DropdownMenuLabel className="bg-secondary/50 text-secondary-foreground pl-6">
 																						{major.name}
 																					</DropdownMenuLabel>
-																					<DropdownMenuItem
-																						onClick={() => {
-																							const yearCourses = programCourses.filter(
-																								course => (course.major === undefined || course.major === major.code) && course.year === year && course.semester === 1
-																							);
-																							setEnteredGrades(yearCourses.map((subject) => ({ code: subject.code, grade: undefined })));
-																						}}
-																					>
-																						<span className="pl-8">{major.code}  - First Semester <Badge variant="default" className="ml-2">{getPresetUnits(programCourses.filter(course => (course.major === undefined || course.major === major.code) && course.year === year && course.semester === 1))} Units</Badge></span>
-																					</DropdownMenuItem>
+																					<RenderPresetItem
+																						itemKey={`major-${major.code}-year-${year}-sem-1`}
+																						label={`${major.code} - First Semester`}
+																						coursesForPreset={programCourses.filter(
+																							course => (course.major === undefined || course.major === major.code) && course.year === year && course.semester === 1
+																						)}
+																						setEnteredGradesState={setEnteredGrades}
+																						calculateUnitsFunc={getPresetUnits}
+																					/>
 																				</React.Fragment>
 																			)
 																		})
 																	}
 																</DropdownMenuGroup>
-																<DropdownMenuItem
-																	onClick={() => {
-																		const yearCourses = programCourses.filter(
-																			course => course.year === year && course.semester === 2
-																		);
-																		setEnteredGrades(yearCourses.map((subject) => ({ code: subject.code, grade: undefined })));
-																	}}
-																>
-																	<span className="pl-8">Year {year} - Second Semester <Badge variant="default" className="ml-2">{getPresetUnits(programCourses.filter(course => course.year === year && course.semester === 2))} Units</Badge></span>
-																</DropdownMenuItem>
+																<RenderPresetItem
+																	itemKey={`year-${year}-second-general`}
+																	label={`Year ${year} - Second Semester`}
+																	coursesForPreset={programCourses.filter(
+																		course => course.year === year && course.semester === 2
+																	)}
+																	setEnteredGradesState={setEnteredGrades}
+																	calculateUnitsFunc={getPresetUnits}
+																/>
 																{hasSummer && (
-																	<DropdownMenuItem
-																		onClick={() => {
-																			const yearCourses = programCourses.filter(
-																				course => course.year === year && course.semester === 3
-																			);
-																			setEnteredGrades(yearCourses.map((subject) => ({ code: subject.code, grade: undefined })));
-																		}}
-																	>
-																		<span className="pl-8">Year {year} - Summer <Badge variant="default" className="ml-2">{getPresetUnits(programCourses.filter(course => course.year === year && course.semester === 3))} Units</Badge></span>
-																	</DropdownMenuItem>
+																	<RenderPresetItem
+																		itemKey={`year-${year}-summer-general`}
+																		label={`Year ${year} - Summer`}
+																		coursesForPreset={programCourses.filter(
+																			course => course.year === year && course.semester === 3
+																		)}
+																		setEnteredGradesState={setEnteredGrades}
+																		calculateUnitsFunc={getPresetUnits}
+																	/>
 																)}
 															</React.Fragment>
 														)
@@ -182,16 +214,15 @@ export default function GwaCalculator() {
 															<React.Fragment key={year}>
 																<DropdownMenuGroup key={year}>
 																	<DropdownMenuLabel className="bg-secondary text-secondary-foreground">Year {year}</DropdownMenuLabel>
-																	<DropdownMenuItem
-																		onClick={() => {
-																			const yearCourses = programCourses.filter(
-																				course => course.year === year && course.semester === 1
-																			);
-																			setEnteredGrades(yearCourses.map((subject) => ({ code: subject.code, grade: undefined })));
-																		}}
-																	>
-																		<span className="pl-8">Year {year} - First Semester <Badge variant="default" className="ml-2">{getPresetUnits(programCourses.filter(course => course.year === year && course.semester === 1))} Units</Badge></span>
-																	</DropdownMenuItem>
+																	<RenderPresetItem
+																		itemKey={`year-${year}-first-general`}
+																		label={`Year ${year} - First Semester`}
+																		coursesForPreset={programCourses.filter(
+																			course => course.year === year && course.semester === 1
+																		)}
+																		setEnteredGradesState={setEnteredGrades}
+																		calculateUnitsFunc={getPresetUnits}
+																	/>
 																	{
 																		program.majors.map((major) => {
 																			return (
@@ -199,31 +230,29 @@ export default function GwaCalculator() {
 																					<DropdownMenuLabel className="bg-secondary/50 text-secondary-foreground pl-6">
 																						{major.name}
 																					</DropdownMenuLabel>
-																					<DropdownMenuItem
-																						onClick={() => {
-																							const yearCourses = programCourses.filter(
-																								course => (course.major === undefined || course.major === major.code) && course.year === year && course.semester === 2
-																							);
-																							setEnteredGrades(yearCourses.map((subject) => ({ code: subject.code, grade: undefined })));
-																						}}
-																					>
-																						<span className="pl-8">{major.code} - Second Semester <Badge variant="default" className="ml-2">{getPresetUnits(programCourses.filter(course => (course.major === undefined || course.major === major.code) && course.year === year && course.semester === 2))} Units</Badge></span>
-																					</DropdownMenuItem>
+																					<RenderPresetItem
+																						itemKey={`major-${major.code}-year-${year}-sem-2`}
+																						label={`${major.code} - Second Semester`}
+																						coursesForPreset={programCourses.filter(
+																							course => (course.major === undefined || course.major === major.code) && course.year === year && course.semester === 2
+																						)}
+																						setEnteredGradesState={setEnteredGrades}
+																						calculateUnitsFunc={getPresetUnits}
+																					/>
 																				</React.Fragment>
 																			)
 																		})
 																	}
 																	{hasSummer && (
-																		<DropdownMenuItem
-																			onClick={() => {
-																				const yearCourses = programCourses.filter(
-																					course => course.year === year && course.semester === 3
-																				);
-																				setEnteredGrades(yearCourses.map((subject) => ({ code: subject.code, grade: undefined })));
-																			}}
-																		>
-																			<span className="pl-8">Year {year} - Summer <Badge variant="default" className="ml-2">{getPresetUnits(programCourses.filter(course => course.year === year && course.semester === 3))} Units</Badge></span>
-																		</DropdownMenuItem>
+																		<RenderPresetItem
+																			itemKey={`year-${year}-summer-general`}
+																			label={`Year ${year} - Summer`}
+																			coursesForPreset={programCourses.filter(
+																				course => course.year === year && course.semester === 3
+																			)}
+																			setEnteredGradesState={setEnteredGrades}
+																			calculateUnitsFunc={getPresetUnits}
+																		/>
 																	)}
 																</DropdownMenuGroup>
 
@@ -242,53 +271,46 @@ export default function GwaCalculator() {
 																					{major.name}
 																				</DropdownMenuLabel>
 
-																				{hasMajorCoursesInFirstSem && (
-																					<DropdownMenuItem
-																						onClick={() => {
-																							const yearCourses = programCourses.filter(
-																								course => (
-																									(course.major === major.code || course.major === undefined) &&
-																									course.semester === 1 &&
-																									course.year === year
-																								)
-																							);
-																							setEnteredGrades(yearCourses.map((subject) => ({ code: subject.code, grade: undefined })));
-																						}}
-																					>
-																						<span className="pl-8">{major.name} - First Semester <Badge variant="default" className="ml-2">{getPresetUnits(programCourses.filter(course => (course.major === major.code || course.major === undefined) && course.semester === 1 && course.year === year))} Units</Badge></span>
-																					</DropdownMenuItem>
-																				)}
+																				<RenderPresetItem
+																					itemKey={`major-${major.code}-year-${year}-sem-1`}
+																					label={`${major.name} - First Semester`}
+																					coursesForPreset={programCourses.filter(
+																						course => (
+																							(course.major === major.code || course.major === undefined) &&
+																							course.semester === 1 &&
+																							course.year === year
+																						)
+																					)}
+																					setEnteredGradesState={setEnteredGrades}
+																					calculateUnitsFunc={getPresetUnits}
+																				/>
 
-																				{hasMajorCoursesInSecondSem && (
-																					<DropdownMenuItem
-																						onClick={() => {
-																							const yearCourses = programCourses.filter(
-																								course => (
-																									(course.major === major.code || course.major === undefined) &&
-																									course.semester === 2 &&
-																									course.year === year
-																								)
-																							);
-																							setEnteredGrades(yearCourses.map((subject) => ({ code: subject.code, grade: undefined })));
-																						}}
-																					>
-																						<span className="pl-8">{major.name} - Second Semester <Badge variant="default" className="ml-2">{getPresetUnits(programCourses.filter(course => (course.major === major.code || course.major === undefined) && course.semester === 2 && course.year === year))} Units</Badge></span>
-																					</DropdownMenuItem>
-																				)}
+																				<RenderPresetItem
+																					itemKey={`major-${major.code}-year-${year}-sem-2`}
+																					label={`${major.name} - Second Semester`}
+																					coursesForPreset={programCourses.filter(
+																						course => (
+																							(course.major === major.code || course.major === undefined) &&
+																							course.semester === 2 &&
+																							course.year === year
+																						)
+																					)}
+																					setEnteredGradesState={setEnteredGrades}
+																					calculateUnitsFunc={getPresetUnits}
+																				/>
 																			</React.Fragment>
 																		);
 																	})}
 																{hasSummer && (
-																	<DropdownMenuItem
-																		onClick={() => {
-																			const yearCourses = programCourses.filter(
-																				course => course.year === year && course.semester === 3
-																			);
-																			setEnteredGrades(yearCourses.map((subject) => ({ code: subject.code, grade: undefined })));
-																		}}
-																	>
-																		<span className="pl-8">Year {year} - Summer <Badge variant="default" className="ml-2">{getPresetUnits(programCourses.filter(course => course.year === year && course.semester === 3))} Units</Badge></span>
-																	</DropdownMenuItem>
+																	<RenderPresetItem
+																		itemKey={`year-${year}-summer-general`}
+																		label={`Year ${year} - Summer`}
+																		coursesForPreset={programCourses.filter(
+																			course => course.year === year && course.semester === 3
+																		)}
+																		setEnteredGradesState={setEnteredGrades}
+																		calculateUnitsFunc={getPresetUnits}
+																	/>
 																)}
 															</DropdownMenuGroup>
 														);
@@ -297,40 +319,34 @@ export default function GwaCalculator() {
 													return (
 														<DropdownMenuGroup key={year}>
 															<DropdownMenuLabel className="bg-secondary text-secondary-foreground">Year {year}</DropdownMenuLabel>
-															<DropdownMenuItem
-																key={`year-${year}-first`}
-																onClick={() => {
-																	const yearCourses = programCourses.filter(
-																		course => course.year === year && course.semester === 1
-																	);
-																	setEnteredGrades(yearCourses.map((subject) => ({ code: subject.code, grade: undefined })));
-																}}
-															>
-																<span className="pl-8">Year {year} - First Semester <Badge variant="default" className="ml-2">{getPresetUnits(programCourses.filter(course => course.year === year && course.semester === 1))} Units</Badge></span>
-															</DropdownMenuItem>
-															<DropdownMenuItem
-																key={`year-${year}-second`}
-																onClick={() => {
-																	const yearCourses = programCourses.filter(
-																		course => course.year === year && course.semester === 2
-																	);
-																	setEnteredGrades(yearCourses.map((subject) => ({ code: subject.code, grade: undefined })));
-																}}
-															>
-																<span className="pl-8">Year {year} - Second Semester <Badge variant="default" className="ml-2">{getPresetUnits(programCourses.filter(course => course.year === year && course.semester === 2))} Units</Badge></span>
-															</DropdownMenuItem>
+															<RenderPresetItem
+																itemKey={`year-${year}-first`}
+																label={`Year ${year} - First Semester`}
+																coursesForPreset={programCourses.filter(
+																	course => course.year === year && course.semester === 1
+																)}
+																setEnteredGradesState={setEnteredGrades}
+																calculateUnitsFunc={getPresetUnits}
+															/>
+															<RenderPresetItem
+																itemKey={`year-${year}-second`}
+																label={`Year ${year} - Second Semester`}
+																coursesForPreset={programCourses.filter(
+																	course => course.year === year && course.semester === 2
+																)}
+																setEnteredGradesState={setEnteredGrades}
+																calculateUnitsFunc={getPresetUnits}
+															/>
 															{hasSummer && (
-																<DropdownMenuItem
-																	key={`year-${year}-summer`}
-																	onClick={() => {
-																		const yearCourses = programCourses.filter(
-																			course => course.year === year && course.semester === 3
-																		);
-																		setEnteredGrades(yearCourses.map((subject) => ({ code: subject.code, grade: undefined })));
-																	}}
-																>
-																	<span className="pl-8">Year {year} - Summer <Badge variant="default" className="ml-2">{getPresetUnits(programCourses.filter(course => course.year === year && course.semester === 3))} Units</Badge></span>
-																</DropdownMenuItem>
+																<RenderPresetItem
+																	itemKey={`year-${year}-summer`}
+																	label={`Year ${year} - Summer`}
+																	coursesForPreset={programCourses.filter(
+																		course => course.year === year && course.semester === 3
+																	)}
+																	setEnteredGradesState={setEnteredGrades}
+																	calculateUnitsFunc={getPresetUnits}
+																/>
 															)}
 														</DropdownMenuGroup>
 													);
