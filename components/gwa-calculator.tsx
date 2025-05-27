@@ -122,9 +122,10 @@ export default function GwaCalculator() {
 	        setEnteredGradesState(coursesForPreset.map((subject) => ({ code: subject.code, grade: undefined })));
 	      }}
 	    >
-	      <span className={cn("pl-8", spanClassName)}>
-	        {label} <Badge variant="default" className="ml-2">{calculateUnitsFunc(coursesForPreset)} Units</Badge>
+	      <span className={cn("pl-8 flex-grow", spanClassName)}>
+	        {label} 
 	      </span>
+		  <Badge variant="default" className="ml-2">{calculateUnitsFunc(coursesForPreset)} Units</Badge>
 	    </DropdownMenuItem>
 	  );
 	};
@@ -757,11 +758,10 @@ function SubjectRow({ selectedProgram, enteredGrade, index, enteredGrades, setEn
 													enteredGrade.code === course.code ? "opacity-100" : "opacity-0"
 												)}
 											/>
-											<span>
+											<span className="flex-grow">
 												{course.code} - {course.name}
-												{course.major && <Badge className="ml-2 text-xs">{course.major}</Badge>}
 											</span>
-											
+											{course.major && <Badge className="text-xs"> {course.major}</Badge>}
 										</CommandItem>
 									))}
 								</CommandGroup>
