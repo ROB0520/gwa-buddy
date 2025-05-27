@@ -23,6 +23,9 @@ export const metadata: Metadata = {
       name: 'alecz.r',
     }
   ],
+  other: {
+    "darkreader-lock": "true",
+  }
 };
 
 export default function RootLayout({
@@ -31,7 +34,6 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {  return (
     <html lang="en" suppressHydrationWarning>
-      <meta name="darkreader-lock"></meta>
       <body className={`${geistSans.variable} ${geistMono.variable} antialiased`}>
         <ThemeProvider attribute="class" defaultTheme="system" enableSystem disableTransitionOnChange>
           {children}
