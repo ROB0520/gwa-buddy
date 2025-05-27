@@ -10,7 +10,7 @@ import Link from "next/link";
 export default function Home() {
   return (
     <div className="flex flex-col items-center justify-center gap-5 p-5 overflow-auto min-h-svh">
-      <div className="flex flex-row items-center gap-3 md:gap-5">
+      <div className="flex flex-row items-center gap-3 md:gap-5 drop-shadow-md">
         <Image
           src={Logo}
           alt="AleczR Logo"
