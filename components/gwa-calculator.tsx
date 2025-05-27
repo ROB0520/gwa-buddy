@@ -119,6 +119,8 @@ export default function GwaCalculator() {
 											programs[selectedProgram].year.map((year) => {
 												const program = programs[selectedProgram];
 												const programCourses = courses[program.code] || [];
+												const getPresetUnits = (coursesToSum: typeof programCourses) => coursesToSum.reduce((sum, course) => sum + course.units, 0);
+
 												const hasMajorCoursesInFirstSem = [...new Set(programCourses.filter(c => c.year === year && c.semester === 1).map(course => course.major))].length > 1;
 												const hasMajorCoursesInSecondSem = [...new Set(programCourses.filter(c => c.year === year && c.semester === 2).map(course => course.major))].length > 1;
 												const hasSummer = programCourses.filter(c => c.year === year && c.semester === 3).length > 0;
@@ -140,11 +142,11 @@ export default function GwaCalculator() {
 																						onClick={() => {
 																							const yearCourses = programCourses.filter(
 																								course => (course.major === undefined || course.major === major.code) && course.year === year && course.semester === 1
-																							).map(course => course.code);
-																							setEnteredGrades(yearCourses.map((subject) => ({ code: subject, grade: undefined })));
+																							);
+																							setEnteredGrades(yearCourses.map((subject) => ({ code: subject.code, grade: undefined })));
 																						}}
 																					>
-																						<span className="pl-8">{major.code}  - First Semester</span>
+																						<span className="pl-8">{major.code}  - First Semester <Badge variant="default" className="ml-2">{getPresetUnits(programCourses.filter(course => (course.major === undefined || course.major === major.code) && course.year === year && course.semester === 1))} Units</Badge></span>
 																					</DropdownMenuItem>
 																				</React.Fragment>
 																			)
@@ -155,22 +157,22 @@ export default function GwaCalculator() {
 																	onClick={() => {
 																		const yearCourses = programCourses.filter(
 																			course => course.year === year && course.semester === 2
-																		).map(course => course.code);
-																		setEnteredGrades(yearCourses.map((subject) => ({ code: subject, grade: undefined })));
+																		);
+																		setEnteredGrades(yearCourses.map((subject) => ({ code: subject.code, grade: undefined })));
 																	}}
 																>
-																	<span className="pl-8">Year {year} - Second Semester</span>
+																	<span className="pl-8">Year {year} - Second Semester <Badge variant="default" className="ml-2">{getPresetUnits(programCourses.filter(course => course.year === year && course.semester === 2))} Units</Badge></span>
 																</DropdownMenuItem>
 																{hasSummer && (
 																	<DropdownMenuItem
 																		onClick={() => {
 																			const yearCourses = programCourses.filter(
 																				course => course.year === year && course.semester === 3
-																			).map(course => course.code);
-																			setEnteredGrades(yearCourses.map((subject) => ({ code: subject, grade: undefined })));
+																			);
+																			setEnteredGrades(yearCourses.map((subject) => ({ code: subject.code, grade: undefined })));
 																		}}
 																	>
-																		<span className="pl-8">Year {year} - Summer</span>
+																		<span className="pl-8">Year {year} - Summer <Badge variant="default" className="ml-2">{getPresetUnits(programCourses.filter(course => course.year === year && course.semester === 3))} Units</Badge></span>
 																	</DropdownMenuItem>
 																)}
 															</React.Fragment>
@@ -184,11 +186,11 @@ export default function GwaCalculator() {
 																		onClick={() => {
 																			const yearCourses = programCourses.filter(
 																				course => course.year === year && course.semester === 1
-																			).map(course => course.code);
-																			setEnteredGrades(yearCourses.map((subject) => ({ code: subject, grade: undefined })));
+																			);
+																			setEnteredGrades(yearCourses.map((subject) => ({ code: subject.code, grade: undefined })));
 																		}}
 																	>
-																		<span className="pl-8">Year {year} - First Semester</span>
+																		<span className="pl-8">Year {year} - First Semester <Badge variant="default" className="ml-2">{getPresetUnits(programCourses.filter(course => course.year === year && course.semester === 1))} Units</Badge></span>
 																	</DropdownMenuItem>
 																	{
 																		program.majors.map((major) => {
@@ -201,11 +203,11 @@ export default function GwaCalculator() {
 																						onClick={() => {
 																							const yearCourses = programCourses.filter(
 																								course => (course.major === undefined || course.major === major.code) && course.year === year && course.semester === 2
-																							).map(course => course.code);
-																							setEnteredGrades(yearCourses.map((subject) => ({ code: subject, grade: undefined })));
+																							);
+																							setEnteredGrades(yearCourses.map((subject) => ({ code: subject.code, grade: undefined })));
 																						}}
 																					>
-																						<span className="pl-8">{major.code} - Second Semester</span>
+																						<span className="pl-8">{major.code} - Second Semester <Badge variant="default" className="ml-2">{getPresetUnits(programCourses.filter(course => (course.major === undefined || course.major === major.code) && course.year === year && course.semester === 2))} Units</Badge></span>
 																					</DropdownMenuItem>
 																				</React.Fragment>
 																			)
@@ -216,11 +218,11 @@ export default function GwaCalculator() {
 																			onClick={() => {
 																				const yearCourses = programCourses.filter(
 																					course => course.year === year && course.semester === 3
-																				).map(course => course.code);
-																				setEnteredGrades(yearCourses.map((subject) => ({ code: subject, grade: undefined })));
+																				);
+																				setEnteredGrades(yearCourses.map((subject) => ({ code: subject.code, grade: undefined })));
 																			}}
 																		>
-																			<span className="pl-8">Year {year} - Summer</span>
+																			<span className="pl-8">Year {year} - Summer <Badge variant="default" className="ml-2">{getPresetUnits(programCourses.filter(course => course.year === year && course.semester === 3))} Units</Badge></span>
 																		</DropdownMenuItem>
 																	)}
 																</DropdownMenuGroup>
@@ -249,11 +251,11 @@ export default function GwaCalculator() {
 																									course.semester === 1 &&
 																									course.year === year
 																								)
-																							).map(course => course.code);
-																							setEnteredGrades(yearCourses.map((subject) => ({ code: subject, grade: undefined })));
+																							);
+																							setEnteredGrades(yearCourses.map((subject) => ({ code: subject.code, grade: undefined })));
 																						}}
 																					>
-																						<span className="pl-8">{major.name} - First Semester</span>
+																						<span className="pl-8">{major.name} - First Semester <Badge variant="default" className="ml-2">{getPresetUnits(programCourses.filter(course => (course.major === major.code || course.major === undefined) && course.semester === 1 && course.year === year))} Units</Badge></span>
 																					</DropdownMenuItem>
 																				)}
 
@@ -266,11 +268,11 @@ export default function GwaCalculator() {
 																									course.semester === 2 &&
 																									course.year === year
 																								)
-																							).map(course => course.code);
-																							setEnteredGrades(yearCourses.map((subject) => ({ code: subject, grade: undefined })));
+																							);
+																							setEnteredGrades(yearCourses.map((subject) => ({ code: subject.code, grade: undefined })));
 																						}}
 																					>
-																						<span className="pl-8">{major.name} - Second Semester</span>
+																						<span className="pl-8">{major.name} - Second Semester <Badge variant="default" className="ml-2">{getPresetUnits(programCourses.filter(course => (course.major === major.code || course.major === undefined) && course.semester === 2 && course.year === year))} Units</Badge></span>
 																					</DropdownMenuItem>
 																				)}
 																			</React.Fragment>
@@ -281,11 +283,11 @@ export default function GwaCalculator() {
 																		onClick={() => {
 																			const yearCourses = programCourses.filter(
 																				course => course.year === year && course.semester === 3
-																			).map(course => course.code);
-																			setEnteredGrades(yearCourses.map((subject) => ({ code: subject, grade: undefined })));
+																			);
+																			setEnteredGrades(yearCourses.map((subject) => ({ code: subject.code, grade: undefined })));
 																		}}
 																	>
-																		<span className="pl-8">Year {year} - Summer</span>
+																		<span className="pl-8">Year {year} - Summer <Badge variant="default" className="ml-2">{getPresetUnits(programCourses.filter(course => course.year === year && course.semester === 3))} Units</Badge></span>
 																	</DropdownMenuItem>
 																)}
 															</DropdownMenuGroup>
@@ -300,22 +302,22 @@ export default function GwaCalculator() {
 																onClick={() => {
 																	const yearCourses = programCourses.filter(
 																		course => course.year === year && course.semester === 1
-																	).map(course => course.code);
-																	setEnteredGrades(yearCourses.map((subject) => ({ code: subject, grade: undefined })));
+																	);
+																	setEnteredGrades(yearCourses.map((subject) => ({ code: subject.code, grade: undefined })));
 																}}
 															>
-																<span className="pl-8">Year {year} - First Semester</span>
+																<span className="pl-8">Year {year} - First Semester <Badge variant="default" className="ml-2">{getPresetUnits(programCourses.filter(course => course.year === year && course.semester === 1))} Units</Badge></span>
 															</DropdownMenuItem>
 															<DropdownMenuItem
 																key={`year-${year}-second`}
 																onClick={() => {
 																	const yearCourses = programCourses.filter(
 																		course => course.year === year && course.semester === 2
-																	).map(course => course.code);
-																	setEnteredGrades(yearCourses.map((subject) => ({ code: subject, grade: undefined })));
+																	);
+																	setEnteredGrades(yearCourses.map((subject) => ({ code: subject.code, grade: undefined })));
 																}}
 															>
-																<span className="pl-8">Year {year} - Second Semester</span>
+																<span className="pl-8">Year {year} - Second Semester <Badge variant="default" className="ml-2">{getPresetUnits(programCourses.filter(course => course.year === year && course.semester === 2))} Units</Badge></span>
 															</DropdownMenuItem>
 															{hasSummer && (
 																<DropdownMenuItem
@@ -323,11 +325,11 @@ export default function GwaCalculator() {
 																	onClick={() => {
 																		const yearCourses = programCourses.filter(
 																			course => course.year === year && course.semester === 3
-																		).map(course => course.code);
-																		setEnteredGrades(yearCourses.map((subject) => ({ code: subject, grade: undefined })));
+																		);
+																		setEnteredGrades(yearCourses.map((subject) => ({ code: subject.code, grade: undefined })));
 																	}}
 																>
-																	<span className="pl-8">Year {year} - Summer</span>
+																	<span className="pl-8">Year {year} - Summer <Badge variant="default" className="ml-2">{getPresetUnits(programCourses.filter(course => course.year === year && course.semester === 3))} Units</Badge></span>
 																</DropdownMenuItem>
 															)}
 														</DropdownMenuGroup>
