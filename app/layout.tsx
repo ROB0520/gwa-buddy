@@ -22,10 +22,17 @@ export const metadata: Metadata = {
       name: 'alecz.r',
     }
   ],
+  metadataBase: new URL('https://gwa.vps.aleczr.link'),
+  alternates: {
+    canonical: '/',
+  },
+  openGraph: {
+    images: '/og-image.png',
+  },
   other: {
     "darkreader-lock": "true",
     "theme-color": "#00c951",
-  }
+  },
 };
 
 export default function RootLayout({
