@@ -671,7 +671,7 @@ function ProgramSelect({ selectedProgram, setSelectedProgram }: { selectedProgra
 					<ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
 				</Button>
 			</PopoverTrigger>
-			<PopoverContent className="w-[var(--radix-popover-trigger-width)] p-0 max-h-52" align="center" collisionPadding={25}>
+			<PopoverContent className="w-[var(--radix-popover-trigger-width)] p-0" align="center" collisionPadding={25}>
 				<ProgramsList />
 			</PopoverContent>
 		</Popover>
