@@ -70,6 +70,13 @@
 				2
 			]
 		},
+		"BSA": {
+			"code": "BSA",
+			"name": "Bachelor of Science in Architecture",
+			"year": [
+				1
+			]
+		},
 		"BSME": {
 			"code": "BSME",
 			"name": "Bachelor of Science in Mechanical Engineering",
@@ -92,6 +99,148 @@
 		}
 	},
 	"courses": {
+		"BSA": [
+			{
+				"code": "AR 112",
+				"name": "Design 1 (Introduction to Design)",
+				"units": 2,
+				"semester": 1,
+				"year": 1
+			},
+			{
+				"code": "AR 113",
+				"name": "Graphics 1 (Architecture Drafting)",
+				"units": 3,
+				"semester": 1,
+				"year": 1
+			},
+			{
+				"code": "AR 132",
+				"name": "Visual Techniques (Freehand Drawing)",
+				"units": 2,
+				"semester": 1,
+				"year": 1
+			},
+			{
+				"code": "AR 152",
+				"name": "Theory of Architecture 1",
+				"units": 2,
+				"semester": 1,
+				"year": 1
+			},
+			{
+				"code": "AR 172",
+				"name": "History of Architecture 1 (Pre-Historic Archi to Byzantine Pd.)",
+				"units": 2,
+				"semester": 1,
+				"year": 1
+			},
+			{
+				"code": "Math 112",
+				"name": "Solid Mensuration",
+				"units": 2,
+				"semester": 1,
+				"year": 1
+			},
+			{
+				"code": "GE 06",
+				"name": "Art Appreciation",
+				"units": 3,
+				"semester": 1,
+				"year": 1
+			},
+			{
+				"code": "GE 01",
+				"name": "Understanding the Self",
+				"units": 3,
+				"semester": 1,
+				"year": 1
+			},
+			{
+				"code": "GE FIL 1",
+				"name": "Kontekswalisadong Komunikasyon sa Filipino",
+				"units": 3,
+				"semester": 1,
+				"year": 1
+			},
+			{
+				"code": "PATHFit 01",
+				"name": "Movement Competency Training",
+				"units": 2,
+				"semester": 1,
+				"year": 1
+			},
+			{
+				"code": "AR 122",
+				"name": "Design 2 (Creative Design Fundamentals)",
+				"units": 2,
+				"semester": 2,
+				"year": 1
+			},
+			{
+				"code": "AR 123",
+				"name": "Graphics 2 (Perspective, Shade and Shadows)",
+				"units": 3,
+				"semester": 2,
+				"year": 1
+			},
+			{
+				"code": "AR 142",
+				"name": "Visual Techniques 2 (Color Rendering and Still Life)",
+				"units": 2,
+				"semester": 2,
+				"year": 1
+			},
+			{
+				"code": "AR 162",
+				"name": "Theory of Architecture 2",
+				"units": 2,
+				"semester": 2,
+				"year": 1
+			},
+			{
+				"code": "AR 143",
+				"name": "Building Technology 1 (Building Materials)",
+				"units": 3,
+				"semester": 2,
+				"year": 1
+			},
+			{
+				"code": "AR 182",
+				"name": "Architectural Interiors",
+				"units": 2,
+				"semester": 2,
+				"year": 1
+			},
+			{
+				"code": "Math 123",
+				"name": "Differential and Integral Calculus",
+				"units": 3,
+				"semester": 2,
+				"year": 1
+			},
+			{
+				"code": "GE FIL 2",
+				"name": "Filipino sa Iba't Ibang Disiplina",
+				"units": 3,
+				"semester": 2,
+				"year": 1
+			},
+			{
+				"code": "GE 02",
+				"name": "Readings in Philippine History",
+				"units": 3,
+				"semester": 2,
+				"year": 1
+			},
+			{
+				"code": "PATHFit 02",
+				"name": "Exercise-based Fitness Activities",
+				"units": 2,
+				"semester": 2,
+				"year": 1
+			}
+		],
 		"BSCE": [
 			{
 				"code": "Math 114",
@@ -200,7 +349,7 @@
 			},
 			{
 				"code": "PATHFit 02",
-				"name": "Exercise-based Fitness Activities"	,
+				"name": "Exercise-based Fitness Activities",
 				"units": 2,
 				"semester": 2,
 				"year": 1
