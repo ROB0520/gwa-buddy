@@ -54,6 +54,9 @@ export default function Home() {
             </Button>
         </CardFooter>
       </Card>
+      <p className="text-sm text-muted-foreground italic max-w-3xl text-center">
+        GWA Buddy is a student-developed tool that helps NEUST students calculate their General Weighted Average. This project is not officially affiliated with the university.
+      </p>
     </div>
   );
 }
