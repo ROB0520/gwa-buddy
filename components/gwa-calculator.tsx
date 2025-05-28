@@ -498,14 +498,14 @@ function PresetSelect({ selectedProgram, setSelectedProgram, setEnteredGrades }:
 			className='max-md:rounded-t-none'
 			value=""
 		>
+			<CommandItem
+				className="px-2 py-1.5 text-sm data-[inset]:pl-8 font-semibold pointer-events-none"
+			>
+				{selectedProgramData ? selectedProgramData.code + ' - ' + selectedProgramData.name : "No program selected"}
+			</CommandItem>
+			<CommandSeparator />
 			<CommandList>
 				<CommandGroup>
-					<CommandItem
-						className="px-2 py-1.5 text-sm data-[inset]:pl-8 font-semibold pointer-events-none"
-					>
-						{selectedProgramData ? selectedProgramData.code + ' - ' + selectedProgramData.name : "No program selected"}
-					</CommandItem>
-					<CommandSeparator />
 					<CommandGroup
 						heading="All-Year-Round"
 					>
