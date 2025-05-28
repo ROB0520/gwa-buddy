@@ -442,7 +442,6 @@ function ProgramSelect({ selectedProgram, setSelectedProgram }: { selectedProgra
 
 function PresetSelect({ selectedProgram, setSelectedProgram, setEnteredGrades }: { selectedProgram: keyof typeof data.programs | undefined; setSelectedProgram: React.Dispatch<React.SetStateAction<keyof typeof data.programs | undefined>>, setEnteredGrades: React.Dispatch<React.SetStateAction<EnteredGrades[]>> }) {
 	const [openPreset, setOpenPreset] = useState(false);
-	// const { programs: rawPrograms } = data as Data;
 	const selectedProgramData = selectedProgram ? data.programs[selectedProgram as keyof typeof data.programs] as Program : undefined;
 	const selectedProgramCourses = data.courses[selectedProgram as keyof typeof data.courses] as Course[] || [];
 	const isMobile = useIsMobile()
@@ -502,10 +501,57 @@ function PresetSelect({ selectedProgram, setSelectedProgram, setEnteredGrades }:
 			<CommandList>
 				<CommandGroup>
 					<CommandItem
-						className="px-2 py-1.5 text-sm data-[inset]:pl-8 font-bold pointer-events-none sticky top-0"
+						className="px-2 py-1.5 text-sm data-[inset]:pl-8 font-semibold pointer-events-none"
 					>
 						{selectedProgramData ? selectedProgramData.code + ' - ' + selectedProgramData.name : "No program selected"}
 					</CommandItem>
+					<CommandSeparator />
+					<CommandGroup
+						className="pl-2 pr-0"
+						heading="All-Year-Round"
+					>
+						{
+							(selectedProgramData?.majors?.length || 0) > 1 ? (
+								selectedProgramData?.majors?.map((major) => {
+									const coursesForMajor = selectedProgramCourses.filter(course => course.major === major.code || course.major === undefined);
+
+									return (
+										<CommandItem
+											key={major.code}
+											onSelect={() => {
+												setSelectedProgram(selectedProgram);
+												setEnteredGrades(coursesForMajor.map(course => ({ code: course.code, grade: undefined })));
+												setOpenPreset(false);
+											}}
+											value={`All-${major.code}`}
+										>
+											<span className="flex-1">
+												All {major.name} ({major.code}) Courses
+											</span>
+											<Badge className="ml-2">
+												{coursesForMajor.reduce((sum, course) => sum + course.units, 0)} Units
+											</Badge>
+										</CommandItem>
+									)
+								})
+							) : (
+								<CommandItem
+									onSelect={() => {
+										setSelectedProgram(selectedProgram);
+										setEnteredGrades(selectedProgramCourses.map(course => ({ code: course.code, grade: undefined })));
+										setOpenPreset(false);
+									}}
+									value="All"
+								>
+									<span className="flex-1">All Courses</span>
+									<Badge className="ml-2">
+										{selectedProgramCourses.reduce((sum, course) => sum + course.units, 0)} Units
+									</Badge>
+								</CommandItem>
+							)
+						}
+					</CommandGroup>
+					<CommandSeparator />
 					{
 						presets.map(([yearKey, { semesters, hasFirstSemMajors, hasSecondSemMajors, hasSummerMajors }], index) => (
 							<React.Fragment key={String(yearKey)}>
