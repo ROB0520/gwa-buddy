@@ -23,12 +23,10 @@ export interface Programs {
 export interface Program {
     code: string;
     name: string;
-    year: number[];
     majors?: Major[];
 }
 
 export interface Major {
     code: string;
     name: string;
-    year: number[];
 }

@@ -78,8 +78,6 @@ export default function GwaCalculator() {
 	if (!hasMounted) return null;
 	const isMobile = windowWidth < 768;
 
-
-
 	const calculateGwa = () => {
 		if (selectedProgram) {
 			const programCourses = courses[selectedProgram] || [];
@@ -526,7 +524,7 @@ function PresetSelect({ selectedProgram, setEnteredGrades }: { selectedProgram: 
 			<CommandList>
 				<CommandGroup>
 					<CommandGroup
-						heading="All-Year-Round"
+						heading="Complete Program"
 					>
 						{
 							(selectedProgramData?.majors?.length || 0) > 1 ? (
@@ -565,6 +563,64 @@ function PresetSelect({ selectedProgram, setEnteredGrades }: { selectedProgram: 
 									</Badge>
 								</CommandItem>
 							)
+						}
+					</CommandGroup>
+					<CommandSeparator />
+					<CommandGroup heading="Year by Year">
+						{
+							presets.map(([yearKey, { semesters }]) => {
+								const allMajorsInYear = Array.from(new Set(
+									Object.values(semesters)
+										.flat()
+										.map(course => course.major)
+										.filter(Boolean)
+								));
+								
+								return (
+									<React.Fragment key={String(yearKey)}>
+										{allMajorsInYear.length > 0 ? (
+											<CommandGroup className="pl-4 pr-0" heading={`${yearKey}`}>
+												{allMajorsInYear.map(major => {
+													const coursesForMajor = Object.values(semesters)
+														.flat()
+														.filter(course => course.major === major || course.major === undefined);
+													
+													return (
+														<CommandItem
+															key={`${yearKey}-${major}`}
+															onSelect={() => {
+																setEnteredGrades(coursesForMajor.map(course => ({ code: course.code, grade: undefined })));
+																setOpenPreset(false);
+															}}
+															value={`${yearKey}-${major}`}
+														>
+															<span className="flex-1">{major} - {selectedProgramData?.majors?.find(m => m.code === major)?.name || major}</span>
+															<Badge className="ml-2">
+																{coursesForMajor.reduce((sum, course) => sum + course.units, 0)} Units
+															</Badge>
+														</CommandItem>
+													);
+												})}
+											</CommandGroup>
+										) : (
+											<CommandItem
+												key={yearKey}
+												onSelect={() => {
+													const allCourses = Object.values(semesters).flat();
+													setEnteredGrades(allCourses.map(course => ({ code: course.code, grade: undefined })));
+													setOpenPreset(false);
+												}}
+												value={yearKey}
+											>
+												<span className="flex-1">{yearKey}</span>
+												<Badge className="ml-2">
+													{Object.values(semesters).flat().reduce((sum, course) => sum + course.units, 0)} Units
+												</Badge>
+											</CommandItem>
+										)}
+									</React.Fragment>
+								);
+							})
 						}
 					</CommandGroup>
 					<CommandSeparator />
