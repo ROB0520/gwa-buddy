@@ -48,20 +48,37 @@ interface EnteredGrades {
 	grade: number | undefined;
 }
 
+function useWindowWidth() {
+	const [width, setWidth] = useState<number>(typeof window !== 'undefined' ? window.innerWidth : 0);
+	useEffect(() => {
+		function handleResize() {
+			setWidth(window.innerWidth);
+		}
+		window.addEventListener('resize', handleResize);
+		return () => window.removeEventListener('resize', handleResize);
+	}, []);
+	return width;
+}
+
 export default function GwaCalculator() {
 	const { courses } = data as Data;
 	const addSubjectButton = useRef<HTMLButtonElement | null>(null);
 	const [selectedProgram, setSelectedProgram] = useState<keyof typeof data.programs | undefined>(undefined);
 	const [enteredGrades, setEnteredGrades] = useState<EnteredGrades[]>([{ code: '', grade: undefined }]);
 	const [gwa, setGwa] = useState<number | null>(null);
-
+	const [hasMounted, setHasMounted] = useState(false);
 	useEffect(() => {
 		setGwa(null);
 	}, [enteredGrades, selectedProgram])
-
 	useEffect(() => {
 		setEnteredGrades([{ code: '', grade: undefined }]);
 	}, [selectedProgram])
+	useEffect(() => { setHasMounted(true); }, []);
+	const windowWidth = useWindowWidth();
+	if (!hasMounted) return null;
+	const isMobile = windowWidth < 768;
+
+
 
 	const calculateGwa = () => {
 		if (selectedProgram) {
@@ -95,7 +112,7 @@ export default function GwaCalculator() {
 			<CardContent>
 				<div className="flex flex-col gap-4 md:gap-6">
 					<ProgramSelect selectedProgram={selectedProgram} setSelectedProgram={setSelectedProgram} />
-					<PresetSelect selectedProgram={selectedProgram} setSelectedProgram={setSelectedProgram} setEnteredGrades={setEnteredGrades} />
+					<PresetSelect selectedProgram={selectedProgram} setEnteredGrades={setEnteredGrades} />
 
 					<div className="grid md:grid-cols-[1fr_auto_auto_auto] gap-x-1 gap-y-4 w-full">
 						{selectedProgram ? (
@@ -105,6 +122,7 @@ export default function GwaCalculator() {
 										return (
 											<SubjectRow
 												key={'eg-' + index}
+												isMobile={isMobile}
 												selectedProgram={selectedProgram}
 												enteredGrade={enteredGrade}
 												index={index}
@@ -440,11 +458,12 @@ function ProgramSelect({ selectedProgram, setSelectedProgram }: { selectedProgra
 	)
 }
 
-function PresetSelect({ selectedProgram, setSelectedProgram, setEnteredGrades }: { selectedProgram: keyof typeof data.programs | undefined; setSelectedProgram: React.Dispatch<React.SetStateAction<keyof typeof data.programs | undefined>>, setEnteredGrades: React.Dispatch<React.SetStateAction<EnteredGrades[]>> }) {
+function PresetSelect({ selectedProgram, setEnteredGrades }: { selectedProgram: keyof typeof data.programs | undefined; setEnteredGrades: React.Dispatch<React.SetStateAction<EnteredGrades[]>> }) {
 	const [openPreset, setOpenPreset] = useState(false);
 	const selectedProgramData = selectedProgram ? data.programs[selectedProgram as keyof typeof data.programs] as Program : undefined;
 	const selectedProgramCourses = data.courses[selectedProgram as keyof typeof data.courses] as Course[] || [];
-	const isMobile = useIsMobile()
+	const windowWidth = useWindowWidth();
+	const isMobile = windowWidth < 768;
 
 	const presetsObj = selectedProgramCourses.reduce((acc, course) => {
 		const yearKey = course.year < 0 ? `Year ${Math.abs(course.year)}` : `Year ${course.year}`;
@@ -518,7 +537,6 @@ function PresetSelect({ selectedProgram, setSelectedProgram, setEnteredGrades }:
 										<CommandItem
 											key={major.code}
 											onSelect={() => {
-												setSelectedProgram(selectedProgram);
 												setEnteredGrades(coursesForMajor.map(course => ({ code: course.code, grade: undefined })));
 												setOpenPreset(false);
 											}}
@@ -536,7 +554,6 @@ function PresetSelect({ selectedProgram, setSelectedProgram, setEnteredGrades }:
 							) : (
 								<CommandItem
 									onSelect={() => {
-										setSelectedProgram(selectedProgram);
 										setEnteredGrades(selectedProgramCourses.map(course => ({ code: course.code, grade: undefined })));
 										setOpenPreset(false);
 									}}
@@ -564,7 +581,6 @@ function PresetSelect({ selectedProgram, setSelectedProgram, setEnteredGrades }:
 													<CommandItem
 														key={`${yearKey}-${semesterKey}`}
 														onSelect={() => {
-															setSelectedProgram(selectedProgram);
 															setEnteredGrades(coursesForPreset.map(course => ({ code: course.code, grade: undefined })));
 															setOpenPreset(false);
 														}}
@@ -593,7 +609,6 @@ function PresetSelect({ selectedProgram, setSelectedProgram, setEnteredGrades }:
 															<CommandGroup className="pl-4 pr-0" key={`${yearKey}-major-${major}`} heading={`${major} - ${selectedProgramData?.majors?.find(m => m.code === major)?.name || major}`}>
 																<CommandItem
 																	onSelect={() => {
-																		setSelectedProgram(selectedProgram);
 																		setEnteredGrades(coursesForPreset.map(course => ({ code: course.code, grade: undefined })));
 																		setOpenPreset(false);
 																	}}
@@ -671,7 +686,6 @@ function PresetSelect({ selectedProgram, setSelectedProgram, setEnteredGrades }:
 															<CommandGroup className="pl-4 pr-0" key={`${yearKey}-major-${major}`} heading={`${major} - ${selectedProgramData?.majors?.find(m => m.code === major)?.name || major}`}>
 																<CommandItem
 																	onSelect={() => {
-																		setSelectedProgram(selectedProgram);
 																		setEnteredGrades(coursesForPreset.map(course => ({ code: course.code, grade: undefined })));
 																		setOpenPreset(false);
 																	}}
@@ -749,7 +763,6 @@ function PresetSelect({ selectedProgram, setSelectedProgram, setEnteredGrades }:
 															<CommandGroup className="pl-4 pr-0" key={`${yearKey}-major-${major}`} heading={`${major} - ${selectedProgramData?.majors?.find(m => m.code === major)?.name || major}`}>
 																<CommandItem
 																	onSelect={() => {
-																		setSelectedProgram(selectedProgram);
 																		setEnteredGrades(coursesForPreset.map(course => ({ code: course.code, grade: undefined })));
 																		setOpenPreset(false);
 																	}}
@@ -778,7 +791,6 @@ function PresetSelect({ selectedProgram, setSelectedProgram, setEnteredGrades }:
 															<CommandGroup className="pl-4 pr-0" key={`${yearKey}-major-${major}`} heading={`${major} - ${selectedProgramData?.majors?.find(m => m.code === major)?.name || major}`}>
 																<CommandItem
 																	onSelect={() => {
-																		setSelectedProgram(selectedProgram);
 																		setEnteredGrades(coursesFor1stPreset.map(course => ({ code: course.code, grade: undefined })));
 																		setOpenPreset(false);
 																	}}
@@ -791,7 +803,6 @@ function PresetSelect({ selectedProgram, setSelectedProgram, setEnteredGrades }:
 																</CommandItem>
 																<CommandItem
 																	onSelect={() => {
-																		setSelectedProgram(selectedProgram);
 																		setEnteredGrades(coursesFor2ndPreset.map(course => ({ code: course.code, grade: undefined })));
 																		setOpenPreset(false);
 																	}}
@@ -852,8 +863,6 @@ function PresetSelect({ selectedProgram, setSelectedProgram, setEnteredGrades }:
 															<CommandGroup className="pl-4 pr-0" key={`${yearKey}-major-${major}`} heading={`${major} - ${selectedProgramData?.majors?.find(m => m.code === major)?.name || major}`}>
 																<CommandItem
 																	onSelect={() => {
-
-																		setSelectedProgram(selectedProgram);
 																		setEnteredGrades(coursesFor2ndPreset.map(course => ({ code: course.code, grade: undefined })));
 																		setOpenPreset(false);
 																	}}
@@ -868,7 +877,7 @@ function PresetSelect({ selectedProgram, setSelectedProgram, setEnteredGrades }:
 																	coursesFor3rdPreset.length > 0 && (
 																		<CommandItem
 																			onSelect={() => {
-																				setSelectedProgram(selectedProgram);
+
 																				setEnteredGrades(coursesFor3rdPreset.map(course => ({ code: course.code, grade: undefined })));
 																				setOpenPreset(false);
 																			}}
@@ -898,7 +907,6 @@ function PresetSelect({ selectedProgram, setSelectedProgram, setEnteredGrades }:
 															<CommandGroup className="pl-4 pr-0" key={`${yearKey}-major-${major}`} heading={`${major} - ${selectedProgramData?.majors?.find(m => m.code === major)?.name || major}`}>
 																<CommandItem
 																	onSelect={() => {
-																		setSelectedProgram(selectedProgram);
 																		setEnteredGrades(coursesForPreset.map(course => ({ code: course.code, grade: undefined })));
 																		setOpenPreset(false);
 																	}}
@@ -939,7 +947,7 @@ function PresetSelect({ selectedProgram, setSelectedProgram, setEnteredGrades }:
 																<CommandGroup className="pl-4 pr-0" key={`${yearKey}-major-${major}`} heading={`${major} - ${selectedProgramData?.majors?.find(m => m.code === major)?.name || major}`}>
 																	<CommandItem
 																		onSelect={() => {
-																			setSelectedProgram(selectedProgram);
+
 																			setEnteredGrades(coursesForPreset.map(course => ({ code: course.code, grade: undefined })));
 																			setOpenPreset(false);
 																		}}
@@ -970,7 +978,6 @@ function PresetSelect({ selectedProgram, setSelectedProgram, setEnteredGrades }:
 															<CommandGroup className="pl-4 pr-0" key={`${yearKey}-major-${major}`} heading={`${major} - ${selectedProgramData?.majors?.find(m => m.code === major)?.name || major}`}>
 																<CommandItem
 																	onSelect={() => {
-																		setSelectedProgram(selectedProgram);
 																		setEnteredGrades(coursesFor1stPreset.map(course => ({ code: course.code, grade: undefined })));
 																		setOpenPreset(false);
 																	}}
@@ -983,7 +990,6 @@ function PresetSelect({ selectedProgram, setSelectedProgram, setEnteredGrades }:
 																</CommandItem>
 																<CommandItem
 																	onSelect={() => {
-																		setSelectedProgram(selectedProgram);
 																		setEnteredGrades(coursesFor2ndPreset.map(course => ({ code: course.code, grade: undefined })));
 																		setOpenPreset(false);
 																	}}
@@ -996,7 +1002,6 @@ function PresetSelect({ selectedProgram, setSelectedProgram, setEnteredGrades }:
 																</CommandItem>
 																<CommandItem
 																	onSelect={() => {
-																		setSelectedProgram(selectedProgram);
 																		setEnteredGrades(coursesFor3rdPreset.map(course => ({ code: course.code, grade: undefined })));
 																		setOpenPreset(false);
 																	}}
@@ -1061,12 +1066,13 @@ function PresetSelect({ selectedProgram, setSelectedProgram, setEnteredGrades }:
 	)
 }
 
-function SubjectRow({ selectedProgram, enteredGrade, index, enteredGrades, setEnteredGrades }: {
+function SubjectRow({ selectedProgram, enteredGrade, index, enteredGrades, setEnteredGrades, isMobile }: {
 	selectedProgram: keyof typeof data.programs | undefined;
 	enteredGrade: EnteredGrades;
 	index: number;
 	enteredGrades: EnteredGrades[];
 	setEnteredGrades: React.Dispatch<React.SetStateAction<EnteredGrades[]>>;
+	isMobile: boolean;
 }) {
 	const { courses } = data as Data;
 	const courseChoices = courses[selectedProgram as string] || [];
@@ -1089,7 +1095,6 @@ function SubjectRow({ selectedProgram, enteredGrade, index, enteredGrades, setEn
 
 	const CourseSelect = () => {
 		const [openCourseChoices, setOpenCourseChoices] = useState(false);
-		const isMobile = useIsMobile()
 
 		const CoursesList = () => (
 			<Command
