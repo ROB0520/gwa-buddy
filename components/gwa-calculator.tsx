@@ -507,7 +507,6 @@ function PresetSelect({ selectedProgram, setSelectedProgram, setEnteredGrades }:
 					</CommandItem>
 					<CommandSeparator />
 					<CommandGroup
-						className="pl-2 pr-0"
 						heading="All-Year-Round"
 					>
 						{
