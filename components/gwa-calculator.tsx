@@ -527,7 +527,7 @@ function PresetSelect({ selectedProgram, setEnteredGrades }: { selectedProgram: 
 						heading="Complete Program"
 					>
 						{
-							(selectedProgramData?.majors?.length || 0) > 2 ? (
+							(selectedProgramData?.majors?.length || 0) >= 1 ? (
 								selectedProgramData?.majors?.map((major) => {
 									const coursesForMajor = selectedProgramCourses.filter(course => course.major === major.code || course.major === undefined);
 
