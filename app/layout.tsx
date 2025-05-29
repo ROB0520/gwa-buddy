@@ -29,6 +29,7 @@ export const metadata: Metadata = {
   other: {
     "darkreader-lock": "true",
     "theme-color": "#00c951",
+    "apple-mobile-web-app-title": "GWA Buddy",
   },
 };
 
