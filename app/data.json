@@ -91,9 +91,71 @@
 		"BSP": {
 			"code": "BSP",
 			"name": "Bachelor of Science in Psychology"
+		},
+		"BSN": {
+			"code": "BSN",
+			"name": "Bachelor of Science in Nursing"
 		}
 	},
 	"courses": {
+		"BSN": [
+			{
+				"code": "GE 01",
+				"name": "Understanding the Self",
+				"units": 3,
+				"semester": 1,
+				"year": 1
+			},
+			{
+				"code": "GE 02",
+				"name": "Readings in Philippine History",
+				"units": 3,
+				"semester": 1,
+				"year": 1
+			},
+			{
+				"code": "NCM 100",
+				"name": "Theoretical Foundation of Nursing",
+				"units": 3,
+				"semester": 1,
+				"year": 1
+			},
+			{
+				"code": "MC 1",
+				"name": "Anatomy and Physiology",
+				"units": 5,
+				"semester": 1,
+				"year": 1
+			},
+			{
+				"code": "MC 2",
+				"name": "Biochemistry",
+				"units": 5,
+				"semester": 1,
+				"year": 1
+			},
+			{
+				"code": "GE 04",
+				"name": "Mathematics in the Modern World",
+				"units": 3,
+				"semester": 1,
+				"year": 1
+			},
+			{
+				"code": "GE 06",
+				"name": "Art Appreciation",
+				"units": 3,
+				"semester": 1,
+				"year": 1
+			},
+			{
+				"code": "PE 1",
+				"name": "Welness and Fitness",
+				"units": 2,
+				"semester": 1,
+				"year": 1
+			}
+		],
 		"BSP": [
 			{
 				"code": "GE 01",
