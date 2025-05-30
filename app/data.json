@@ -389,7 +389,8 @@
 				"name": "Cereals and Food Legumes",
 				"units": 3,
 				"semester": 1,
-				"year": 3
+				"year": 3,
+				"major": "CS"
 			},
 			{
 				"code": "Major Course 4",
