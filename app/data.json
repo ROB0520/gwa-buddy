@@ -105,9 +105,71 @@
 					"name": "Financial Management"
 				}
 			]
+		},
+		"BEE": {
+			"code": "BEE",
+			"name": "Bachelor of Elementary Education"
 		}
 	},
 	"courses": {
+		"BEE": [
+			{
+				"code": "FIL 1",
+				"name": "Kontekswalisadong Komunikasyon sa Filipino",
+				"units": 3,
+				"semester": 1,
+				"year": 1
+			},
+			{
+				"code": "GE 02",
+				"name": "Readings in Philippine History",
+				"units": 3,
+				"semester": 1,
+				"year": 1
+			},
+			{
+				"code": "GE 04",
+				"name": "Mathematics in the Modern World",
+				"units": 3,
+				"semester": 1,
+				"year": 1
+			},
+			{
+				"code": "GE 05",
+				"name": "Purposive Communication",
+				"units": 3,
+				"semester": 1,
+				"year": 1
+			},
+			{
+				"code": "ProfEd 01",
+				"name": "The Teaching Profession",
+				"units": 3,
+				"semester": 1,
+				"year": 1
+			},
+			{
+				"code": "ProfEd 02",
+				"name": "The Child and Adolescent Learner and Learning Principles",
+				"units": 3,
+				"semester": 1,
+				"year": 1
+			},
+			{
+				"code": "GE 01",
+				"name": "Understanding the Self",
+				"units": 3,
+				"semester": 1,
+				"year": 1
+			},
+			{
+				"code": "PATHFit 01",
+				"name": "Movement Competency Training",
+				"units": 2,
+				"semester": 1,
+				"year": 1
+			}
+		],
 		"BSBA": [
 			{
 				"code": "GE 01",
