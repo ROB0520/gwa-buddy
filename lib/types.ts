@@ -13,7 +13,7 @@ export interface Course {
     units: number;
     semester?: number;
     year: number;
-    major?: string;
+    major?: string | string[];
 }
 
 export interface Programs {

@@ -1188,7 +1188,16 @@ function SubjectRow({ selectedProgram, enteredGrade, index, enteredGrades, setEn
 												<span className="flex-grow">
 													{course.code} - {course.name}
 												</span>
-												{course.major && <Badge className="text-xs"> {course.major}</Badge>}
+												{
+													course.major &&
+													<Badge className="ml-2">
+														{
+															Array.isArray(course.major) ? 
+																course.major.sort().join('/') : 
+																course.major
+														}
+													</Badge>
+												}
 											</CommandItem>
 										))}
 									</CommandGroup>
