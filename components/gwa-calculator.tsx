@@ -1198,7 +1198,7 @@ function SubjectRow({ selectedProgram, enteredGrade, index, enteredGrades, setEn
 
 		const CoursesList = () => (
 			<Command
-				value={course.code + ' - ' + course.major}
+				value={course ? course.code + ' - ' + course.major : ''}
 				className='max-md:rounded-t-none'
 			>
 				<CommandInput placeholder="Search course..." />
