@@ -103,6 +103,10 @@
 				{
 					"code": "FM",
 					"name": "Financial Management"
+				},
+				{
+					"code": "HRM",
+					"name": "Human Resource Management"
 				}
 			]
 		},
@@ -677,12 +681,19 @@
 				"year": 1
 			},
 			{
+				"code": "GE 08",
+				"name": "Ethics",
+				"units": 3,
+				"semester": 2,
+				"year": 1
+			},
+			{
 				"code": "Elective 1",
 				"name": "Entrepreneurial Management",
 				"units": 3,
 				"semester": 2,
 				"year": 1,
-				"major": "FM"
+				"major": ["FM", "HRM"]
 			},
 			{
 				"code": "Elective 2",
@@ -690,14 +701,7 @@
 				"units": 3,
 				"semester": 2,
 				"year": 1,
-				"major": "FM"
-			},
-			{
-				"code": "GE 08",
-				"name": "Ethics",
-				"units": 3,
-				"semester": 2,
-				"year": 1
+				"major": ["FM", "HRM"]
 			},
 			{
 				"code": "PATHFit 03",
@@ -750,6 +754,14 @@
 				"major": "FM"
 			},
 			{
+				"code": "Elective 3",
+				"name": "Management",
+				"units": 3,
+				"semester": 1,
+				"year": 2,
+				"major": "HRM"
+			},
+			{
 				"code": "ELP",
 				"name": "English for Business Administrators",
 				"units": 3,
@@ -783,21 +795,56 @@
 				"name": "Public Finance",
 				"units": 3,
 				"semester": 2,
-				"year": 2
+				"year": 2,
+				"major": "FM"
 			},
 			{
 				"code": "Elective 5",
 				"name": "Mutual Fund",
 				"units": 3,
 				"semester": 2,
-				"year": 2
+				"year": 2,
+				"major": "FM"
 			},
 			{
 				"code": "Elective 6",
 				"name": "Security Analysis",
 				"units": 3,
 				"semester": 2,
-				"year": 2
+				"year": 2,
+				"major": "FM"
+			},
+			{
+				"code": "Elective 4",
+				"name": "Global/International Trade",
+				"units": 3,
+				"semester": 2,
+				"year": 2,
+				"major": "HRM"
+			},
+			{
+				"code": "Elective 5",
+				"name": "Logistics Management",
+				"units": 3,
+				"semester": 2,
+				"year": 2,
+				"major": "HRM"
+			},
+			{
+				"code": "Elective 6",
+				"name": "Marketing Management",
+				"units": 3,
+				"semester": 2,
+				"year": 2,
+				"major": "HRM"
+			},
+			{
+				"code": "Elective 7",
+				"name": "Environmental Management System",
+				"units": 3,
+				"semester": 2,
+				"year": 2,
+				"major": "HRM"
 			},
 			{
 				"code": "PATHFit 04",
