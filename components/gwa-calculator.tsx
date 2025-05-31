@@ -46,6 +46,7 @@ import { Badge } from "./ui/badge";
 interface EnteredGrades {
 	code: string;
 	grade: number | undefined;
+	major?: string | string[] | undefined;
 }
 
 function useWindowWidth() {
@@ -529,13 +530,14 @@ function PresetSelect({ selectedProgram, setEnteredGrades }: { selectedProgram: 
 						{
 							(selectedProgramData?.majors?.length || 0) >= 1 ? (
 								selectedProgramData?.majors?.map((major) => {
-									const coursesForMajor = selectedProgramCourses.filter(course => course.major === major.code || course.major === undefined);
-
-									return (
+									const coursesForMajor = selectedProgramCourses.filter(course =>
+										(Array.isArray(course.major) ? course.major.includes(major.code) : course.major === major.code) ||
+										course.major === undefined
+									); return (
 										<CommandItem
 											key={major.code}
 											onSelect={() => {
-												setEnteredGrades(coursesForMajor.map(course => ({ code: course.code, grade: undefined })));
+												setEnteredGrades(coursesForMajor.map(course => ({ code: course.code, grade: undefined, major: course.major })));
 												setOpenPreset(false);
 											}}
 											value={`All-${major.code}`}
@@ -549,79 +551,76 @@ function PresetSelect({ selectedProgram, setEnteredGrades }: { selectedProgram: 
 										</CommandItem>
 									)
 								})
-							) : (
-								<CommandItem
-									onSelect={() => {
-										setEnteredGrades(selectedProgramCourses.map(course => ({ code: course.code, grade: undefined })));
-										setOpenPreset(false);
-									}}
-									value="All"
-								>
-									<span className="flex-1">All Courses</span>
-									<Badge className="ml-2">
-										{selectedProgramCourses.reduce((sum, course) => sum + course.units, 0)} Units
-									</Badge>
-								</CommandItem>
+							) : (<CommandItem
+								onSelect={() => {
+									setEnteredGrades(selectedProgramCourses.map(course => ({ code: course.code, grade: undefined, major: course.major })));
+									setOpenPreset(false);
+								}}
+								value="All"
+							>
+								<span className="flex-1">All Courses</span>
+								<Badge className="ml-2">
+									{selectedProgramCourses.reduce((sum, course) => sum + course.units, 0)} Units
+								</Badge>
+							</CommandItem>
 							)
 						}
 					</CommandGroup>
 					<CommandSeparator />
-					<CommandGroup heading="Year by Year">
-						{
-							presets.map(([yearKey, { semesters }]) => {
-								const allMajorsInYear = Array.from(new Set(
-									Object.values(semesters)
-										.flat()
-										.map(course => course.major)
-										.filter(Boolean)
-								));
-								
-								return (
-									<React.Fragment key={String(yearKey)}>
-										{allMajorsInYear.length > 0 ? (
-											<CommandGroup className="pl-4 pr-0" heading={`${yearKey}`}>
-												{allMajorsInYear.map(major => {
-													const coursesForMajor = Object.values(semesters)
-														.flat()
-														.filter(course => course.major === major || course.major === undefined);
-													
-													return (
-														<CommandItem
-															key={`${yearKey}-${major}`}
-															onSelect={() => {
-																setEnteredGrades(coursesForMajor.map(course => ({ code: course.code, grade: undefined })));
-																setOpenPreset(false);
-															}}
-															value={`${yearKey}-${major}`}
-														>
-															<span className="flex-1">{major} - {selectedProgramData?.majors?.find(m => m.code === major)?.name || major}</span>
-															<Badge className="ml-2">
-																{coursesForMajor.reduce((sum, course) => sum + course.units, 0)} Units
-															</Badge>
-														</CommandItem>
-													);
-												})}
-											</CommandGroup>
-										) : (
-											<CommandItem
-												key={yearKey}
+					<CommandGroup heading="Year by Year">						{
+						presets.map(([yearKey, { semesters }]) => {
+							const allMajorsInYear = Array.from(new Set(
+								Object.values(semesters)
+									.flat()
+									.flatMap(course => Array.isArray(course.major) ? course.major : course.major ? [course.major] : [])
+							));
+
+							return (
+								<React.Fragment key={String(yearKey)}>
+									{allMajorsInYear.length > 0 ? (
+										<CommandGroup className="pl-4 pr-0" heading={`${yearKey}`}>												{allMajorsInYear.map(major => {
+											const coursesForMajor = Object.values(semesters)
+												.flat()
+												.filter(course =>
+													(Array.isArray(course.major) ? course.major.includes(major) : course.major === major) ||
+													course.major === undefined
+												);
+
+											return (<CommandItem
+												key={`${yearKey}-${major}`}
 												onSelect={() => {
-													const allCourses = Object.values(semesters).flat();
-													setEnteredGrades(allCourses.map(course => ({ code: course.code, grade: undefined })));
+													setEnteredGrades(coursesForMajor.map(course => ({ code: course.code, grade: undefined, major: course.major })));
 													setOpenPreset(false);
 												}}
-												value={yearKey}
+												value={`${yearKey}-${major}`}
 											>
-												<span className="flex-1">{yearKey}</span>
+												<span className="flex-1">{major} - {selectedProgramData?.majors?.find(m => m.code === major)?.name || major}</span>
 												<Badge className="ml-2">
-													{Object.values(semesters).flat().reduce((sum, course) => sum + course.units, 0)} Units
+													{coursesForMajor.reduce((sum, course) => sum + course.units, 0)} Units
 												</Badge>
 											</CommandItem>
-										)}
-									</React.Fragment>
-								);
-							})
-						}
+											);
+										})}
+										</CommandGroup>
+									) : (<CommandItem
+										key={yearKey}
+										onSelect={() => {
+											const allCourses = Object.values(semesters).flat();
+											setEnteredGrades(allCourses.map(course => ({ code: course.code, grade: undefined, major: course.major })));
+											setOpenPreset(false);
+										}}
+										value={yearKey}
+									>
+										<span className="flex-1">{yearKey}</span>
+										<Badge className="ml-2">
+											{Object.values(semesters).flat().reduce((sum, course) => sum + course.units, 0)} Units
+										</Badge>
+									</CommandItem>
+									)}
+								</React.Fragment>
+							);
+						})
+					}
 					</CommandGroup>
 					<CommandSeparator />
 					{
@@ -633,90 +632,93 @@ function PresetSelect({ selectedProgram, setEnteredGrades }: { selectedProgram: 
 										!hasFirstSemMajors && !hasSecondSemMajors && !hasSummerMajors && (
 											Object.entries(semesters).map(([semesterKey, courses]) => {
 												const coursesForPreset = courses as Course[];
-												return (
-													<CommandItem
-														key={`${yearKey}-${semesterKey}`}
-														onSelect={() => {
-															setEnteredGrades(coursesForPreset.map(course => ({ code: course.code, grade: undefined })));
-															setOpenPreset(false);
-														}}
-														value={`${yearKey} - ${semesterKey}`}
-													>
-														<span className="flex-1">
-															{`${semesterKey}`}
-														</span>
-														<Badge className="ml-2">
-															{
-																coursesForPreset.reduce((sum, course) => sum + course.units, 0)
-															} Units
-														</Badge>
-													</CommandItem>
+												return (<CommandItem
+													key={`${yearKey}-${semesterKey}`}
+													onSelect={() => {
+														setEnteredGrades(coursesForPreset.map(course => ({ code: course.code, grade: undefined, major: course.major })));
+														setOpenPreset(false);
+													}}
+													value={`${yearKey} - ${semesterKey}`}
+												>
+													<span className="flex-1">
+														{`${semesterKey}`}
+													</span>
+													<Badge className="ml-2">
+														{
+															coursesForPreset.reduce((sum, course) => sum + course.units, 0)
+														} Units
+													</Badge>
+												</CommandItem>
 												)
 											})
 										)
 									}
-									{
-										hasFirstSemMajors && !hasSecondSemMajors && !hasSummerMajors && (
-											<>
-												{
-													Array.from(new Set(semesters['First Semester'].map(course => course.major))).filter(Boolean).map((major) => {
-														const coursesForPreset = semesters['First Semester'].filter(course => course.major === major || course.major === undefined) as Course[];
-														return (
-															<CommandGroup className="pl-4 pr-0" key={`${yearKey}-major-${major}`} heading={`${major} - ${selectedProgramData?.majors?.find(m => m.code === major)?.name || major}`}>
-																<CommandItem
-																	onSelect={() => {
-																		setEnteredGrades(coursesForPreset.map(course => ({ code: course.code, grade: undefined })));
-																		setOpenPreset(false);
-																	}}
-																	value={`${yearKey} - ${major} - First Semester`}
-																>
-																	<span className="flex-1">First Semester</span>
-																	<Badge className="ml-2">
-																		{coursesForPreset.reduce((sum, course) => sum + course.units, 0)} Units
-																	</Badge>
-																</CommandItem>
-															</CommandGroup>
-														)
-													})
-												}
-												{
-													semesters['Second Semester'] && (
-														<CommandItem
-															key={`${yearKey}-second`}
-															onSelect={() => {
-																const coursesForPreset = semesters['Second Semester'] as Course[];
-																setEnteredGrades(coursesForPreset.map(course => ({ code: course.code, grade: undefined })));
-																setOpenPreset(false);
-															}}
-															value={`${yearKey} - Second Semester`}
-														>
-															<span className="flex-1">Second Semester</span>
-															<Badge className="ml-2">
-																{semesters['Second Semester'].reduce((sum, course) => sum + course.units, 0)} Units
-															</Badge>
-														</CommandItem>
+									{hasFirstSemMajors && !hasSecondSemMajors && !hasSummerMajors && (
+										<>
+											{
+												Array.from(new Set(semesters['First Semester'].flatMap(course =>
+													Array.isArray(course.major) ? course.major : course.major ? [course.major] : []
+												))).filter(Boolean).map((major) => {
+													const coursesForPreset = semesters['First Semester'].filter(course =>
+														(Array.isArray(course.major) ? course.major.includes(major) : course.major === major) ||
+														course.major === undefined
+													) as Course[];
+													return (
+														<CommandGroup className="pl-4 pr-0" key={`${yearKey}-major-${major}`} heading={`${major} - ${selectedProgramData?.majors?.find(m => m.code === major)?.name || major}`}>
+															<CommandItem
+																onSelect={() => {
+																	setEnteredGrades(coursesForPreset.map(course => ({ code: course.code, grade: undefined, major: course.major })));
+																	setOpenPreset(false);
+																}}
+																value={`${yearKey} - ${major} - First Semester`}
+															>
+																<span className="flex-1">First Semester</span>
+																<Badge className="ml-2">
+																	{coursesForPreset.reduce((sum, course) => sum + course.units, 0)} Units
+																</Badge>
+															</CommandItem>
+														</CommandGroup>
 													)
-												}
-												{
-													semesters['Summer'] && (
-														<CommandItem
-															key={`${yearKey}-summer`}
-															onSelect={() => {
-																const coursesForPreset = semesters['Summer'] as Course[];
-																setEnteredGrades(coursesForPreset.map(course => ({ code: course.code, grade: undefined })));
-																setOpenPreset(false);
-															}}
-															value={`${yearKey} - Summer`}
-														>
-															<span className="flex-1">Summer</span>
-															<Badge className="ml-2">
-																{semesters['Summer'].reduce((sum, course) => sum + course.units, 0)} Units
-															</Badge>
-														</CommandItem>
-													)
-												}
-											</>
-										)
+												})
+											}
+											{
+												semesters['Second Semester'] && (
+													<CommandItem
+														key={`${yearKey}-second`}
+														onSelect={() => {
+															const coursesForPreset = semesters['Second Semester'] as Course[];
+															setEnteredGrades(coursesForPreset.map(course => ({ code: course.code, grade: undefined, major: course.major })));
+															setOpenPreset(false);
+														}}
+														value={`${yearKey} - Second Semester`}
+													>
+														<span className="flex-1">Second Semester</span>
+														<Badge className="ml-2">
+															{semesters['Second Semester'].reduce((sum, course) => sum + course.units, 0)} Units
+														</Badge>
+													</CommandItem>
+												)
+											}
+											{
+												semesters['Summer'] && (
+													<CommandItem
+														key={`${yearKey}-summer`}
+														onSelect={() => {
+															const coursesForPreset = semesters['Summer'] as Course[];
+															setEnteredGrades(coursesForPreset.map(course => ({ code: course.code, grade: undefined, major: course.major })));
+															setOpenPreset(false);
+														}}
+														value={`${yearKey} - Summer`}
+													>
+														<span className="flex-1">Summer</span>
+														<Badge className="ml-2">
+															{semesters['Summer'].reduce((sum, course) => sum + course.units, 0)} Units
+														</Badge>
+													</CommandItem>
+												)
+											}
+										</>
+									)
 									}
 									{
 										!hasFirstSemMajors && hasSecondSemMajors && !hasSummerMajors && (
@@ -725,7 +727,7 @@ function PresetSelect({ selectedProgram, setEnteredGrades }: { selectedProgram: 
 													key={`${yearKey}-first`}
 													onSelect={() => {
 														const coursesForPreset = semesters['First Semester'] as Course[];
-														setEnteredGrades(coursesForPreset.map(course => ({ code: course.code, grade: undefined })));
+														setEnteredGrades(coursesForPreset.map(course => ({ code: course.code, grade: undefined, major: course.major })));
 														setOpenPreset(false);
 													}}
 													value={`${yearKey} - First Semester`}
@@ -734,15 +736,19 @@ function PresetSelect({ selectedProgram, setEnteredGrades }: { selectedProgram: 
 													<Badge className="ml-2">
 														{semesters['First Semester'].reduce((sum, course) => sum + course.units, 0)} Units
 													</Badge>
-												</CommandItem>
-												{
-													Array.from(new Set(semesters['Second Semester'].map(course => course.major))).filter(Boolean).map((major) => {
-														const coursesForPreset = semesters['Second Semester'].filter(course => course.major === major || course.major === undefined) as Course[];
+												</CommandItem>												{
+													Array.from(new Set(semesters['Second Semester'].flatMap(course =>
+														Array.isArray(course.major) ? course.major : course.major ? [course.major] : []
+													))).filter(Boolean).map((major) => {
+														const coursesForPreset = semesters['Second Semester'].filter(course =>
+															(Array.isArray(course.major) ? course.major.includes(major) : course.major === major) ||
+															course.major === undefined
+														) as Course[];
 														return (
 															<CommandGroup className="pl-4 pr-0" key={`${yearKey}-major-${major}`} heading={`${major} - ${selectedProgramData?.majors?.find(m => m.code === major)?.name || major}`}>
 																<CommandItem
 																	onSelect={() => {
-																		setEnteredGrades(coursesForPreset.map(course => ({ code: course.code, grade: undefined })));
+																		setEnteredGrades(coursesForPreset.map(course => ({ code: course.code, grade: undefined, major: course.major })));
 																		setOpenPreset(false);
 																	}}
 																	value={`${yearKey} - ${major} - Second Semester`}
@@ -762,7 +768,7 @@ function PresetSelect({ selectedProgram, setEnteredGrades }: { selectedProgram: 
 															key={`${yearKey}-summer`}
 															onSelect={() => {
 																const coursesForPreset = semesters['Summer'] as Course[];
-																setEnteredGrades(coursesForPreset.map(course => ({ code: course.code, grade: undefined })));
+																setEnteredGrades(coursesForPreset.map(course => ({ code: course.code, grade: undefined, major: course.major })));
 																setOpenPreset(false);
 															}}
 															value={`${yearKey} - Summer`}
@@ -784,7 +790,7 @@ function PresetSelect({ selectedProgram, setEnteredGrades }: { selectedProgram: 
 													key={`${yearKey}-first`}
 													onSelect={() => {
 														const coursesForPreset = semesters['First Semester'] as Course[];
-														setEnteredGrades(coursesForPreset.map(course => ({ code: course.code, grade: undefined })));
+														setEnteredGrades(coursesForPreset.map(course => ({ code: course.code, grade: undefined, major: course.major })));
 														setOpenPreset(false);
 													}}
 													value={`${yearKey} - First Semester`}
@@ -800,7 +806,7 @@ function PresetSelect({ selectedProgram, setEnteredGrades }: { selectedProgram: 
 															key={`${yearKey}-second`}
 															onSelect={() => {
 																const coursesForPreset = semesters['Second Semester'] as Course[];
-																setEnteredGrades(coursesForPreset.map(course => ({ code: course.code, grade: undefined })));
+																setEnteredGrades(coursesForPreset.map(course => ({ code: course.code, grade: undefined, major: course.major })));
 																setOpenPreset(false);
 															}}
 															value={`${yearKey} - Second Semester`}
@@ -811,15 +817,19 @@ function PresetSelect({ selectedProgram, setEnteredGrades }: { selectedProgram: 
 															</Badge>
 														</CommandItem>
 													)
-												}
-												{
-													Array.from(new Set(semesters['Summer'].map(course => course.major))).filter(Boolean).map((major) => {
-														const coursesForPreset = semesters['Summer'].filter(course => course.major === major || course.major === undefined) as Course[];
+												}												{
+													Array.from(new Set(semesters['Summer'].flatMap(course =>
+														Array.isArray(course.major) ? course.major : course.major ? [course.major] : []
+													))).filter(Boolean).map((major) => {
+														const coursesForPreset = semesters['Summer'].filter(course =>
+															(Array.isArray(course.major) ? course.major.includes(major) : course.major === major) ||
+															course.major === undefined
+														) as Course[];
 														return (
 															<CommandGroup className="pl-4 pr-0" key={`${yearKey}-major-${major}`} heading={`${major} - ${selectedProgramData?.majors?.find(m => m.code === major)?.name || major}`}>
 																<CommandItem
 																	onSelect={() => {
-																		setEnteredGrades(coursesForPreset.map(course => ({ code: course.code, grade: undefined })));
+																		setEnteredGrades(coursesForPreset.map(course => ({ code: course.code, grade: undefined, major: course.major })));
 																		setOpenPreset(false);
 																	}}
 																	value={`${yearKey} - ${major} - Summer`}
@@ -836,63 +846,70 @@ function PresetSelect({ selectedProgram, setEnteredGrades }: { selectedProgram: 
 											</>
 										)
 									}
-									{
-										hasFirstSemMajors && hasSecondSemMajors && !hasSummerMajors && (
-											<>
-												{
-													Array.from(new Set(semesters['First Semester'].map(course => course.major))).filter(Boolean).map((major) => {
-														const coursesFor1stPreset = semesters['First Semester'].filter(course => course.major === major || course.major === undefined) as Course[];
-														const coursesFor2ndPreset = semesters['Second Semester'].filter(course => course.major === major || course.major === undefined) as Course[];
-														return (
-															<CommandGroup className="pl-4 pr-0" key={`${yearKey}-major-${major}`} heading={`${major} - ${selectedProgramData?.majors?.find(m => m.code === major)?.name || major}`}>
-																<CommandItem
-																	onSelect={() => {
-																		setEnteredGrades(coursesFor1stPreset.map(course => ({ code: course.code, grade: undefined })));
-																		setOpenPreset(false);
-																	}}
-																	value={`${yearKey} - ${major} - First Semester`}
-																>
-																	<span className="flex-1">First Semester</span>
-																	<Badge className="ml-2">
-																		{coursesFor1stPreset.reduce((sum, course) => sum + course.units, 0)} Units
-																	</Badge>
-																</CommandItem>
-																<CommandItem
-																	onSelect={() => {
-																		setEnteredGrades(coursesFor2ndPreset.map(course => ({ code: course.code, grade: undefined })));
-																		setOpenPreset(false);
-																	}}
-																	value={`${yearKey} - ${major} - Second Semester`}
-																>
-																	<span className="flex-1">Second Semester</span>
-																	<Badge className="ml-2">
-																		{coursesFor2ndPreset.reduce((sum, course) => sum + course.units, 0)} Units
-																	</Badge>
-																</CommandItem>
-															</CommandGroup>
-														)
-													})
-												}
-												{
-													semesters['Summer'] && (
-														<CommandItem
-															key={`${yearKey}-summer`}
-															onSelect={() => {
-																const coursesForPreset = semesters['Summer'] as Course[];
-																setEnteredGrades(coursesForPreset.map(course => ({ code: course.code, grade: undefined })));
-																setOpenPreset(false);
-															}}
-															value={`${yearKey} - Summer`}
-														>
-															<span className="flex-1">Summer</span>
-															<Badge className="ml-2">
-																{semesters['Summer'].reduce((sum, course) => sum + course.units, 0)} Units
-															</Badge>
-														</CommandItem>
+									{hasFirstSemMajors && hasSecondSemMajors && !hasSummerMajors && (
+										<>
+											{
+												Array.from(new Set(semesters['First Semester'].flatMap(course =>
+													Array.isArray(course.major) ? course.major : course.major ? [course.major] : []
+												))).filter(Boolean).map((major) => {
+													const coursesFor1stPreset = semesters['First Semester'].filter(course =>
+														(Array.isArray(course.major) ? course.major.includes(major) : course.major === major) ||
+														course.major === undefined
+													) as Course[];
+													const coursesFor2ndPreset = semesters['Second Semester'].filter(course =>
+														(Array.isArray(course.major) ? course.major.includes(major) : course.major === major) ||
+														course.major === undefined
+													) as Course[];
+													return (
+														<CommandGroup className="pl-4 pr-0" key={`${yearKey}-major-${major}`} heading={`${major} - ${selectedProgramData?.majors?.find(m => m.code === major)?.name || major}`}>
+															<CommandItem
+																onSelect={() => {
+																	setEnteredGrades(coursesFor1stPreset.map(course => ({ code: course.code, grade: undefined, major: course.major })));
+																	setOpenPreset(false);
+																}}
+																value={`${yearKey} - ${major} - First Semester`}
+															>
+																<span className="flex-1">First Semester</span>
+																<Badge className="ml-2">
+																	{coursesFor1stPreset.reduce((sum, course) => sum + course.units, 0)} Units
+																</Badge>
+															</CommandItem>
+															<CommandItem
+																onSelect={() => {
+																	setEnteredGrades(coursesFor2ndPreset.map(course => ({ code: course.code, grade: undefined, major: course.major })));
+																	setOpenPreset(false);
+																}}
+																value={`${yearKey} - ${major} - Second Semester`}
+															>
+																<span className="flex-1">Second Semester</span>
+																<Badge className="ml-2">
+																	{coursesFor2ndPreset.reduce((sum, course) => sum + course.units, 0)} Units
+																</Badge>
+															</CommandItem>
+														</CommandGroup>
 													)
-												}
-											</>
-										)
+												})
+											}
+											{
+												semesters['Summer'] && (
+													<CommandItem
+														key={`${yearKey}-summer`}
+														onSelect={() => {
+															const coursesForPreset = semesters['Summer'] as Course[];
+															setEnteredGrades(coursesForPreset.map(course => ({ code: course.code, grade: undefined, major: course.major })));
+															setOpenPreset(false);
+														}}
+														value={`${yearKey} - Summer`}
+													>
+														<span className="flex-1">Summer</span>
+														<Badge className="ml-2">
+															{semesters['Summer'].reduce((sum, course) => sum + course.units, 0)} Units
+														</Badge>
+													</CommandItem>
+												)
+											}
+										</>
+									)
 									}
 									{
 										!hasFirstSemMajors && hasSecondSemMajors && hasSummerMajors && (
@@ -901,7 +918,7 @@ function PresetSelect({ selectedProgram, setEnteredGrades }: { selectedProgram: 
 													key={`${yearKey}-first`}
 													onSelect={() => {
 														const coursesForPreset = semesters['First Semester'] as Course[];
-														setEnteredGrades(coursesForPreset.map(course => ({ code: course.code, grade: undefined })));
+														setEnteredGrades(coursesForPreset.map(course => ({ code: course.code, grade: undefined, major: course.major })));
 														setOpenPreset(false);
 													}}
 													value={`${yearKey} - First Semester`}
@@ -910,16 +927,23 @@ function PresetSelect({ selectedProgram, setEnteredGrades }: { selectedProgram: 
 													<Badge className="ml-2">
 														{semesters['First Semester'].reduce((sum, course) => sum + course.units, 0)} Units
 													</Badge>
-												</CommandItem>
-												{
-													Array.from(new Set(semesters['Second Semester'].map(course => course.major))).filter(Boolean).map((major) => {
-														const coursesFor2ndPreset = semesters['Second Semester'].filter(course => course.major === major || course.major === undefined) as Course[];
-														const coursesFor3rdPreset = semesters['Summer'].filter(course => course.major === major || course.major === undefined) as Course[];
+												</CommandItem>												{
+													Array.from(new Set(semesters['Second Semester'].flatMap(course =>
+														Array.isArray(course.major) ? course.major : course.major ? [course.major] : []
+													))).filter(Boolean).map((major) => {
+														const coursesFor2ndPreset = semesters['Second Semester'].filter(course =>
+															(Array.isArray(course.major) ? course.major.includes(major) : course.major === major) ||
+															course.major === undefined
+														) as Course[];
+														const coursesFor3rdPreset = semesters['Summer'].filter(course =>
+															(Array.isArray(course.major) ? course.major.includes(major) : course.major === major) ||
+															course.major === undefined
+														) as Course[];
 														return (
 															<CommandGroup className="pl-4 pr-0" key={`${yearKey}-major-${major}`} heading={`${major} - ${selectedProgramData?.majors?.find(m => m.code === major)?.name || major}`}>
 																<CommandItem
 																	onSelect={() => {
-																		setEnteredGrades(coursesFor2ndPreset.map(course => ({ code: course.code, grade: undefined })));
+																		setEnteredGrades(coursesFor2ndPreset.map(course => ({ code: course.code, grade: undefined, major: course.major })));
 																		setOpenPreset(false);
 																	}}
 																	value={`${yearKey} - ${major} - Second Semester`}
@@ -934,7 +958,7 @@ function PresetSelect({ selectedProgram, setEnteredGrades }: { selectedProgram: 
 																		<CommandItem
 																			onSelect={() => {
 
-																				setEnteredGrades(coursesFor3rdPreset.map(course => ({ code: course.code, grade: undefined })));
+																				setEnteredGrades(coursesFor3rdPreset.map(course => ({ code: course.code, grade: undefined, major: course.major })));
 																				setOpenPreset(false);
 																			}}
 																			value={`${yearKey} - ${major} - Summer`}
@@ -953,22 +977,71 @@ function PresetSelect({ selectedProgram, setEnteredGrades }: { selectedProgram: 
 											</>
 										)
 									}
-									{
-										hasFirstSemMajors && !hasSecondSemMajors && hasSummerMajors && (
-											<>
-												{
-													Array.from(new Set(semesters['First Semester'].map(course => course.major))).filter(Boolean).map((major) => {
-														const coursesForPreset = semesters['First Semester'].filter(course => course.major === major || course.major === undefined) as Course[];
+									{hasFirstSemMajors && !hasSecondSemMajors && hasSummerMajors && (
+										<>
+											{
+												Array.from(new Set(semesters['First Semester'].flatMap(course =>
+													Array.isArray(course.major) ? course.major : course.major ? [course.major] : []
+												))).filter(Boolean).map((major) => {
+													const coursesForPreset = semesters['First Semester'].filter(course =>
+														(Array.isArray(course.major) ? course.major.includes(major) : course.major === major) ||
+														course.major === undefined
+													) as Course[];
+													return (
+														<CommandGroup className="pl-4 pr-0" key={`${yearKey}-major-${major}`} heading={`${major} - ${selectedProgramData?.majors?.find(m => m.code === major)?.name || major}`}>
+															<CommandItem
+																onSelect={() => {
+																	setEnteredGrades(coursesForPreset.map(course => ({ code: course.code, grade: undefined, major: course.major })));
+																	setOpenPreset(false);
+																}}
+																value={`${yearKey} - ${major} - First Semester`}
+															>
+																<span className="flex-1">First Semester</span>
+																<Badge className="ml-2">
+																	{coursesForPreset.reduce((sum, course) => sum + course.units, 0)} Units
+																</Badge>
+															</CommandItem>
+														</CommandGroup>
+													)
+												})
+											}
+											{
+												semesters['Second Semester'] && (
+													<CommandItem
+														key={`${yearKey}-second`}
+														onSelect={() => {
+															const coursesForPreset = semesters['Second Semester'] as Course[];
+															setEnteredGrades(coursesForPreset.map(course => ({ code: course.code, grade: undefined, major: course.major })));
+															setOpenPreset(false);
+														}}
+														value={`${yearKey} - Second Semester`}
+													>
+														<span className="flex-1">Second Semester</span>
+														<Badge className="ml-2">
+															{semesters['Second Semester'].reduce((sum, course) => sum + course.units, 0)} Units
+														</Badge>
+													</CommandItem>
+												)
+											}												{
+												semesters['Summer'] && (
+													Array.from(new Set(semesters['Summer'].flatMap(course =>
+														Array.isArray(course.major) ? course.major : course.major ? [course.major] : []
+													))).filter(Boolean).map((major) => {
+														const coursesForPreset = semesters['Summer'].filter(course =>
+															(Array.isArray(course.major) ? course.major.includes(major) : course.major === major) ||
+															course.major === undefined
+														) as Course[];
 														return (
 															<CommandGroup className="pl-4 pr-0" key={`${yearKey}-major-${major}`} heading={`${major} - ${selectedProgramData?.majors?.find(m => m.code === major)?.name || major}`}>
 																<CommandItem
 																	onSelect={() => {
-																		setEnteredGrades(coursesForPreset.map(course => ({ code: course.code, grade: undefined })));
+
+																		setEnteredGrades(coursesForPreset.map(course => ({ code: course.code, grade: undefined, major: course.major })));
 																		setOpenPreset(false);
 																	}}
-																	value={`${yearKey} - ${major} - First Semester`}
+																	value={`${yearKey} - ${major} - Summer`}
 																>
-																	<span className="flex-1">First Semester</span>
+																	<span className="flex-1">Summer</span>
 																	<Badge className="ml-2">
 																		{coursesForPreset.reduce((sum, course) => sum + course.units, 0)} Units
 																	</Badge>
@@ -976,104 +1049,73 @@ function PresetSelect({ selectedProgram, setEnteredGrades }: { selectedProgram: 
 															</CommandGroup>
 														)
 													})
-												}
-												{
-													semesters['Second Semester'] && (
-														<CommandItem
-															key={`${yearKey}-second`}
-															onSelect={() => {
-																const coursesForPreset = semesters['Second Semester'] as Course[];
-																setEnteredGrades(coursesForPreset.map(course => ({ code: course.code, grade: undefined })));
-																setOpenPreset(false);
-															}}
-															value={`${yearKey} - Second Semester`}
-														>
-															<span className="flex-1">Second Semester</span>
-															<Badge className="ml-2">
-																{semesters['Second Semester'].reduce((sum, course) => sum + course.units, 0)} Units
-															</Badge>
-														</CommandItem>
-													)
-												}
-												{
-													semesters['Summer'] && (
-														Array.from(new Set(semesters['Summer'].map(course => course.major))).filter(Boolean).map((major) => {
-															const coursesForPreset = semesters['Summer'].filter(course => course.major === major || course.major === undefined) as Course[];
-															return (
-																<CommandGroup className="pl-4 pr-0" key={`${yearKey}-major-${major}`} heading={`${major} - ${selectedProgramData?.majors?.find(m => m.code === major)?.name || major}`}>
-																	<CommandItem
-																		onSelect={() => {
-
-																			setEnteredGrades(coursesForPreset.map(course => ({ code: course.code, grade: undefined })));
-																			setOpenPreset(false);
-																		}}
-																		value={`${yearKey} - ${major} - Summer`}
-																	>
-																		<span className="flex-1">Summer</span>
-																		<Badge className="ml-2">
-																			{coursesForPreset.reduce((sum, course) => sum + course.units, 0)} Units
-																		</Badge>
-																	</CommandItem>
-																</CommandGroup>
-															)
-														})
-													)
-												}
-											</>
-										)
+												)
+											}
+										</>
+									)
 									}
-									{
-										hasFirstSemMajors && hasSecondSemMajors && hasSummerMajors && (
-											<>
-												{
-													Array.from(new Set(semesters['First Semester'].map(course => course.major))).filter(Boolean).map((major) => {
-														const coursesFor1stPreset = semesters['First Semester'].filter(course => course.major === major || course.major === undefined) as Course[];
-														const coursesFor2ndPreset = semesters['Second Semester'].filter(course => course.major === major || course.major === undefined) as Course[];
-														const coursesFor3rdPreset = semesters['Summer'].filter(course => course.major === major || course.major === undefined) as Course[];
-														return (
-															<CommandGroup className="pl-4 pr-0" key={`${yearKey}-major-${major}`} heading={`${major} - ${selectedProgramData?.majors?.find(m => m.code === major)?.name || major}`}>
-																<CommandItem
-																	onSelect={() => {
-																		setEnteredGrades(coursesFor1stPreset.map(course => ({ code: course.code, grade: undefined })));
-																		setOpenPreset(false);
-																	}}
-																	value={`${yearKey} - ${major} - First Semester`}
-																>
-																	<span className="flex-1">First Semester</span>
-																	<Badge className="ml-2">
-																		{coursesFor1stPreset.reduce((sum, course) => sum + course.units, 0)} Units
-																	</Badge>
-																</CommandItem>
-																<CommandItem
-																	onSelect={() => {
-																		setEnteredGrades(coursesFor2ndPreset.map(course => ({ code: course.code, grade: undefined })));
-																		setOpenPreset(false);
-																	}}
-																	value={`${yearKey} - ${major} - Second Semester`}
-																>
-																	<span className="flex-1">Second Semester</span>
-																	<Badge className="ml-2">
-																		{coursesFor2ndPreset.reduce((sum, course) => sum + course.units, 0)} Units
-																	</Badge>
-																</CommandItem>
-																<CommandItem
-																	onSelect={() => {
-																		setEnteredGrades(coursesFor3rdPreset.map(course => ({ code: course.code, grade: undefined })));
-																		setOpenPreset(false);
-																	}}
-																	value={`${yearKey} - ${major} - Summer`}
-																>
-																	<span className="flex-1">Summer</span>
-																	<Badge className="ml-2">
-																		{coursesFor3rdPreset.reduce((sum, course) => sum + course.units, 0)} Units
-																	</Badge>
-																</CommandItem>
-															</CommandGroup>
-														)
-													})
-												}
-											</>
-										)
+									{hasFirstSemMajors && hasSecondSemMajors && hasSummerMajors && (
+										<>
+											{
+												Array.from(new Set(semesters['First Semester'].flatMap(course =>
+													Array.isArray(course.major) ? course.major : course.major ? [course.major] : []
+												))).filter(Boolean).map((major) => {
+													const coursesFor1stPreset = semesters['First Semester'].filter(course =>
+														(Array.isArray(course.major) ? course.major.includes(major) : course.major === major) ||
+														course.major === undefined
+													) as Course[];
+													const coursesFor2ndPreset = semesters['Second Semester'].filter(course =>
+														(Array.isArray(course.major) ? course.major.includes(major) : course.major === major) ||
+														course.major === undefined
+													) as Course[];
+													const coursesFor3rdPreset = semesters['Summer'].filter(course =>
+														(Array.isArray(course.major) ? course.major.includes(major) : course.major === major) ||
+														course.major === undefined
+													) as Course[];
+													return (
+														<CommandGroup className="pl-4 pr-0" key={`${yearKey}-major-${major}`} heading={`${major} - ${selectedProgramData?.majors?.find(m => m.code === major)?.name || major}`}>
+															<CommandItem
+																onSelect={() => {
+																	setEnteredGrades(coursesFor1stPreset.map(course => ({ code: course.code, grade: undefined, major: course.major })));
+																	setOpenPreset(false);
+																}}
+																value={`${yearKey} - ${major} - First Semester`}
+															>
+																<span className="flex-1">First Semester</span>
+																<Badge className="ml-2">
+																	{coursesFor1stPreset.reduce((sum, course) => sum + course.units, 0)} Units
+																</Badge>
+															</CommandItem>
+															<CommandItem
+																onSelect={() => {
+																	setEnteredGrades(coursesFor2ndPreset.map(course => ({ code: course.code, grade: undefined, major: course.major })));
+																	setOpenPreset(false);
+																}}
+																value={`${yearKey} - ${major} - Second Semester`}
+															>
+																<span className="flex-1">Second Semester</span>
+																<Badge className="ml-2">
+																	{coursesFor2ndPreset.reduce((sum, course) => sum + course.units, 0)} Units
+																</Badge>
+															</CommandItem>
+															<CommandItem
+																onSelect={() => {
+																	setEnteredGrades(coursesFor3rdPreset.map(course => ({ code: course.code, grade: undefined, major: course.major })));
+																	setOpenPreset(false);
+																}}
+																value={`${yearKey} - ${major} - Summer`}
+															>
+																<span className="flex-1">Summer</span>
+																<Badge className="ml-2">
+																	{coursesFor3rdPreset.reduce((sum, course) => sum + course.units, 0)} Units
+																</Badge>
+															</CommandItem>
+														</CommandGroup>
+													)
+												})
+											}
+										</>
+									)
 									}
 								</CommandGroup>
 							</React.Fragment>
@@ -1129,10 +1171,12 @@ function SubjectRow({ selectedProgram, enteredGrade, index, enteredGrades, setEn
 	enteredGrades: EnteredGrades[];
 	setEnteredGrades: React.Dispatch<React.SetStateAction<EnteredGrades[]>>;
 	isMobile: boolean;
-}) {
-	const { courses } = data as Data;
+}) {	const { courses } = data as Data;
 	const courseChoices = courses[selectedProgram as string] || [];
-	const course = courseChoices.find(course => course.code === enteredGrade.code);
+	const course = courseChoices.find(course => 
+		course.code === enteredGrade.code && 
+		(course.major === enteredGrade.major || (!course.major && !enteredGrade.major))
+	);
 	const groupedChoices = courseChoices.reduce((acc, course) => {
 		const yearKey = course.year < 0 ? `Year ${Math.abs(course.year)}` : `Year ${course.year}`;
 		const semesterKey = course.semester === 1 ? `First Semester` : course.semester === 2 ? `Second Semester` : `Summer`;
@@ -1154,7 +1198,7 @@ function SubjectRow({ selectedProgram, enteredGrade, index, enteredGrades, setEn
 
 		const CoursesList = () => (
 			<Command
-				value={enteredGrade.code + ' - ' + course?.name}
+				value={course.code + ' - ' + course.major}
 				className='max-md:rounded-t-none'
 			>
 				<CommandInput placeholder="Search course..." />
@@ -1168,13 +1212,14 @@ function SubjectRow({ selectedProgram, enteredGrade, index, enteredGrades, setEn
 									<CommandGroup heading={`${yearKey} - ${semesterKey}`}>
 										{courses.map((course) => (
 											<CommandItem
-												key={course.code}
-												value={course.code + ' - ' + course.name}
-												disabled={enteredGrades.some(eg => eg.code === course.code)}
+												key={course.code + ' - ' + course.major}
+												value={course.code + ' - ' + course.major}
+												disabled={enteredGrades.some(eg => eg.code === course.code && eg.major === course.major)}
 												onSelect={() => {
 													const newEnteredGrades = [...enteredGrades];
 													newEnteredGrades[index].code = course.code;
 													newEnteredGrades[index].grade = undefined; // Reset grade when course changes
+													newEnteredGrades[index].major = course?.major
 													setEnteredGrades(newEnteredGrades);
 													setOpenCourseChoices(false);
 												}}
@@ -1182,7 +1227,8 @@ function SubjectRow({ selectedProgram, enteredGrade, index, enteredGrades, setEn
 												<Check
 													className={cn(
 														"mr-2 h-4 w-4",
-														enteredGrade.code === course.code ? "opacity-100" : "opacity-0"
+														enteredGrades.some(eg => eg.code === course.code && eg.major === course.major) ?
+															"opacity-100" : "opacity-0"
 													)}
 												/>
 												<span className="flex-grow">
@@ -1192,8 +1238,8 @@ function SubjectRow({ selectedProgram, enteredGrade, index, enteredGrades, setEn
 													course.major &&
 													<Badge className="ml-2">
 														{
-															Array.isArray(course.major) ? 
-																course.major.sort().join('/') : 
+															Array.isArray(course.major) ?
+																course.major.sort().join('/') :
 																course.major
 														}
 													</Badge>
@@ -1212,11 +1258,10 @@ function SubjectRow({ selectedProgram, enteredGrade, index, enteredGrades, setEn
 		if (isMobile) {
 			return (
 				<Drawer open={openCourseChoices} onOpenChange={setOpenCourseChoices}>
-					<DrawerTrigger asChild>
-						<Button variant="outline" className="w-full justify-between">
+					<DrawerTrigger asChild>						<Button variant="outline" className="w-full justify-between">
 							<p className="flex-grow overflow-hidden text-ellipsis whitespace-nowrap text-left">
 								{course?.code
-									? courses[selectedProgram as string].find((course) => course.code === enteredGrade.code)?.code + ' - ' + courses[selectedProgram as string].find((course) => course.code === enteredGrade.code)?.name
+									? course.code + ' - ' + course.name
 									: "Select course..."}
 							</p>
 							<ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
@@ -1242,11 +1287,10 @@ function SubjectRow({ selectedProgram, enteredGrade, index, enteredGrades, setEn
 						variant="outline"
 						role="combobox"
 						aria-expanded={openCourseChoices}
-						className="w-full justify-between overflow-hidden"
-					>
+						className="w-full justify-between overflow-hidden"					>
 						<p className="flex-grow overflow-hidden text-ellipsis whitespace-nowrap text-left">
 							{course?.code
-								? courses[selectedProgram as string].find((course) => course.code === enteredGrade.code)?.code + ' - ' + courses[selectedProgram as string].find((course) => course.code === enteredGrade.code)?.name
+								? course.code + ' - ' + course.name
 								: "Select course..."}
 						</p>
 						<ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
