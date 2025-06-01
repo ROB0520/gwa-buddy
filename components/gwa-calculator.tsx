@@ -1171,10 +1171,11 @@ function SubjectRow({ selectedProgram, enteredGrade, index, enteredGrades, setEn
 	enteredGrades: EnteredGrades[];
 	setEnteredGrades: React.Dispatch<React.SetStateAction<EnteredGrades[]>>;
 	isMobile: boolean;
-}) {	const { courses } = data as Data;
+}) {
+	const { courses } = data as Data;
 	const courseChoices = courses[selectedProgram as string] || [];
-	const course = courseChoices.find(course => 
-		course.code === enteredGrade.code && 
+	const course = courseChoices.find(course =>
+		course.code === enteredGrade.code &&
 		(course.major === enteredGrade.major || (!course.major && !enteredGrade.major))
 	);
 	const groupedChoices = courseChoices.reduce((acc, course) => {
@@ -1258,7 +1259,8 @@ function SubjectRow({ selectedProgram, enteredGrade, index, enteredGrades, setEn
 		if (isMobile) {
 			return (
 				<Drawer open={openCourseChoices} onOpenChange={setOpenCourseChoices}>
-					<DrawerTrigger asChild>						<Button variant="outline" className="w-full justify-between">
+					<DrawerTrigger asChild>
+						<Button variant="outline" className="w-full justify-between">
 							<p className="flex-grow overflow-hidden text-ellipsis whitespace-nowrap text-left">
 								{course?.code
 									? course.code + ' - ' + course.name
@@ -1287,7 +1289,8 @@ function SubjectRow({ selectedProgram, enteredGrade, index, enteredGrades, setEn
 						variant="outline"
 						role="combobox"
 						aria-expanded={openCourseChoices}
-						className="w-full justify-between overflow-hidden"					>
+						className="w-full justify-between overflow-hidden"
+					>
 						<p className="flex-grow overflow-hidden text-ellipsis whitespace-nowrap text-left">
 							{course?.code
 								? course.code + ' - ' + course.name
