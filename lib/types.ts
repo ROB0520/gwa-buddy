@@ -24,6 +24,7 @@ export interface Program {
     code: string;
     name: string;
     majors?: Major[];
+    coreCode?: string;
 }
 
 export interface Major {
