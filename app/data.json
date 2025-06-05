@@ -124,9 +124,71 @@
 					"name": "Crop Science"
 				}
 			]
+		},
+		"BSHM": {
+			"code": "BSHM",
+			"name": "Bachelor of Science in Hospitality Management"
 		}
 	},
 	"courses": {
+		"BSHM": [
+			{
+				"code": "GE 03",
+				"name": "The Contemporary World",
+				"units": 3,
+				"semester": 2,
+				"year": 2
+			},
+			{
+				"code": "GE 04",
+				"name": "Mathematics in the Modern World",
+				"units": 3,
+				"semester": 2,
+				"year": 2
+			},
+			{
+				"code": "HPC 4",
+				"name": "Ergonomics and Facilities Planning for the Hospitality Industry",
+				"units": 3,
+				"semester": 2,
+				"year": 2
+			},
+			{
+				"code": "HPC 6",
+				"name": "Foreign Language 1",
+				"units": 3,
+				"semester": 2,
+				"year": 2
+			},
+			{
+				"code": "HPC 3",
+				"name": "Fundamentals of Food Service Operators",
+				"units": 3,
+				"semester": 2,
+				"year": 2
+			},
+			{
+				"code": "HPC 5",
+				"name": "Introduction to Meetings, Incentives, Conventions and Exhibitions (MICE)",
+				"units": 3,
+				"semester": 2,
+				"year": 2
+			},
+			{
+				"code": "HMPE 3",
+				"name": "Food and Beverage Cost Control",
+				"units": 3,
+				"semester": 2,
+				"year": 2
+			},
+			{
+				"code": "PATHFit 04",
+				"name": "Menu of Dance, Sports, Martial Arts, Group Exercise, Outdoor and Adventure Activities",
+				"units": 2,
+				"semester": 2,
+				"year": 2
+			}
+		],
 		"BSAgri": [
 			{
 				"code": "GE 01",
