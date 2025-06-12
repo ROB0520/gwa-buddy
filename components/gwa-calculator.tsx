@@ -42,6 +42,7 @@ import { Separator } from "@/components/ui/separator";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Badge } from "./ui/badge";
+import umami from '@umami/node';
 
 interface EnteredGrades {
 	code: string;
@@ -68,6 +69,10 @@ export default function GwaCalculator() {
 	const [enteredGrades, setEnteredGrades] = useState<EnteredGrades[]>([{ code: '', grade: undefined }]);
 	const [gwa, setGwa] = useState<number | null>(null);
 	const [hasMounted, setHasMounted] = useState(false);
+	umami.init({
+		websiteId: process.env.NEXT_PUBLIC_UMAMI_WEBSITE_ID || '',
+		hostUrl: process.env.NEXT_PUBLIC_UMAMI_SCRIPT_URL || '',
+	});
 	useEffect(() => {
 		setGwa(null);
 	}, [enteredGrades, selectedProgram])
@@ -81,6 +86,11 @@ export default function GwaCalculator() {
 
 	const calculateGwa = () => {
 		if (selectedProgram) {
+			if (process.env.NEXT_PUBLIC_UMAMI_SCRIPT_URL && process.env.NEXT_PUBLIC_UMAMI_WEBSITE_ID) {
+				umami.track('program', {
+					selected: selectedProgram,
+				})
+			}
 			const programCourses = courses[selectedProgram] || [];
 			const totalUnits = enteredGrades.reduce((acc, course) => {
 				const foundCourse = programCourses.find(c => c.code === course.code);

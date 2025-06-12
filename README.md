@@ -57,50 +57,6 @@ GWA Buddy is an unofficial web-based calculator platform designed specifically f
 - Node.js 18+ 
 - npm, yarn, or pnpm package manager
 
-### Installation
-
-1. **Clone the repository**
-   ```bash
-   git clone https://github.com/ROB0520/gwa-buddy.git
-   cd gwa-buddy
-   ```
-
-2. **Install dependencies**
-   ```bash
-   npm install
-   # or
-   yarn install
-   # or
-   pnpm install
-   ```
-
-3. **Start the development server**
-   ```bash
-   npm run dev
-   # or
-   yarn dev
-   # or
-   pnpm dev
-   ```
-
-   The application will be available at `http://localhost:3000`
-
-### Available Scripts
-
-```bash
-# Start development server with Turbopack
-npm run dev
-
-# Build for production
-npm run build
-
-# Start production server
-npm run start
-
-# Run ESLint
-npm run lint
-```
-
 ## 📁 Project Structure
 
 ```
@@ -144,25 +100,17 @@ npm run lint
 
 ## 🎨 Theming & Customization
 
-The application features a comprehensive theming system:
+The application features a theming system:
 
 ### Theme Toggle
 - **System Detection**: Automatically respects user's system preference (dark/light)
-- **Manual Override**: Toggle between dark and light modes with smooth transitions
-- **Persistence**: Remembers user's choice using localStorage
-- **Dynamic Updates**: Real-time theme switching without page reload
+- **Manual Override**: Toggle between dark and light modes
 
 ### Course Data Management
 - **JSON Configuration**: Course and program data stored in `app/data.json`
 - **Type Safety**: Strongly typed course and program interfaces
 - **Easy Updates**: Simple JSON structure for adding new programs or courses
 - **Flexible Structure**: Supports multiple majors, semesters, and year levels
-
-### Customization Options
-- **Brand Colors**: Easily customizable through Tailwind CSS variables
-- **Component Variants**: Consistent design system with shadcn/ui
-- **Responsive Breakpoints**: Configurable mobile/desktop layouts
-- **Animation System**: Smooth transitions and micro-interactions
 
 ## 🔧 Configuration
 
@@ -202,22 +150,7 @@ Update the `app/data.json` file with new program data:
 Update meta tags in `app/layout.tsx`:
 - **Title and Description**: Update site metadata
 - **Open Graph Images**: Replace with your branded assets
-- **Domain Configuration**: Update metadataBase URL
-
-### Build Process
-```bash
-# Build for production
-npm run build
-
-# The build output will be in the .next/ directory
-# Upload to your hosting provider (Vercel, Netlify, etc.)
-```
-
-## 📱 PWA Features
-
-- **Installable**: Can be installed as a Progressive Web App
-- **App-like Experience**: Native app feel on mobile devices
-- **Fast Loading**: Optimized for performance and caching
+- **Domain Configuration**: Update metadataBase URL or `NEXT_PUBLIC_SITE_URL` environment variable
 
 ## 🤝 Contributing
 
@@ -226,21 +159,6 @@ npm run build
 3. Commit your changes (`git commit -m 'Add some amazing feature'`)
 4. Push to the branch (`git push origin feature/amazing-feature`)
 5. Open a Pull Request
-
-### Development Guidelines
-- Follow TypeScript best practices
-- Use Tailwind CSS for styling
-- Maintain component modularity with shadcn/ui patterns
-- Test on multiple devices and screen sizes
-- Ensure accessibility compliance (WCAG 2.1)
-- Add proper TypeScript types for new features
-
-### Code Style
-- Use ESLint configuration provided
-- Follow React hooks best practices
-- Implement proper error handling
-- Write descriptive commit messages
-- Add comments for complex logic
 
 ## 📈 Future Enhancements
 

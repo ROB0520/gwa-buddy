@@ -3,7 +3,7 @@ import { Geist, Geist_Mono } from "next/font/google";
 import { ThemeProvider } from "@/components/theme-provider"
 import "./globals.css";
 import { ThemeToggle } from "@/components/theme-toggle";
-import Head from "next/head";
+import Script from 'next/script'
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -21,9 +21,10 @@ export const metadata: Metadata = {
   authors: [
     {
       name: 'alecz.r',
+      url: 'https://aleczr.link',
     }
   ],
-  metadataBase: new URL('https://gwa.vps.aleczr.link'),
+  metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL || 'https://gwa.vps.aleczr.link'),
   openGraph: {
     images: '/og-image.png',
   },
@@ -41,9 +42,16 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" suppressHydrationWarning>
-      <Head>
-        <script defer src="https://umami.vps.aleczr.link/script.js" data-website-id="f9cd8bfd-2b2c-498b-9214-d5aa9056d57f"></script>
-      </Head>
+      {
+        process.env.NEXT_PUBLIC_UMAMI_SCRIPT_URL &&
+        process.env.NEXT_PUBLIC_UMAMI_WEBSITE_ID && (
+          <Script
+            src={process.env.NEXT_PUBLIC_UMAMI_SCRIPT_URL}
+            data-website-id={process.env.NEXT_PUBLIC_UMAMI_WEBSITE_ID}
+            strategy="lazyOnload"
+          />
+        )
+      }
       <body className={`${geistSans.variable} ${geistMono.variable} antialiased`}>
         <ThemeProvider attribute="class" defaultTheme="system" enableSystem disableTransitionOnChange>
           {children}
