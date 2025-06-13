@@ -349,7 +349,10 @@ export default function GwaCalculator() {
 				<Button
 					className="w-full md:w-auto"
 					onClick={calculateGwa}
-					{...(selectedProgram ? { ['data-umami-event-selected']: selectedProgram } : {})}
+					{...(selectedProgram ? { 
+						['data-umami-event']: 'calculate-gwa',
+						['data-umami-event-program']: selectedProgram
+					} : {})}
 					disabled={
 						!selectedProgram ||
 						enteredGrades.length === 0 ||
