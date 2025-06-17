@@ -39,7 +39,7 @@ export default function Home() {
       <Card className="w-full max-w-3xl">
         <CardHeader>
           <CardTitle>NEUST Portal Directory</CardTitle>
-            <CardDescription>Find your department&apos;s portal and check its current status</CardDescription>
+            <CardDescription>Check NEUST Portal server status from a single site</CardDescription>
         </CardHeader>
         <CardContent>
             <p>
