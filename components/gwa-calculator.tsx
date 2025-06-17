@@ -68,8 +68,9 @@ export default function GwaCalculator() {
 	const [enteredGrades, setEnteredGrades] = useState<EnteredGrades[]>([{ code: '', grade: undefined }]);
 	const [gwa, setGwa] = useState<number | null>(null);
 	const [hasMounted, setHasMounted] = useState(false);
+	const [usedSemPreset, setUsedSemPreset] = useState(false);
 	useEffect(() => {
-		setGwa(null);
+		setGwa(null);	
 	}, [enteredGrades, selectedProgram])
 	useEffect(() => {
 		setEnteredGrades([{ code: '', grade: undefined }]);
@@ -102,6 +103,20 @@ export default function GwaCalculator() {
 		}
 	}
 
+	const checkIfQualifiedForHonorSociety = () => {
+		if (selectedProgram == null) return "Select a program first";
+		if (gwa === null) return "Calculate your GWA first";
+		if (!usedSemPreset) return "Please use a Semester preset for accurate NEUST Honor Society qualification.";
+		if (enteredGrades.filter(eg => eg.grade === undefined || eg.grade < 1.0).length > 0) return "You must enter all grades first";
+		const gradesBelowThreshold = enteredGrades.filter(eg => {
+			return eg.grade !== undefined && eg.grade >= 2.25;
+		})
+		if (gradesBelowThreshold.length > 0) {
+			return `You have ${gradesBelowThreshold.length} grade(s) below 2.25. This semester is not qualified for the NEUST Honor Society.`;
+		}
+		return `This semester is qualified for the NEUST Honor Society!`;
+	}
+
 	return (
 		<Card className="w-full max-w-3xl">
 			<CardHeader>
@@ -110,8 +125,8 @@ export default function GwaCalculator() {
 			</CardHeader>
 			<CardContent>
 				<div className="flex flex-col gap-4 md:gap-6">
-					<ProgramSelect selectedProgram={selectedProgram} setSelectedProgram={setSelectedProgram} />
-					<PresetSelect selectedProgram={selectedProgram} setEnteredGrades={setEnteredGrades} />
+					<ProgramSelect selectedProgram={selectedProgram} setSelectedProgram={setSelectedProgram} setUsedSemPreset={setUsedSemPreset} />
+					<PresetSelect selectedProgram={selectedProgram} setEnteredGrades={setEnteredGrades} setUsedSemPreset={setUsedSemPreset} />
 
 					<div className="grid md:grid-cols-[1fr_auto_auto_auto] gap-x-1 gap-y-4 w-full">
 						{selectedProgram ? (
@@ -127,6 +142,7 @@ export default function GwaCalculator() {
 												index={index}
 												enteredGrades={enteredGrades}
 												setEnteredGrades={setEnteredGrades}
+												setUsedSemPreset={setUsedSemPreset}
 											/>
 										)
 									})
@@ -159,6 +175,8 @@ export default function GwaCalculator() {
 										{gwa >= 2 && gwa < 3 && 'You are doing okay. Keep it up!'}
 										{gwa > 1.5 && gwa < 2 && 'You are doing great! Keep it up!'}
 										{gwa <= 1.5 && 'You are doing excellent! Keep it up!'}
+										<br />
+										<p className="italic text-xs">{checkIfQualifiedForHonorSociety()}</p>
 									</CardDescription>
 								</CardHeader>
 								<CardContent>
@@ -331,9 +349,10 @@ export default function GwaCalculator() {
 							}, 100);
 							return newEnteredGrades;
 						});
+						setUsedSemPreset(false);
 					}}
 				>
-					Add Subject
+					Add Course
 				</Button>
 				<Button
 					variant='destructive'
@@ -366,7 +385,7 @@ export default function GwaCalculator() {
 	)
 }
 
-function ProgramSelect({ selectedProgram, setSelectedProgram }: { selectedProgram: keyof typeof data.programs | undefined; setSelectedProgram: React.Dispatch<React.SetStateAction<keyof typeof data.programs | undefined>> }) {
+function ProgramSelect({ selectedProgram, setSelectedProgram, setUsedSemPreset }: { selectedProgram: keyof typeof data.programs | undefined; setSelectedProgram: React.Dispatch<React.SetStateAction<keyof typeof data.programs | undefined>>; setUsedSemPreset: React.Dispatch<React.SetStateAction<boolean>> }) {
 	const [openProgram, setOpenProgram] = useState(false);
 	const { programs: rawPrograms } = data as Data;
 	const isMobile = useIsMobile()
@@ -390,6 +409,7 @@ function ProgramSelect({ selectedProgram, setSelectedProgram }: { selectedProgra
 							value={code + ' - ' + name}
 							onSelect={() => {
 								setSelectedProgram(code as keyof typeof data.programs);
+								setUsedSemPreset(false);
 								setOpenProgram(false);
 							}}
 						>
@@ -461,7 +481,7 @@ function ProgramSelect({ selectedProgram, setSelectedProgram }: { selectedProgra
 	)
 }
 
-function PresetSelect({ selectedProgram, setEnteredGrades }: { selectedProgram: keyof typeof data.programs | undefined; setEnteredGrades: React.Dispatch<React.SetStateAction<EnteredGrades[]>> }) {
+function PresetSelect({ selectedProgram, setEnteredGrades, setUsedSemPreset }: { selectedProgram: keyof typeof data.programs | undefined; setEnteredGrades: React.Dispatch<React.SetStateAction<EnteredGrades[]>>; setUsedSemPreset: React.Dispatch<React.SetStateAction<boolean>> }) {
 	const [openPreset, setOpenPreset] = useState(false);
 	const selectedProgramData = selectedProgram ? data.programs[selectedProgram as keyof typeof data.programs] as Program : undefined;
 	const selectedProgramCourses = data.courses[selectedProgram as keyof typeof data.courses] as Course[] || [];
@@ -550,6 +570,7 @@ function PresetSelect({ selectedProgram, setEnteredGrades }: { selectedProgram: 
 				key={`${yearKey}-${semesterKey.toLowerCase()}-core`}
 				onSelect={() => {
 					setEnteredGrades(coreCoursesForPreset.map(course => ({ code: course.code, grade: undefined, major: course.major })));
+					setUsedSemPreset(true);
 					setOpenPreset(false);
 				}}
 				value={`${yearKey} - Core Program - ${semesterLabel}`}
@@ -606,6 +627,7 @@ function PresetSelect({ selectedProgram, setEnteredGrades }: { selectedProgram: 
 				key={`${yearKey} - ${major} - ${semesterLabel}`}
 				onSelect={() => {
 					setEnteredGrades(coursesForPreset.map(course => ({ code: course.code, grade: undefined, major: course.major })));
+					setUsedSemPreset(true);
 					setOpenPreset(false);
 				}}
 				value={`${yearKey} - ${major} - ${semesterLabel}`}
@@ -653,6 +675,7 @@ function PresetSelect({ selectedProgram, setEnteredGrades }: { selectedProgram: 
 					key={`${yearKey}-${semesterKey.toLowerCase().replace(' ', '-')}`}
 					onSelect={() => {
 						setEnteredGrades(coursesForPreset.map(course => ({ code: course.code, grade: undefined, major: course.major })));
+						setUsedSemPreset(true);
 						setOpenPreset(false);
 					}}
 					value={`${yearKey} - ${semesterKey}`}
@@ -688,6 +711,7 @@ function PresetSelect({ selectedProgram, setEnteredGrades }: { selectedProgram: 
 											<CommandItem
 												onSelect={() => {
 													setEnteredGrades(coursesForCore.map(course => ({ code: course.code, grade: undefined, major: course.major })));
+													setUsedSemPreset(false);
 													setOpenPreset(false);
 												}}
 												value="All"
@@ -709,6 +733,7 @@ function PresetSelect({ selectedProgram, setEnteredGrades }: { selectedProgram: 
 													key={major.code}
 													onSelect={() => {
 														setEnteredGrades(coursesForMajor.map(course => ({ code: course.code, grade: undefined, major: course.major })));
+														setUsedSemPreset(false);
 														setOpenPreset(false);
 													}}
 													value={`All-${major.code}`}
@@ -728,6 +753,7 @@ function PresetSelect({ selectedProgram, setEnteredGrades }: { selectedProgram: 
 								<CommandItem
 									onSelect={() => {
 										setEnteredGrades(selectedProgramCourses.map(course => ({ code: course.code, grade: undefined, major: course.major })));
+										setUsedSemPreset(false);
 										setOpenPreset(false);
 									}}
 									value="All"
@@ -770,6 +796,7 @@ function PresetSelect({ selectedProgram, setEnteredGrades }: { selectedProgram: 
 																key={`${yearKey}-core`}
 																onSelect={() => {
 																	setEnteredGrades(coreCourses.map(course => ({ code: course.code, grade: undefined, major: course.major })));
+																	setUsedSemPreset(false);
 																	setOpenPreset(false);
 																}}
 																value={`${yearKey}-All`}
@@ -794,6 +821,7 @@ function PresetSelect({ selectedProgram, setEnteredGrades }: { selectedProgram: 
 																key={`${yearKey}-${major}`}
 																onSelect={() => {
 																	setEnteredGrades(coursesForMajor.map(course => ({ code: course.code, grade: undefined, major: course.major })));
+																	setUsedSemPreset(false);
 																	setOpenPreset(false);
 																}}
 																value={`${yearKey}-${major}`}
@@ -813,6 +841,7 @@ function PresetSelect({ selectedProgram, setEnteredGrades }: { selectedProgram: 
 											onSelect={() => {
 												const allCourses = Object.values(semesters).flat();
 												setEnteredGrades(allCourses.map(course => ({ code: course.code, grade: undefined, major: course.major })));
+												setUsedSemPreset(false);
 												setOpenPreset(false);
 											}}
 											value={yearKey}
@@ -879,6 +908,7 @@ function PresetSelect({ selectedProgram, setEnteredGrades }: { selectedProgram: 
 																key={`${yearKey}-first-core`}
 																onSelect={() => {
 																	setEnteredGrades(coreCoursesForPreset.map(course => ({ code: course.code, grade: undefined, major: course.major })));
+																	setUsedSemPreset(true);
 																	setOpenPreset(false);
 																}}
 																value={`${yearKey} - Core Program - First Semester`}
@@ -902,6 +932,7 @@ function PresetSelect({ selectedProgram, setEnteredGrades }: { selectedProgram: 
 																key={`${yearKey}-second-core`}
 																onSelect={() => {
 																	setEnteredGrades(coreCoursesForPreset.map(course => ({ code: course.code, grade: undefined, major: course.major })));
+																	setUsedSemPreset(true);
 																	setOpenPreset(false);
 																}}
 																value={`${yearKey} - Core Program - Second Semester`}
@@ -925,6 +956,7 @@ function PresetSelect({ selectedProgram, setEnteredGrades }: { selectedProgram: 
 																key={`${yearKey}-summer-core`}
 																onSelect={() => {
 																	setEnteredGrades(coreCoursesForPreset.map(course => ({ code: course.code, grade: undefined, major: course.major })));
+																	setUsedSemPreset(true);
 																	setOpenPreset(false);
 																}}
 																value={`${yearKey} - Core Program - Summer`}
@@ -954,6 +986,7 @@ function PresetSelect({ selectedProgram, setEnteredGrades }: { selectedProgram: 
 																<CommandItem
 																	onSelect={() => {
 																		setEnteredGrades(coursesFor2ndPreset.map(course => ({ code: course.code, grade: undefined, major: course.major })));
+																		setUsedSemPreset(true);
 																		setOpenPreset(false);
 																	}}
 																	value={`${yearKey} - ${major} - Second Semester`}
@@ -968,6 +1001,7 @@ function PresetSelect({ selectedProgram, setEnteredGrades }: { selectedProgram: 
 																		<CommandItem
 																			onSelect={() => {
 																				setEnteredGrades(coursesFor3rdPreset.map(course => ({ code: course.code, grade: undefined, major: course.major })));
+																				setUsedSemPreset(true);
 																				setOpenPreset(false);
 																			}}
 																			value={`${yearKey} - ${major} - Summer`}
@@ -988,6 +1022,7 @@ function PresetSelect({ selectedProgram, setEnteredGrades }: { selectedProgram: 
 													onSelect={() => {
 														const coursesForPreset = semesters['First Semester'] as Course[];
 														setEnteredGrades(coursesForPreset.map(course => ({ code: course.code, grade: undefined, major: course.major })));
+														setUsedSemPreset(true);
 														setOpenPreset(false);
 													}}
 													value={`${yearKey} - First Semester`}
@@ -1077,13 +1112,14 @@ function PresetSelect({ selectedProgram, setEnteredGrades }: { selectedProgram: 
 	)
 }
 
-function SubjectRow({ selectedProgram, enteredGrade, index, enteredGrades, setEnteredGrades, isMobile }: {
+function SubjectRow({ selectedProgram, enteredGrade, index, enteredGrades, setEnteredGrades, isMobile, setUsedSemPreset }: {
 	selectedProgram: keyof typeof data.programs | undefined;
 	enteredGrade: EnteredGrades;
 	index: number;
 	enteredGrades: EnteredGrades[];
 	setEnteredGrades: React.Dispatch<React.SetStateAction<EnteredGrades[]>>;
 	isMobile: boolean;
+	setUsedSemPreset: React.Dispatch<React.SetStateAction<boolean>>;
 }) {
 	const { courses } = data as Data;
 	const courseChoices = courses[selectedProgram as string] || [];
@@ -1229,9 +1265,9 @@ function SubjectRow({ selectedProgram, enteredGrade, index, enteredGrades, setEn
 				<p className="text-sm font-medium">Units</p>
 				<Input
 					type="number"
-					className="w-full md:w-16"
+					className="w-full md:w-16 cursor-not-allowed pointer-events-none"
+					tabIndex={-1}
 					value={course?.units || ''}
-					disabled
 					readOnly
 				/>
 			</div>
@@ -1268,6 +1304,7 @@ function SubjectRow({ selectedProgram, enteredGrade, index, enteredGrades, setEn
 				className="ml-auto md:ml-1 md:mt-auto mb-1"
 				onClick={() => {
 					setEnteredGrades(prev => prev.filter((_, i) => i !== index));
+					setUsedSemPreset(false);
 				}}
 			>
 				<Trash2 />
