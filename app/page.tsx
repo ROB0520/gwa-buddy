@@ -32,7 +32,7 @@ export default function Home() {
           <p>Want to add your course to GWA Buddy or have suggestions for improvements? I&apos;d love to hear from you!</p>
         </CardContent>
         <CardFooter className="flex justify-center">
-          <p>Email me at <a href="mailto:gwabuddy@aleczr.link" className="underline text-primary hover:text-primary/80">gwabuddy@aleczr.link</a></p>
+          <p>Email me at <Link href="mailto:gwabuddy@aleczr.link" className="underline text-primary hover:text-primary/80">gwabuddy@aleczr.link</Link></p>
         </CardFooter>
       </Card>
       <GwaCalculator />
@@ -43,7 +43,7 @@ export default function Home() {
         </CardHeader>
         <CardContent>
             <p>
-              Quickly find which server hosts your department&apos;s portal and check real-time server status from one place with another site that I made called the <a href="https://neust-portal.link" className="underline text-primary underline-offset-2 hover:text-primary/80">NEUST Portal Directory</a>.
+              Check the real-time NEUST Portal server status from one place with another site that I made called the <Link href="https://neust-portal.link" className="underline text-primary underline-offset-2 hover:text-primary/80">NEUST Portal Directory</Link>.
             </p>
         </CardContent>
         <CardFooter className="flex justify-end">
