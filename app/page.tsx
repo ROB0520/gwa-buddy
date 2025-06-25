@@ -32,7 +32,7 @@ export default function Home() {
           <p>Want to add your course to GWA Buddy or have suggestions for improvements? I&apos;d love to hear from you!</p>
         </CardContent>
         <CardFooter className="flex justify-center">
-          <p>Email me at <Link href="mailto:gwabuddy@aleczr.link" className="underline text-primary hover:text-primary/80">gwabuddy@aleczr.link</Link></p>
+          <p>Email me at <Link href="mailto:gwabuddy@aleczr.link?subject=GWA%20Buddy%20Suggestions" className="underline text-primary hover:text-primary/80">gwabuddy@aleczr.link</Link></p>
         </CardFooter>
       </Card>
       <GwaCalculator />
