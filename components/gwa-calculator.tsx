@@ -1139,7 +1139,6 @@ function SubjectRow({ selectedProgram, enteredGrade, index, enteredGrades, setEn
 			<div className="flex flex-col gap-1 overflow-x-hidden p-1">
 				<p className="text-sm font-medium">Units</p>
 				<Input
-					type="number"
 					className="w-full md:w-16 cursor-not-allowed pointer-events-none"
 					tabIndex={-1}
 					value={course?.units || ''}
