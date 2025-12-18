@@ -146,9 +146,86 @@
 					"name": "Home Economics"
 				}
 			]
-		}
-	},
+			},
+			"BSpNEd": {
+				"code": "BSpNEd",
+				"name": "Bachelor of Special Needs Education",
+				"majors": [
+					{
+						"code": "ECE",
+						"name": "Early Childhood Education"
+					}
+				]
+			}
+		},
 	"courses": {
+		"BSpNEd": [
+			{
+				"code": "FIL 3",
+				"name": "Dalumat ng Filipino",
+				"units": 3,
+				"semester": 1,
+				"year": 2
+			},
+			{
+				"code": "PROF ED 04",
+				"name": "Technology for Teaching and Learning 1",
+				"units": 3,
+				"semester": 1,
+				"year": 2
+			},
+			{
+				"code": "PROF ED 05",
+				"name": "The Teacher and the School Curriculum",
+				"units": 3,
+				"semester": 1,
+				"year": 2
+			},
+			{
+				"code": "PROF ED 06",
+				"name": "Assessment in Learning 1",
+				"units": 3,
+				"semester": 1,
+				"year": 2
+			},
+			{
+				"code": "SNED 5",
+				"name": "Curriculum and Pedagogy in Inclusive Education",
+				"units": 3,
+				"semester": 1,
+				"year": 2
+			},
+			{
+				"code": "SNED 6",
+				"name": "Educational Assessment of Students with Special Needs",
+				"units": 3,
+				"semester": 1,
+				"year": 2
+			},
+			{
+				"code": "SNED-ECE 1",
+				"name": "Creative Arts, Music and Movement in Early Childhood Education",
+				"units": 3,
+				"semester": 1,
+				"year": 2,
+				"major": "ECE"
+			},
+			{
+				"code": "SNED-ECE 2",
+				"name": "Arts and Movement in Early Childhood Education",
+				"units": 3,
+				"semester": 1,
+				"year": 2,
+				"major": "ECE"
+			},
+			{
+				"code": "PATHFit 03",
+				"name": "Physical Activities Towards Health and Fitness 3",
+				"units": 2,
+				"semester": 1,
+				"year": 2
+			}
+		],
 		"BTLEd": [
 			{
 				"code": "PE 1",
