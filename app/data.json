@@ -146,18 +146,22 @@
 					"name": "Home Economics"
 				}
 			]
-			},
-			"BSpNEd": {
-				"code": "BSpNEd",
-				"name": "Bachelor of Special Needs Education",
-				"majors": [
-					{
-						"code": "ECE",
-						"name": "Early Childhood Education"
-					}
-				]
-			}
 		},
+		"BSpNEd": {
+			"code": "BSpNEd",
+			"name": "Bachelor of Special Needs Education",
+			"majors": [
+				{
+					"code": "ECE",
+					"name": "Early Childhood Education"
+				}
+			]
+		},
+		"BECEd": {
+			"code": "BECEd",
+			"name": "Bachelor of Early Childhood Education"
+		}
+	},
 	"courses": {
 		"BSpNEd": [
 			{
@@ -224,6 +228,64 @@
 				"units": 2,
 				"semester": 1,
 				"year": 2
+			}
+		],
+		"BECEd": [
+			{
+				"code": "PATHFit 01",
+				"name": "Physical Activities Toward Health and Fitness 1: Movement Competency Training",
+				"units": 2,
+				"semester": 1,
+				"year": 1
+			},
+			{
+				"code": "FIL 1",
+				"name": "Kontekswalisadong Komunikasyon sa Filipino (KOMFIL)",
+				"units": 3,
+				"semester": 1,
+				"year": 1
+			},
+			{
+				"code": "GE 02",
+				"name": "Readings in Philippine History",
+				"units": 3,
+				"semester": 1,
+				"year": 1
+			},
+			{
+				"code": "GE 04",
+				"name": "Mathematics in the Modern World",
+				"units": 3,
+				"semester": 1,
+				"year": 1
+			},
+			{
+				"code": "GE 01",
+				"name": "Understanding the Self",
+				"units": 3,
+				"semester": 1,
+				"year": 1
+			},
+			{
+				"code": "GE 05",
+				"name": "Purposive Communication",
+				"units": 3,
+				"semester": 1,
+				"year": 1
+			},
+			{
+				"code": "PROF ED 01",
+				"name": "The Teaching Profession",
+				"units": 3,
+				"semester": 1,
+				"year": 1
+			},
+			{
+				"code": "PROF ED 02",
+				"name": "The Child and Adolescent Learner and Learning Principles",
+				"units": 3,
+				"semester": 1,
+				"year": 1
 			}
 		],
 		"BTLEd": [
