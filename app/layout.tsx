@@ -1,19 +1,16 @@
 import type { Metadata } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
-import { ThemeProvider } from "@/components/theme-provider"
+import { Figtree, Fira_Code } from "next/font/google";
 import "./globals.css";
-import { ThemeToggle } from "@/components/theme-toggle";
-import Script from 'next/script'
+import { NuqsAdapter } from "nuqs/adapters/next";
+import { ThemeProvider } from "@/components/theme-provider";
+import { Toaster } from "@/components/ui/sonner";
+import { ThemeSwitcher } from "@/components/theme-switcher";
+import Script from "next/script";
+import { Suspense } from "react";
 
-const geistSans = Geist({
-  variable: "--font-geist-sans",
-  subsets: ["latin"],
-});
+const figtree = Figtree({ subsets: ['latin'], variable: '--font-sans' });
 
-const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
-  subsets: ["latin"],
-});
+const firaCode = Fira_Code({ subsets: ['latin'], variable: '--font-mono' });
 
 export const metadata: Metadata = {
   title: "GWA Buddy",
@@ -30,7 +27,7 @@ export const metadata: Metadata = {
   },
   other: {
     "darkreader-lock": "true",
-    "theme-color": "#00c951",
+    "theme-color": "#15ba81",
     "apple-mobile-web-app-title": "GWA Buddy",
   },
 };
@@ -41,7 +38,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" suppressHydrationWarning>
+    <html lang="en" className={`${figtree.variable} ${firaCode.variable}`} suppressHydrationWarning>
       {
         process.env.NEXT_PUBLIC_UMAMI_SCRIPT_URL &&
         process.env.NEXT_PUBLIC_UMAMI_WEBSITE_ID && (
@@ -52,12 +49,30 @@ export default function RootLayout({
           />
         )
       }
-      <body className={`${geistSans.variable} ${geistMono.variable} antialiased`}>
-        <ThemeProvider attribute="class" defaultTheme="system" enableSystem disableTransitionOnChange>
-          {children}
-          <div className="fixed bottom-4 right-4 z-[900]">
-            <ThemeToggle />
-          </div>
+      <body
+        className='antialiased'
+      >
+        <ThemeProvider
+          attribute="class"
+          defaultTheme="system"
+          enableSystem
+          disableTransitionOnChange
+        >
+          <NuqsAdapter>
+            <Suspense>
+              {children}
+            </Suspense>
+            <Toaster
+              position="bottom-left"
+              closeButton
+              richColors
+            />
+            <div
+              className="fixed top-4 right-4"
+            >
+              <ThemeSwitcher />
+            </div>
+          </NuqsAdapter>
         </ThemeProvider>
       </body>
     </html>

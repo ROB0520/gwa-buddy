@@ -1,0 +1,382 @@
+import { Curriculum } from "@/data/types";
+
+const majors = [
+	{
+		code: "WST",
+		name: "Web Systems Technology"
+	},
+	{
+		code: "DST",
+		name: "Database Systems Technology"
+	},
+	{
+		code: "NST",
+		name: "Network Systems Technology"
+	}
+] as const;
+
+export default {
+	name: "Latest Curriculum",
+	internalName: "latest",
+	majors,
+	term: [
+		{
+			year: 1,
+			semester: 1,
+			courses: [
+				{
+					code: "CC-100",
+					name: "Introduction to Computing",
+					units: 3
+				},
+				{
+					code: "CC-101",
+					name: "Computer Programming 1, Fundamentals",
+					units: 3
+				},
+				{
+					code: "IT-NET01",
+					name: "Networking 1, Fundamentals",
+					units: 3
+				},
+				{
+					code: "GE 04",
+					name: "Mathematics in the Modern World",
+					units: 3
+				},
+				{
+					code: "GE 05",
+					name: "Purposive Communication",
+					units: 3
+				},
+				{
+					code: "FIL 1",
+					name: "Kontekswalisadong Komunikasyon sa Filipino",
+					units: 3
+				},
+				{
+					code: "GE 07",
+					name: "Science, Technology and Society",
+					units: 3
+				},
+				{
+					code: "PATHFit 01",
+					name: "Movement Competency Training",
+					units: 2
+				}
+			]
+		},
+		{
+			year: 1,
+			semester: 2,
+			courses: [
+				{
+					code: "CC-102",
+					name: "Computer Programming 2, Intermediate",
+					units: 3
+				},
+				{
+					code: "IT-NET02",
+					name: "Networking 1, Advanced",
+					units: 3
+				},
+				{
+					code: "IT-WS01",
+					name: "Web Systems and Technologies 1",
+					units: 3
+				},
+				{
+					code: "GE 01",
+					name: "Understanding the Self",
+					units: 3
+				},
+				{
+					code: "GE 02",
+					name: "Mga Babasahin Hinggil sa Kasaysayan ng Pilipinas",
+					units: 3
+				},
+				{
+					code: "FIL 2",
+					name: "Filipino sa Iba't Ibang Disiplina",
+					units: 3
+				},
+				{
+					code: "PATHFit 02",
+					name: "Exercise-based Fitness Activities",
+					units: 2
+				}
+			]
+		},
+		{
+			year: 2,
+			semester: 1,
+			courses: [
+				{
+					code: "CC-103",
+					name: "Data Structures and Algorithms",
+					units: 3
+				},
+				{
+					code: "IT-PF01",
+					name: "Object-Oriented Programming 1",
+					units: 3
+				},
+				{
+					code: "IT-WS02",
+					name: "Web Systems and Technologies 2",
+					units: 3
+				},
+				{
+					code: "IT-MS01",
+					name: "Discrete Mathematics",
+					units: 3
+				},
+				{
+					code: "GE 06",
+					name: "Art Appreciation",
+					units: 3
+				},
+				{
+					code: "GE 08",
+					name: "Ethics",
+					units: 3
+				},
+				{
+					code: "FIL 3",
+					name: "Dalumat Ng/Sa Filipino",
+					units: 3
+				},
+				{
+					code: "PATHFit 03",
+					name: "Choice of Dance, Sports, Martial Arts, Group Exercise, Outdoor and Adventure Activities",
+					units: 2
+				}
+			]
+		},
+		{
+			year: 2,
+			semester: 2,
+			courses: [
+				{
+					code: "CC-104",
+					name: "Information Management",
+					units: 3
+				},
+				{
+					code: "CC-105",
+					name: "Applications Development and Emerging Technologies",
+					units: 3
+				},
+				{
+					code: "IT-PF02",
+					name: "Object-Oriented Programming 2",
+					units: 3
+				},
+				{
+					code: "IT-HCI01",
+					name: "Introduction to Human Computer Interaction",
+					units: 3
+				},
+				{
+					code: "IT-MS02",
+					name: "Quantitative Methods",
+					units: 3
+				},
+				{
+					code: "GE 03",
+					name: "The Contemporary World",
+					units: 3
+				},
+				{
+					code: "GE 09",
+					name: "The Life and Works of Rizal",
+					units: 3
+				},
+				{
+					code: "PATHFit 04",
+					name: "Choice of Dance, Sports, Martial Arts, Group Exercise, Outdoor and Adventure Activities",
+					units: 2
+				}
+			]
+		},
+		{
+			year: 3,
+			semester: 1,
+			courses: [
+				{
+					code: "IT-IM01",
+					name: "Advanced Database Systems",
+					units: 3
+				},
+				{
+					code: "IT-IPT01",
+					name: "Integrative Programming and Technologies 1",
+					units: 3
+				},
+				{
+					code: "IT-SA01",
+					name: "Systems Administration and Maintenance",
+					units: 3
+				},
+				{
+					code: "IT-IAS01",
+					name: "Information Assurance and Security 1",
+					units: 3
+				},
+				{
+					code: "IT-PT02",
+					name: "Mobile App Development",
+					units: 3
+				},
+				{
+					code: "ELP",
+					name: "English for Information Technologist",
+					units: 3
+				}
+			]
+		},
+		{
+			year: 3,
+			semester: 2,
+			courses: [
+				{
+					code: "IT-IAS02",
+					name: "Information Assurance and Security 2",
+					units: 3
+				},
+				{
+					code: "IT-CAP01",
+					name: "Capstone Project and Research 1",
+					units: 3
+				},
+				{
+					code: "IT-WS03",
+					name: "Web Systems and Technologies 3",
+					units: 3,
+					majorCode: "WST"
+				},
+				{
+					code: "IT-WS04",
+					name: "Web Systems Vulnerabilities",
+					units: 3,
+					majorCode: "WST"
+				},
+				{
+					code: "IT-WS05",
+					name: "Web Security",
+					units: 3,
+					majorCode: "WST"
+				},
+				{
+					code: "IT-IM02",
+					name: "Database Systems Technology 1 (SQL)",
+					units: 3,
+					majorCode: "DST"
+				},
+				{
+					code: "IT-IM03",
+					name: "Database Systems Technology 2 (NoSQL)",
+					units: 3,
+					majorCode: "DST"
+				},
+				{
+					code: "IT-IM04",
+					name: "Database Security",
+					units: 3,
+					majorCode: "DST"
+				},
+				{
+					code: "IT-NET03",
+					name: "Network Systems Technology",
+					units: 3,
+					majorCode: "NST"
+				},
+				{
+					code: "IT-NET04",
+					name: "Routing and Switching",
+					units: 3,
+					majorCode: "NST"
+				},
+				{
+					code: "IT-NET05",
+					name: "Network Security",
+					units: 3,
+					majorCode: "NST"
+				}
+			]
+		},
+		{
+			year: 4,
+			semester: 1,
+			courses: [
+				{
+					code: "IT-SIA01",
+					name: "Systems Integration and Architecture",
+					units: 3
+				},
+				{
+					code: "IT-SP01",
+					name: "Social and Professional Issues",
+					units: 3
+				},
+				{
+					code: "IT-CAP02",
+					name: "Capstone Project and Research 2",
+					units: 3
+				},
+				{
+					code: "IT-SW01",
+					name: "Seminars and Workshops",
+					units: 2
+				},
+				{
+					code: "IT-WS06",
+					name: "Web Digital Media",
+					units: 3,
+					majorCode: "WST"
+				},
+				{
+					code: "IT-WS07",
+					name: "Mobile Application Technology",
+					units: 3,
+					majorCode: "WST"
+				},
+				{
+					code: "IT-IM05",
+					name: "Data Warehousing and Data Mining",
+					units: 3,
+					majorCode: "DST"
+				},
+				{
+					code: "IT-IM06",
+					name: "Geographic Information Systems",
+					units: 3,
+					majorCode: "DST"
+				},
+				{
+					code: "IT-NET06",
+					name: "Network Application Areas",
+					units: 3,
+					majorCode: "NST"
+				},
+				{
+					code: "IT-NET07",
+					name: "Network Management",
+					units: 3,
+					majorCode: "NST"
+				}
+			]
+		},
+		{
+			year: 4,
+			semester: 2,
+			courses: [
+				{
+					code: "IT-OJT01",
+					name: "Practicum (OJT)",
+					units: 6
+				}
+			]
+		}
+	]
+} satisfies Curriculum<typeof majors>;
