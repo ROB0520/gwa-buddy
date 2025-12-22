@@ -761,6 +761,7 @@ export default function Page() {
 				orientation={isMobile ? 'vertical' : 'horizontal'}
 			>
 				<ScrollSpyNav className="sticky top-15 md:top-20 h-fit z-50 bg-card text-card-foreground p-2 rounded-lg border shadow *:data-[state=active]:text-accent-foreground overflow-x-auto *:max-md:whitespace-nowrap md:max-w-48 *:[&_svg]:size-4 *:[&_svg]:shrink-0 *:flex *:items-center *:justify-start *:gap-2">
+					<ScrollSpyLink value="system-of-grading"><CalculatorIcon /> System of Grading</ScrollSpyLink>
 					<ScrollSpyLink value="latin-honors"><GraduationCapIcon /> Latin Honors</ScrollSpyLink>
 					<ScrollSpyLink value="academic-distinction"><ScrollTextIcon /> Academic Distinction Award</ScrollSpyLink>
 					<ScrollSpyLink value="awards-comparison"><ScaleIcon /> Awards Comparison</ScrollSpyLink>
@@ -776,6 +777,86 @@ export default function Page() {
 							The information provided in this section is based on the NEUST Student Handbook (2023 Edition) and my understanding of the grading policies at NEUST. While I strive to ensure accuracy, please note that policies may change over time. For the most current and official information, always refer to the latest version of the NEUST Student Handbook or consult with the university administration.
 						</AlertDescription>
 					</Alert>
+
+					<ScrollSpySection value="system-of-grading">
+						<h3 className="text-2xl font-semibold tracking-tight">
+							System of Grading
+						</h3>
+						<p>
+							NEUST employs a <span className="font-semibold">5-point grading system</span> to evaluate student performance in their courses. However, their precentage equivalents and descriptions <span className="font-semibold">vary depending on the professor</span> but it appears that they commonly follow the table below starting at 70% and above for passing grades.
+						</p>
+						<Alert>
+							<AlertCircleIcon />
+							<AlertTitle>Note</AlertTitle>
+							<AlertDescription className="md:text-wrap">
+								The table below represents common equivalents but is not definitive for all courses or instructors.
+							</AlertDescription>
+						</Alert>
+						<Table>
+							<TableCaption>
+								Common Precentage Equivalents for NEUST&apos;s 5-Point Grading System
+							</TableCaption>
+							<TableHeader>
+								<TableRow>
+									<TableHead>
+										5-Point Scale
+									</TableHead>
+									<TableHead>
+										Percentage Scale (with Passing Grades starting at 70%)
+									</TableHead>
+									<TableHead>
+										Description
+									</TableHead>
+								</TableRow>
+							</TableHeader>
+							<TableBody className="**:text-wrap">
+								{(() => {
+									const gradingSystem = [
+										{ point: '1.00', percentage: '96.64% - 100.00%', description: 'Excellent' },
+										{ point: '1.25', percentage: '93.31% - 96.63%', description: 'Excellent' },
+										{ point: '1.50', percentage: '89.98% - 93.30%', description: 'Very Good' },
+										{ point: '1.75', percentage: '86.65% - 89.97%', description: 'Very Good' },
+										{ point: '2.00', percentage: '83.32% - 86.64%', description: 'Good' },
+										{ point: '2.25', percentage: '79.99% - 83.31%', description: 'Good' },
+										{ point: '2.50', percentage: '76.66% - 79.98%', description: 'Satisfactory' },
+										{ point: '2.75', percentage: '73.33% - 76.65%', description: 'Satisfactory' },
+										{ point: '3.00', percentage: '70.00% - 73.32%', description: 'Passing' },
+										{ point: '4.00', percentage: '69.00% - 69.00%', description: 'Conditional', state: 1 },
+										{ point: '5.00', percentage: 'Below 69.00%', description: 'Failure', state: 2 },
+										{ point: 'INC', percentage: 'N/A', description: 'Incomplete', state: 1 },
+										{ point: 'UD', percentage: 'N/A', description: 'Unofficially Dropped', state: 2 },
+										{ point: 'OD', percentage: 'N/A', description: 'Officially Dropped', state: 2 },
+									];
+
+									return gradingSystem.map((grade, index) => (
+										<TableRow
+											key={index}
+											className={cn(
+												grade.state === 1 && "bg-amber-600/10 hover:bg-amber-600/20 dark:bg-amber-600/20 dark:hover:bg-amber-600/30 text-amber-600 border-amber-600/30",
+												grade.state === 2 && "bg-destructive/10 hover:bg-destructive/20 dark:bg-destructive/20 dark:hover:bg-destructive/30 text-destructive border-destructive/30",
+											)}
+										>
+											<TableCell>{grade.point}</TableCell>
+											<TableCell>{grade.percentage}</TableCell>
+											<TableCell>{grade.description}</TableCell>
+										</TableRow>
+									));
+								})()}
+							</TableBody>
+						</Table>
+						<p className="-indent-10 pl-10 md:-indent-15 md:pl-15">
+							<span className="font-bold">4.00 / Conditional</span> — This grade indicates that a student has not yet completed all the requirements for a course. The student is given a &quot;removal&quot; exam, where passing it will convert the grade into a <span className="font-semibold">passing grade (3.00)</span> and nothing higher. If the student <span className="underline">does not pass the exam</span>, the grade automatically converts to <span className="font-semibold">5.00 / Failure</span>.
+						</p>
+						<p className="-indent-10 pl-10 md:-indent-15 md:pl-15">
+							<span className="font-bold">INC / Incomplete</span> — This grade is given when a student has not completed all course requirements due to valid reasons, such as illness, but does have a passing grade at the time. The student must complete the requirements within a year to convert this grade into the earned grade. Failure to do so will result in the grade <span className="font-semibold">converting to the original earned grade</span>. For example, if a student has an INC with an earned grade of 2.00, failing to complete the requirements will convert the INC to 2.00. But if they completed the requirements and earned a 1.75, the INC would convert to 1.75.
+						</p>
+						<p className="-indent-10 pl-10 md:-indent-15 md:pl-15">
+							<span className="font-bold">UD / Unofficially Dropped</span> — This grade is assigned to students by the professors who stop attending classes without formally dropping the course. It indicates that the student has withdrawn from the course without following the official procedures. The student will need to retake the course in the next academic year if they wish to complete it.
+						</p>
+						<p className="-indent-10 pl-10 md:-indent-15 md:pl-15">
+							<span className="font-bold">OD / Officially Dropped</span> — This grade is given to students who officially drop a course <span className="font-semibold">before the mid-term examination</span> by the Office of Admission and Registration. It indicates that the student has formally withdrawn from the course without any academic penalty.
+						</p>
+					</ScrollSpySection>
 
 					<ScrollSpySection value="latin-honors">
 						<h3 className="text-2xl font-semibold tracking-tight">
