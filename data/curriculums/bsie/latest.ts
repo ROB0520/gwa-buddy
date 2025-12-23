@@ -95,6 +95,57 @@ export default {
 					units: 3
 				}
 			]
+		},
+		{
+			year: 2,
+			semester: 1,
+			courses: [
+				{
+					code: "GE 10",
+					name: "Living in the IT Era",
+					units: 3
+				},
+				{
+					code: "Educ 4",
+					name: "Technology for Learning and Teaching 1",
+					units: 3
+				},
+				{
+					code: "Educ 5",
+					name: "Curriculum Development and Evaluation withe Emphasis on Trainer's Methodology II",
+					units: 3
+				},
+				{
+					code: "IEIA 6",
+					name: "Family and Consumer Life Skills",
+					units: 2
+				},
+				{
+					code: "IEIA 7",
+					name: "Entrepreneurship for Industrial Arts Part II",
+					units: 3
+				},
+				{
+					code: "IEIA 8",
+					name: "Introduction to Industraial Arts Part II",
+					units: 3
+				},
+				{
+					code: "IEIA 9",
+					name: "Introduction to ICT Specifications II",
+					units: 3
+				},
+				{
+					code: "PATHFit 03",
+					name: "Physical Activities Towards Health and Fitness 3: Menu of Dance, Sports, Martial Arts, Group Exercise, Outdoor and Adventure Activities",
+					units: 2
+				},
+				{
+					code: "Educ 6",
+					name: "Assessment in Learning 1",
+					units: 3
+				},
+			]
 		}
 	]
 } satisfies Curriculum;
