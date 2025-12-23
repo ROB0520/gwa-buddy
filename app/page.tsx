@@ -964,7 +964,7 @@ export default function Page() {
 									<TableCell>Dean&apos;s Lister</TableCell>
 									<TableCell>Typically requires a GWA of 1.75 or better for a specific semester. Depending on the Department.</TableCell>
 									<TableCell>
-										Recognizes students who excel academically in a particular semester, highlighting consistent performance. This is not an award given during graduation, but rather a semester-based recognition. Additionally, <span className="font-semibold">not all departments may have this award</span>.
+										Recognizes students who excel academically in a particular semester, highlighting consistent performance. This is not an award given during graduation, but rather a semester-based recognition. Additionally, <span className="font-semibold">not all departments may have this award and requirements may vary</span>.
 									</TableCell>
 								</TableRow>
 								<TableRow>
