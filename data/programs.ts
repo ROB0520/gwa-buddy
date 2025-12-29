@@ -264,5 +264,16 @@ export const programs = [
 				internalName: "latest",
 			}
 		]
+	},
+	{
+		code: "BIT",
+		name: "Bachelor of Industrial Technology",
+		internalName: "bit",
+		curriculums: [
+			{
+				name: "Latest Curriculum",
+				internalName: "latest",
+			}
+		],
 	}
 ] satisfies Program[];
