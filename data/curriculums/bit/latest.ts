@@ -5,6 +5,10 @@ const majors = [
 		code: "CT",
 		name: "Culinary Technology"
 	},
+	{
+		code: "FT",
+		name: "Food Technology"
+	},
 ] as const;
 
 export default {
@@ -20,19 +24,28 @@ export default {
 					code: "CT 111",
 					name: "Occupational Health and Safety",
 					units: 3,
-					majorCode: "CT"
+					majorCode: [
+						"CT",
+						"FT",
+					]
 				},
 				{
-					code: "CC 112",
+					code: "CT 112",
 					name: "Food Safety Management",
 					units: 2,
-					majorCode: "CT"
+					majorCode: [
+						"CT",
+						"FT",
+					]
 				},
 				{
 					code: "CT 113",
 					name: "Food and Beverage Management",
 					units: 3,
-					majorCode: "CT"
+					majorCode: [
+						"FT",
+						"CT",
+					]
 				},
 				{
 					code: "GE 01",

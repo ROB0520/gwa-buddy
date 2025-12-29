@@ -31,7 +31,7 @@ export interface Course<M extends readonly Major[] = MajorsArray> {
 	 * When `Course` is used with a concrete `majors` array type `M`,
 	 * `majorCode` will be restricted to the codes present in `M`.
 	 */
-	majorCode?: MajorCodes<M>;
+	majorCode?: MajorCodes<M> | MajorCodes<M>[];
 	coreOnly?: boolean;
 }
 
