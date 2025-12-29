@@ -32,7 +32,7 @@ type Course = {
 	code?: string;
 	name?: string;
 	units?: number;
-	majorCode?: string;
+	majorCode?: string | string[];
 	coreOnly?: boolean;
 	grade?: number | null;
 }
@@ -59,6 +59,8 @@ export default function Page() {
 	const [selectedCourseIndex, setSelectedCourseIndex] = useState<number | null>(null);
 	const [finalGwa, setFinalGwa] = useState<number | null>(null);
 	const isMobile = useIsMobile();
+
+
 
 	useEffect(() => {
 		// Load curriculum if needed
@@ -98,7 +100,7 @@ export default function Page() {
 			if (!term) return;
 			const matched = (term.courses ?? []).filter((c) => {
 				if (filterCore) return c.coreOnly || c.majorCode === undefined;
-				if (selectedMajor) return (c.majorCode === selectedMajor || c.majorCode === undefined) && !c.coreOnly;
+				if (selectedMajor) return includeForMajor(c, selectedMajor);
 				return true;
 			});
 			if ((matched ?? []).length > 0) {
@@ -115,7 +117,10 @@ export default function Page() {
 			const majorsInYear = new Set<string>();
 			let hasCoreInYear = false;
 			for (const t of terms) for (const c of (t.courses ?? [])) {
-				if (c.majorCode) majorsInYear.add(c.majorCode);
+				if (c.majorCode) {
+					if (typeof c.majorCode === 'string') majorsInYear.add(c.majorCode);
+					else for (const mc of c.majorCode) majorsInYear.add(mc);
+				}
 				if (c.coreOnly) hasCoreInYear = true;
 			}
 
@@ -136,7 +141,7 @@ export default function Page() {
 			}
 			if (selectedMajor) {
 				const collected: Course[] = [];
-				for (const t of terms) for (const c of (t.courses ?? [])) if ((c.majorCode === selectedMajor || c.majorCode === undefined) && !c.coreOnly) collected.push(c as Course);
+				for (const t of terms) for (const c of (t.courses ?? [])) if (includeForMajor(c, selectedMajor!)) collected.push(c as Course);
 				if (collected.length > 0) applyPresetToPage(collected, snapshotFor(collected));
 				return;
 			}
@@ -232,7 +237,15 @@ export default function Page() {
 										</span>
 										{
 											course.majorCode ?
-												<Badge>{course.majorCode}</Badge> :
+												<Badge>
+													{
+														typeof course.majorCode === 'string' ?
+															course.majorCode :
+															course.majorCode
+																.sort((a, b) => a.localeCompare(b))
+																.join("∕")
+													}
+												</Badge> :
 												course.coreOnly ?
 													<Badge>Core Only</Badge> :
 													null
@@ -1430,7 +1443,8 @@ function PresetInput({
 					(t.courses ?? []).forEach((c) => {
 						if (c.majorCode) {
 							hasMajorCodes = true;
-							majorsFound.add(c.majorCode);
+							if (typeof c.majorCode === 'string') majorsFound.add(c.majorCode);
+							else for (const mc of c.majorCode) majorsFound.add(mc);
 						}
 						if (c.coreOnly) {
 							hasCoreOnly = true;
@@ -1474,7 +1488,7 @@ function PresetInput({
 		if (!term) return 0;
 		let courses = (term.courses ?? []);
 		if (p.core) courses = courses.filter((c) => c.coreOnly || c.majorCode === undefined);
-		else if (p.major) courses = courses.filter((c) => (c.majorCode === p.major || c.majorCode === undefined) && !c.coreOnly);
+		else if (p.major) courses = courses.filter((c) => includeForMajor(c, p.major!));
 		return courses.reduce((sum, c) => sum + (c.units || 0), 0);
 	}
 
@@ -1504,7 +1518,10 @@ function PresetInput({
 					let programHasCore = false;
 					for (const t of allTerms) {
 						for (const c of (t.courses ?? [])) {
-							if (c.majorCode) programMajors.add(c.majorCode);
+							if (c.majorCode) {
+								if (typeof c.majorCode === 'string') programMajors.add(c.majorCode);
+								else for (const mc of c.majorCode) programMajors.add(mc);
+							}
 							if (c.coreOnly) programHasCore = true;
 						}
 					}
@@ -1543,7 +1560,7 @@ function PresetInput({
 											if (pp.core) {
 												if (c.coreOnly || c.majorCode === undefined) collected.push(c);
 											} else if (pp.major) {
-												if ((c.majorCode === pp.major || c.majorCode === undefined) && !c.coreOnly) collected.push(c);
+												if (includeForMajor(c, pp.major!)) collected.push(c);
 											} else {
 												collected.push(c);
 											}
@@ -1569,7 +1586,7 @@ function PresetInput({
 												setOpen(false);
 												setFilters({ year: null, semester: null, major: pp.major ?? null, core: pp.core ?? false });
 											}}
-											data-checked={lastIncludedSnapshot !== null && equalCodeArrays(lastIncludedSnapshot, snap)}
+											data-checked={lastIncludedSnapshot !== null && equalCodeArrays(lastIncludedSnapshot, snap) && selectedMajor === (pp.major ?? null) && filterCore === !!pp.core}
 										>
 											<div className="flex justify-between items-center w-full gap-2">
 												<span>{pp.core ? 'Core Only' : (pp.major ? pp.label : 'Entire Program')}</span>
@@ -1591,7 +1608,10 @@ function PresetInput({
 									const majorsInYear = new Set<string>();
 									let hasCoreInYear = false;
 									for (const t of terms) for (const c of (t.courses ?? [])) {
-										if (c.majorCode) majorsInYear.add(c.majorCode);
+										if (c.majorCode) {
+											if (typeof c.majorCode === 'string') majorsInYear.add(c.majorCode);
+											else for (const mc of c.majorCode) majorsInYear.add(mc);
+										}
 										if (c.coreOnly) hasCoreInYear = true;
 									}
 
@@ -1604,7 +1624,7 @@ function PresetInput({
 									} else {
 										for (const m of Array.from(majorsInYear).sort()) {
 											const collected = [];
-											for (const t of terms) for (const c of (t.courses ?? [])) if ((c.majorCode === m || c.majorCode === undefined) && !c.coreOnly) collected.push(c);
+											for (const t of terms) for (const c of (t.courses ?? [])) if (includeForMajor(c, m)) collected.push(c);
 											const majorObj = curriculumData?.majors?.find((mm) => mm.code === m);
 											const label = majorObj ? `${m} – ${majorObj.name}` : m;
 											groups.push({ key: m, label, courses: collected });
@@ -1642,7 +1662,7 @@ function PresetInput({
 														setFilters({ year: year, semester: null, major: null, core: false });
 														setOpen(false);
 													}}
-													data-checked={lastIncludedSnapshot !== null && equalCodeArrays(lastIncludedSnapshot, snap)}
+													data-checked={lastIncludedSnapshot !== null && equalCodeArrays(lastIncludedSnapshot, snap) && selectedYear === year && selectedMajor === (g.key !== 'CORE' ? g.key : null) && filterCore === (g.key === 'CORE')}
 												>
 													<div className="flex justify-between items-center w-full">
 														<span>{`Year ${year}`}</span>
@@ -1679,7 +1699,7 @@ function PresetInput({
 																setFilters({ year: year, semester: null, major: g.key !== 'CORE' ? g.key : null, core: g.key === 'CORE' });
 																setOpen(false);
 															}}
-															data-checked={lastIncludedSnapshot !== null && equalCodeArrays(lastIncludedSnapshot, snap)}
+															data-checked={lastIncludedSnapshot !== null && equalCodeArrays(lastIncludedSnapshot, snap) && selectedYear === year && selectedMajor === (g.key !== 'CORE' ? g.key : null) && filterCore === (g.key === 'CORE')}
 														>
 															<div className="flex justify-between items-center w-full">
 																<span>{g.label === 'All' ? `${semesterOrdinal(1)}+` : g.label}</span>
@@ -1730,7 +1750,7 @@ function PresetInput({
 																const units = unitsForPreset(p);
 																const newIncluded = (curriculumData?.term.find(t => t.year === p.year && t.semester === p.semester)?.courses.filter(c => {
 																	if (p.core) return c.coreOnly || c.majorCode === undefined;
-																	else if (p.major) return (c.majorCode === p.major || c.majorCode === undefined) && !c.coreOnly;
+																	else if (p.major) return includeForMajor(c, p.major!);
 																	else return true;
 																}) ?? []);
 																const snap = snapshotFor(newIncluded);
@@ -1754,9 +1774,9 @@ function PresetInput({
 																			onApplyPreset(newIncluded, snap);
 																			setOpen(false);
 																		}}
-																		data-checked={lastIncludedSnapshot !== null && equalCodeArrays(lastIncludedSnapshot, snap)}
+																		data-checked={lastIncludedSnapshot !== null && equalCodeArrays(lastIncludedSnapshot, snap) && selectedYear === p.year && selectedSemester === p.semester && selectedMajor === (p.major ?? null) && filterCore === !!p.core}
 																	>
-																		<div className="flex justify-between items-center w-full">
+																		<div className="flex justify-between items-center w-full gap-2">
 																			<span>{semesterOrdinal(p.semester)} Semester</span>
 																			<Badge>{Number(units).toLocaleString()} Units</Badge>
 																		</div>
@@ -1784,7 +1804,7 @@ function PresetInput({
 																	const units = unitsForPreset(p);
 																	const newIncluded = (curriculumData?.term.find(t => t.year === p.year && t.semester === p.semester)?.courses.filter(c => {
 																		if (p.core) return c.coreOnly || c.majorCode === undefined;
-																		else if (p.major) return (c.majorCode === p.major || c.majorCode === undefined) && !c.coreOnly;
+																		else if (p.major) return includeForMajor(c, p.major!);
 																		else return true;
 																	}) ?? []);
 																	const snap = snapshotFor(newIncluded);
@@ -1793,7 +1813,14 @@ function PresetInput({
 																			key={`${p.year}-${p.semester}-${p.major ?? 'ALL'}`}
 																			value={`${p.year}-${p.semester}-${p.major ?? 'ALL'}`}
 																			onSelect={async () => {
-																				if (lastIncludedSnapshot !== null && equalCodeArrays(lastIncludedSnapshot, snap)) return;
+																				if (
+																					lastIncludedSnapshot !== null &&
+																					equalCodeArrays(lastIncludedSnapshot, snap) &&
+																					selectedYear === p.year &&
+																					selectedSemester === p.semester &&
+																					selectedMajor === (p.major ?? null) &&
+																					filterCore === !!p.core
+																				) return;
 																				if (includedCourses?.some(c => c.grade !== null && c.grade !== undefined)) {
 																					const ok = await confirm({
 																						title: 'Apply Preset',
@@ -1808,9 +1835,9 @@ function PresetInput({
 																				onApplyPreset(newIncluded, snap);
 																				setOpen(false);
 																			}}
-																			data-checked={lastIncludedSnapshot !== null && equalCodeArrays(lastIncludedSnapshot, snap)}
+																			data-checked={lastIncludedSnapshot !== null && equalCodeArrays(lastIncludedSnapshot, snap) && selectedYear === p.year && selectedSemester === p.semester && selectedMajor === (p.major ?? null) && filterCore === !!p.core}
 																		>
-																			<div className="flex justify-between items-center w-full">
+																			<div className="flex justify-between items-center w-full gap-2">
 																				<span>{semesterOrdinal(p.semester)} Semester</span>
 																				<Badge>{Number(units).toLocaleString()} Units</Badge>
 																			</div>
@@ -2123,4 +2150,15 @@ function CourseRowGradeSelector({
 			</Select>
 		</div>
 	)
+}
+
+function courseHasMajor(c: { majorCode?: string | string[] | undefined }, major: string) {
+	if (!c.majorCode) return false;
+	return typeof c.majorCode === 'string' ? c.majorCode === major : c.majorCode.includes(major);
+}
+
+function includeForMajor(c: { majorCode?: string | string[] | undefined; coreOnly?: boolean }, major: string) {
+	if (c.coreOnly) return false;
+	if (c.majorCode === undefined) return true;
+	return courseHasMajor(c, major);
 }
