@@ -10,7 +10,7 @@ export default {
 			courses: [
 				{
 					code: "PATHFit 1",
-					name: "Movement Competenc Training",
+					name: "Movement Competency Training",
 					units: 2
 				},
 				{
