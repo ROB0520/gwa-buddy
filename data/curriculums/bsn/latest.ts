@@ -9,6 +9,11 @@ export default {
 			semester: 1,
 			courses: [
 				{
+					code: "PATHFit 1",
+					name: "Movement Competenc Training",
+					units: 2
+				},
+				{
 					code: "GE 01",
 					name: "Understanding the Self",
 					units: 3
@@ -19,7 +24,7 @@ export default {
 					units: 3
 				},
 				{
-					code: "NCM 100",
+					code: "NMC 100",
 					name: "Theoretical Foundation of Nursing",
 					units: 3
 				},
@@ -34,20 +39,20 @@ export default {
 					units: 5
 				},
 				{
+					code: "GE 03",
+					name: "The Contemporary World",
+					units: 3
+				},
+				{
 					code: "GE 04",
 					name: "Mathematics in the Modern World",
 					units: 3
 				},
 				{
-					code: "GE 06",
-					name: "Art Appreciation",
+					code: "GE 05",
+					name: "Purposive Communication",
 					units: 3
 				},
-				{
-					code: "PE 1",
-					name: "Welness and Fitness",
-					units: 2
-				}
 			]
 		}
 	]
