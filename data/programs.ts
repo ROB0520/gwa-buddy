@@ -275,5 +275,16 @@ export const programs = [
 				internalName: "latest",
 			}
 		],
+	},
+	{
+		code: "BPE",
+		name: "Bachelor of Physical Education",
+		internalName: "bpe",
+		curriculums: [
+			{
+				name: "Latest Curriculum",
+				internalName: "latest",
+			}
+		],
 	}
 ] satisfies Program[];
