@@ -18,7 +18,6 @@ import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, Command
 import { Empty, EmptyContent, EmptyDescription, EmptyHeader, EmptyMedia, EmptyTitle } from "@/components/ui/empty"
 import { Curriculum } from "@/data/types"
 import { Badge } from "@/components/ui/badge"
-import { Select, SelectContent, SelectGroup, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip"
 import { confirm } from "@/components/confirm-dialog"
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible"
@@ -27,6 +26,7 @@ import { toast } from "sonner"
 import { ScrollSpy, ScrollSpyLink, ScrollSpyNav, ScrollSpySection, ScrollSpyViewport } from "@/components/ui/scroll-spy"
 import { Table, TableBody, TableCaption, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
+import { Combobox, ComboboxContent, ComboboxEmpty, ComboboxInput, ComboboxItem, ComboboxList } from "@/components/ui/combobox"
 
 type Course = {
 	code?: string;
@@ -1675,7 +1675,7 @@ function PresetInput({
 
 									return (
 										<Fragment key={`year-${year}`}>
-											<CommandGroup heading={`Year ${year}`} className="[&_[cmdk-group-items]_[cmdk-group-heading]]:pt-0 py-0">
+											<CommandGroup heading={`Year ${year}`} className="[&_[cmdk-group-items]_[cmdk-group-heading]]:pt-0 pt-0">
 												{groups.map((g) => {
 													const courses = g.courses ?? [];
 													const snap = snapshotFor(courses);
@@ -1740,7 +1740,7 @@ function PresetInput({
 											<Fragment key={`sem-year-${year}`}>
 												<CommandGroup
 													heading={`Year ${year}`}
-													className="[&_[cmdk-group-items]_[cmdk-group-heading]]:pt-0 py-0"
+													className="[&_[cmdk-group-items]_[cmdk-group-heading]]:pt-0 pt-0 last:pb-0"
 												>
 													{Array.from(byMajor.entries()).map(([majorKey, groupItems]) => {
 														const first = groupItems[0];
@@ -2109,13 +2109,14 @@ function CourseRowGradeSelector({
 }) {
 	return (
 		<div className={cn("grid gap-1", className)}>
-			<Label>
+			<Label htmlFor={`grade-select-${index}`}>
 				Grade
 			</Label>
-			<Select
+			<Combobox 
+				items={["1.00", "1.25", "1.50", "1.75", "2.00", "2.25", "2.50", "2.75", "3.00", "5.00"]}
 				disabled={includedCourses[index].units === undefined}
-				value={includedCourses[index].grade ? includedCourses[index].grade!.toString() : ''}
-				onValueChange={(value) => {
+				value={includedCourses[index].grade ? Number(includedCourses[index].grade).toFixed(2) : ''}
+				onValueChange={(value: string | null) => {
 					const grade = value ? parseFloat(value) : null;
 					setIncludedCourses((prev) => {
 						const newCourses = [...prev];
@@ -2127,27 +2128,18 @@ function CourseRowGradeSelector({
 					});
 				}}
 			>
-				<SelectTrigger
-					className="justify-between border-input! h-8! [&_svg]:text-muted-foreground! items-center w-full rounded-lg px-2.5"
-				>
-					<SelectValue
-						className="truncate"
-					/>
-				</SelectTrigger>
-				<SelectContent
-					position="popper"
-				>
-					<SelectGroup>
-						{
-							[1, 1.25, 1.5, 1.75, 2, 2.25, 2.5, 2.75, 3, 5].map((grade) => (
-								<SelectItem key={grade} value={grade.toString()}>
-									{grade.toFixed(2)}
-								</SelectItem>
-							))
-						}
-					</SelectGroup>
-				</SelectContent>
-			</Select>
+				<ComboboxInput id={`grade-select-${index}`} />
+				<ComboboxContent>
+					<ComboboxEmpty>Grade not found.</ComboboxEmpty>
+					<ComboboxList>
+						{(item) => (
+							<ComboboxItem key={item} value={item}>
+								{item}
+							</ComboboxItem>
+						)}
+					</ComboboxList>
+				</ComboboxContent>
+			</Combobox>
 		</div>
 	)
 }
