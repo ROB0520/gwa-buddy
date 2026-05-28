@@ -172,6 +172,125 @@ export default {
 					units: 2
 				}
 			]
+		},
+		{
+			year: 3,
+			semester: 1,
+			courses: [
+				{
+					code: "GE 05",
+					name: "Purposive Communication",
+					units: 3
+				},
+				{
+					code: "GE 06",
+					name: "Art Appreciation",
+					units: 3
+				},
+				{
+					code: "GE Elec 3",
+					name: "Philippine Popular Culture",
+					units: 3
+				},
+				{
+					code: "BME 1",
+					name: "Operation Management in Tourism and Hospitality",
+					units: 3
+				},
+				{
+					code: "TPC 6",
+					name: "Foreign Language 1",
+					units: 3
+				},
+				{
+					code: "TPC 7",
+					name: "Introduction to Meetings, Incentives, Conference and Events Management",
+					units: 3
+				},
+				{
+					code: "THC 10",
+					name: "Tourism and Hospitality Marketing",
+					units: 3
+				},
+				{
+					code: "TMPE 3",
+					name: "Hospitality & Tourism Facilities Management & Design",
+					units: 3
+				},
+			],
+		},
+		{
+			year: 3,
+			semester: 2,
+			courses: [
+				{
+					code: "GE 07",
+					name: "Science, Technology and Society",
+					units: 3
+				},
+				{
+					code: "BME 2",
+					name: "Strategic Management in Tourism and Hospitality Industry",
+					units: 3
+				},
+				{
+					code: "TPC 8",
+					name: "Research in Tourism",
+					units: 3
+				},
+				{
+					code: "TPC 9",
+					name: "Foreign Language 2",
+					units: 3
+				},
+				{
+					code: "TMPE 4",
+					name: "Philippine Gastronomical Tourism",
+					units: 3
+				}
+			],
+		},
+		{
+			year: 4,
+			semester: 1,
+			courses: [
+				{
+					code: "GE 08",
+					name: "Ethics",
+					units: 3
+				},
+				{
+					code: "GE 09",
+					name: "Life and Works of Rizal",
+					units: 3
+				},
+				{
+					code: "TPC 10",
+					name: "Tourism Policy Planning and Development",
+					units: 3
+				},
+				{
+					code: "TMPE 5",
+					name: "Agri-Tourism",
+					units: 3
+				},
+				{
+					code: "TMPE 6",
+					name: "Ecotourism",
+					units: 3
+				},
+			],
+		},
+		{
+			year: 4,
+			semester: 2,
+			courses: [
+				{
+					code: "PRAC",
+					name: "Practicum (600 hours)",
+					units: 6
+				}
+			]
 		}
 	]
 } satisfies Curriculum;
