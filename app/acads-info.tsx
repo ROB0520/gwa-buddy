@@ -164,7 +164,7 @@ export function AcadsInfo() {
 							<li>Must have completed at least 76% of the required academic units for their degree program in NEUST.</li>
 							<li>Must have been enrolled in the university for a minimum of two (2) academic years.</li>
 							<li>Must have taken not less than 15 units during each semester.</li>
-							<li>Must not have any grades below 2.00 in any course.</li>
+							<li>Must not have any grades below 2.00 (2.25 - 5.00) in any course.</li>
 						</ul>
 					</ScrollSpySection>
 
