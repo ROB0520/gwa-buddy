@@ -1,15 +1,15 @@
 "use client"
 
-import { BookXIcon, CalculatorIcon, ChevronsUpDownIcon, ClipboardXIcon, EraserIcon, EyeIcon, FunnelXIcon, MinusIcon, PartyPopperIcon, PlusIcon, SearchXIcon, SparkleIcon, StarsIcon, TrendingUpDownIcon, TriangleAlertIcon } from "lucide-react"
+import { BookXIcon, CalculatorIcon, ChevronsUpDownIcon, ClipboardXIcon, EraserIcon, EyeIcon, FunnelXIcon, MinusIcon, PartyPopperIcon, PlusIcon, SearchXIcon, Share2Icon, SparkleIcon, StarsIcon, TrendingUpDownIcon, TriangleAlertIcon } from "lucide-react"
 import Link from "next/link"
-import { parseAsBoolean, parseAsInteger, parseAsString, SetValues, SingleParserBuilder, useQueryStates } from "nuqs"
+import { createParser, createSerializer, parseAsBoolean, parseAsInteger, parseAsString, SetValues, SingleParserBuilder, useQueryStates } from "nuqs"
 import { programs as programsData } from "@/data/programs"
 import { Label } from "@/components/ui/label"
 import { Button } from "@/components/ui/button"
 import { cn } from "@/lib/utils"
 import { Input } from "@/components/ui/input"
 import { useIsMobile } from "@/hooks/use-mobile"
-import { useState, useEffect, Dispatch, SetStateAction, Fragment, type ReactNode } from "react"
+import { useState, useEffect, useRef, Dispatch, SetStateAction, Fragment, type ReactNode } from "react"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
 import { Drawer, DrawerContent, DrawerDescription, DrawerHeader, DrawerTitle, DrawerTrigger } from "@/components/ui/drawer"
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList, CommandSeparator } from "@/components/ui/command"
@@ -32,14 +32,136 @@ type Course = {
 	grade?: number | null;
 }
 
-export function GWACalculator() {
+type SharedLinkPayload = number[];
+
+function randomByte() {
+	const cryptoSource = globalThis.crypto;
+	if (cryptoSource?.getRandomValues) {
+		return cryptoSource.getRandomValues(new Uint8Array(1))[0] ?? 0;
+	}
+	return Math.floor(Math.random() * 256);
+}
+
+function encodeVarint(value: number) {
+	const bytes: number[] = [];
+	let current = value >>> 0;
+	while (current >= 0x80) {
+		bytes.push((current & 0x7f) | 0x80);
+		current >>>= 7;
+	}
+	bytes.push(current);
+	return bytes;
+}
+
+function decodeVarints(bytes: Uint8Array) {
+	const values: number[] = [];
+	let current = 0;
+	let shift = 0;
+	for (const byte of bytes) {
+		current |= (byte & 0x7f) << shift;
+		if ((byte & 0x80) === 0) {
+			values.push(current >>> 0);
+			current = 0;
+			shift = 0;
+			continue;
+		}
+		shift += 7;
+	}
+	if (shift !== 0) return null;
+	return values;
+}
+
+function toBase64Url(bytes: Uint8Array) {
+	let binary = "";
+	for (const byte of bytes) binary += String.fromCharCode(byte);
+	return btoa(binary).replaceAll("+", "-").replaceAll("/", "_").replaceAll("=", "");
+}
+
+function fromBase64Url(value: string) {
+	const normalized = value.replaceAll("-", "+").replaceAll("_", "/");
+	const padded = normalized + "=".repeat((4 - (normalized.length % 4)) % 4);
+	const binary = atob(padded);
+	return Uint8Array.from(binary, (char) => char.charCodeAt(0));
+}
+
+function xorBytes(bytes: Uint8Array, seed: number) {
+	let state = seed >>> 0;
+	return bytes.map((byte) => {
+		state = (state * 1664525 + 1013904223) >>> 0;
+		return byte ^ (state & 0xff);
+	});
+}
+
+function parseCompactSharedLinkPayload(value: string): SharedLinkPayload | null {
+	if (!value) return null;
+	const [seedPart, encodedPart] = value.split(".");
+	if (!seedPart || !encodedPart) return null;
+	const seed = parseInt(seedPart, 16);
+	if (!Number.isInteger(seed) || seed < 0 || seed > 255) return null;
+	try {
+		const decoded = fromBase64Url(encodedPart);
+		const payloadBytes = xorBytes(decoded, seed);
+		const indexes = decodeVarints(payloadBytes);
+		return indexes;
+	} catch {
+		return null;
+	}
+}
+
+function snapshotForCourses(courses?: Array<{ code?: string }>) {
+	return (courses ?? []).map((course) => course.code).filter((code): code is string => typeof code === "string").sort();
+}
+
+function getFlattenedCurriculumCourses(curriculumData: Curriculum) {
+	return (curriculumData.term ?? []).flatMap((term) => term.courses ?? []);
+}
+
+function hydrateSharedCourses(payload: SharedLinkPayload, curriculumData: Curriculum): Course[] {
+	const allCourses = getFlattenedCurriculumCourses(curriculumData);
+	return payload.flatMap((index) => {
+		const matched = allCourses[index];
+		if (!matched) return [];
+		return [{
+			code: matched.code,
+			name: matched.name,
+			units: matched.units,
+			majorCode: matched.majorCode,
+			coreOnly: matched.coreOnly,
+			grade: null,
+		}];
+	});
+}
+
+const sharePayloadParser = createParser<SharedLinkPayload>({
+	parse: (value: string) => parseCompactSharedLinkPayload(value),
+	serialize: (payload: SharedLinkPayload) => {
+		const seed = randomByte();
+		const rawBytes = payload.flatMap((index) => encodeVarint(index));
+		const xored = xorBytes(Uint8Array.from(rawBytes), seed);
+		return `${seed.toString(16).padStart(2, "0")}.${toBase64Url(xored)}`;
+	},
+});
+const serializeSharePayload = createSerializer({ s: sharePayloadParser });
+
+type GWACalculatorProps = {
+	initialCurriculumData?: Curriculum | null;
+	initialIncludedCourses?: Course[];
+	initialLastIncludedSnapshot?: string[] | null;
+};
+
+export function GWACalculator({
+	initialCurriculumData = null,
+	initialIncludedCourses = [],
+	initialLastIncludedSnapshot = null,
+}: GWACalculatorProps) {
 	const [{
 		program: selectedProgram,
 		curriculum: selectedCurriculum,
 		major: selectedMajor,
 		year: selectedYear,
 		semester: selectedSemester,
-		core: filterCore
+		core: filterCore,
+		s: sharedState,
 	}, setFilters] = useQueryStates({
 		program: parseAsString,
 		curriculum: parseAsString,
@@ -47,45 +169,78 @@ export function GWACalculator() {
 		year: parseAsInteger,
 		semester: parseAsInteger,
 		core: parseAsBoolean.withDefault(false),
+		s: sharePayloadParser
 	});
-	const [curriculumData, setCurriculumData] = useState<Curriculum | null>(null);
-	const [includedCourses, setIncludedCourses] = useState<Course[]>([]);
-	const [lastIncludedSnapshot, setLastIncludedSnapshot] = useState<string[] | null>(null);
+	const [curriculumData, setCurriculumData] = useState<Curriculum | null>(initialCurriculumData ?? null);
+	const [includedCourses, setIncludedCourses] = useState<Course[]>(initialIncludedCourses);
+	const [lastIncludedSnapshot, setLastIncludedSnapshot] = useState<string[] | null>(initialLastIncludedSnapshot);
 	const [selectedCourseIndex, setSelectedCourseIndex] = useState<number | null>(null);
 	const [finalGwa, setFinalGwa] = useState<number | null>(null);
+	const pendingSharedPayloadRef = useRef<SharedLinkPayload | null>(null);
+	const appliedSharedPayloadRef = useRef<string | null>(null);
+	const loadedCurriculumKeyRef = useRef<string | null>(
+		initialCurriculumData && selectedProgram && selectedCurriculum
+			? `${selectedProgram}::${selectedCurriculum}`
+			: null
+	);
 	const isMobile = useIsMobile();
 
 	useEffect(() => {
-		// Load curriculum if needed
 		const loadCurriculum = async () => {
-			if (selectedProgram && selectedCurriculum) {
-				const program = programsData.find((p) => p.code === selectedProgram);
-				if (!program) {
-					setCurriculumData(null);
-					return;
-				}
-
-				const dir = program.internalName;
-				try {
-					const mod = await import(`@/data/curriculums/${dir}/${selectedCurriculum}`);
-					const data = (mod.default ?? mod) as Curriculum;
-					setCurriculumData(data);
-				} catch {
-					setCurriculumData(null);
-					toast.error("Failed to load curriculum data. Try again later.");
-				}
+			if (!selectedProgram || !selectedCurriculum) {
+				setCurriculumData(null);
+				loadedCurriculumKeyRef.current = null;
 				return;
+			}
+
+			const currentKey = `${selectedProgram}::${selectedCurriculum}`;
+			if (curriculumData && loadedCurriculumKeyRef.current === currentKey) {
+				return;
+			}
+
+			const program = programsData.find((p) => p.code === selectedProgram);
+			if (!program) {
+				setCurriculumData(null);
+				loadedCurriculumKeyRef.current = null;
+				return;
+			}
+
+			try {
+				const mod = await import(`@/data/curriculums/${program.internalName}/${selectedCurriculum}`);
+				const data = (mod.default ?? mod) as Curriculum;
+				setCurriculumData(data);
+				loadedCurriculumKeyRef.current = currentKey;
+			} catch {
+				setCurriculumData(null);
+				loadedCurriculumKeyRef.current = null;
+				toast.error("Failed to load curriculum data. Try again later.");
 			}
 		};
 
-		setFinalGwa(null); // reset GWA on filter change
+		void loadCurriculum();
+	}, [selectedProgram, selectedCurriculum, curriculumData]);
 
-		if (includedCourses.length > 0) return; // don't overwrite user edits
-		if (!curriculumData) { loadCurriculum(); return; }
+	useEffect(() => {
+		if (!sharedState) {
+			pendingSharedPayloadRef.current = null;
+			appliedSharedPayloadRef.current = null;
+			return;
+		}
+
+		const signature = JSON.stringify(sharedState);
+		if (signature === appliedSharedPayloadRef.current) return;
+		pendingSharedPayloadRef.current = sharedState;
+		setSelectedCourseIndex(null);
+		setIncludedCourses([]);
+		setLastIncludedSnapshot(null);
+	}, [sharedState, setFilters]);
+
+	useEffect(() => {
+		setFinalGwa(null);
+		if (includedCourses.length > 0) return;
+		if (!curriculumData) return;
 
 		const allTerms = curriculumData.term ?? [];
-
-		const snapshotFor = (courses?: Array<{ code?: string }>) => (courses ?? []).map(c => c.code).filter((s): s is string => typeof s === 'string').sort();
 
 		// 1) Exact semester preset (year + semester)
 		if (selectedYear && selectedSemester) {
@@ -97,7 +252,7 @@ export function GWACalculator() {
 				return true;
 			});
 			if ((matched ?? []).length > 0) {
-				applyPresetToPage(matched as Course[], snapshotFor(matched));
+				applyPresetToPage(matched as Course[], snapshotForCourses(matched));
 			}
 			return;
 		}
@@ -121,7 +276,7 @@ export function GWACalculator() {
 				// All courses in the year
 				const collected: Course[] = [];
 				for (const t of terms) for (const c of (t.courses ?? [])) collected.push(c as Course);
-				if (collected.length > 0) applyPresetToPage(collected, snapshotFor(collected));
+				if (collected.length > 0) applyPresetToPage(collected, snapshotForCourses(collected));
 				return;
 			}
 
@@ -129,13 +284,13 @@ export function GWACalculator() {
 			if (filterCore) {
 				const collected: Course[] = [];
 				for (const t of terms) for (const c of (t.courses ?? [])) if (c.coreOnly || c.majorCode === undefined) collected.push(c as Course);
-				if (collected.length > 0) applyPresetToPage(collected, snapshotFor(collected));
+				if (collected.length > 0) applyPresetToPage(collected, snapshotForCourses(collected));
 				return;
 			}
 			if (selectedMajor) {
 				const collected: Course[] = [];
 				for (const t of terms) for (const c of (t.courses ?? [])) if (includeForMajor(c, selectedMajor!)) collected.push(c as Course);
-				if (collected.length > 0) applyPresetToPage(collected, snapshotFor(collected));
+				if (collected.length > 0) applyPresetToPage(collected, snapshotForCourses(collected));
 				return;
 			}
 			return;
@@ -153,14 +308,25 @@ export function GWACalculator() {
 					if ((c.majorCode === selectedMajor || c.majorCode === undefined) && !c.coreOnly) collected.push(c as Course);
 				}
 			}
-			if (collected.length > 0) applyPresetToPage(collected, snapshotFor(collected));
+			if (collected.length > 0) applyPresetToPage(collected, snapshotForCourses(collected));
 			return;
 		}
-	}, [curriculumData, selectedYear, selectedSemester, selectedMajor, filterCore, includedCourses.length, selectedProgram, selectedCurriculum]);
+	}, [curriculumData, selectedYear, selectedSemester, selectedMajor, filterCore, includedCourses.length]);
+
+	useEffect(() => {
+		const pending = pendingSharedPayloadRef.current;
+		if (!pending || !curriculumData) return;
+
+		const hydratedCourses = hydrateSharedCourses(pending, curriculumData);
+		applyPresetToPage(hydratedCourses, snapshotForCourses(hydratedCourses));
+		appliedSharedPayloadRef.current = JSON.stringify(pending);
+		pendingSharedPayloadRef.current = null;
+	}, [curriculumData, selectedProgram, selectedCurriculum]);
 
 	function applyPresetToPage(courses: Course[], snapshot: string[]) {
 		setIncludedCourses(courses);
 		setLastIncludedSnapshot(snapshot);
+		setSelectedCourseIndex(null);
 	}
 
 	// Shared course list (rendered once) — used by the single Drawer/Popover below.
@@ -489,7 +655,34 @@ export function GWACalculator() {
 						</EmptyContent>
 					</Empty>
 				)}
-				<div className="flex justify-end w-full max-w-7xl">
+				<div className="flex justify-end w-full max-w-7xl gap-2">
+					<Button
+						variant="outline"
+						disabled={!(selectedProgram && selectedCurriculum) || includedCourses.length == 0}
+						onClick={async () => {
+							if (!selectedProgram || !selectedCurriculum) return;
+							if (!curriculumData) return;
+							const allCourses = getFlattenedCurriculumCourses(curriculumData);
+							const payload: SharedLinkPayload = includedCourses.flatMap((course) => {
+								if (!course.code) return [];
+								const index = allCourses.findIndex((item) => item.code === course.code && item.name === course.name);
+								return index >= 0 ? [index] : [];
+							});
+							const sharePath = serializeSharePayload(window.location.href, { s: payload });
+							const shareUrl = `${sharePath}`;
+							try {
+								await navigator.clipboard.writeText(shareUrl);
+								toast.success("Share link copied to clipboard.", {
+									icon: <Share2Icon className="size-4" />
+								});
+							} catch {
+								toast.error("Could not copy the share link.");
+							}
+						}}
+					>
+						<Share2Icon />
+						Share Selection
+					</Button>
 					<Button
 						disabled={includedCourses.length === 0 || includedCourses.some(c => c.grade === null || c.grade === undefined)}
 						onClick={() => {
