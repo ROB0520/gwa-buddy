@@ -141,7 +141,7 @@ const sharePayloadParser = createParser<SharedLinkPayload>({
 		return `${seed.toString(16).padStart(2, "0")}.${toBase64Url(xored)}`;
 	},
 });
-const serializeSharePayload = createSerializer({ s: sharePayloadParser });
+const serializeSharePayload = createSerializer({ ss: sharePayloadParser });
 
 type GWACalculatorProps = {
 	initialCurriculumData?: Curriculum | null;
@@ -155,21 +155,21 @@ export function GWACalculator({
 	initialLastIncludedSnapshot = null,
 }: GWACalculatorProps) {
 	const [{
-		program: selectedProgram,
-		curriculum: selectedCurriculum,
-		major: selectedMajor,
-		year: selectedYear,
-		semester: selectedSemester,
-		core: filterCore,
-		s: sharedState,
+		p: selectedProgram,
+		c: selectedCurriculum,
+		m: selectedMajor,
+		y: selectedYear,
+		s: selectedSemester,
+		co: filterCore,
+		ss: sharedState,
 	}, setFilters] = useQueryStates({
-		program: parseAsString,
-		curriculum: parseAsString,
-		major: parseAsString,
-		year: parseAsInteger,
-		semester: parseAsInteger,
-		core: parseAsBoolean.withDefault(false),
-		s: sharePayloadParser
+		p: parseAsString,
+		c: parseAsString,
+		m: parseAsString,
+		y: parseAsInteger,
+		s: parseAsInteger,
+		co: parseAsBoolean.withDefault(false),
+		ss: sharePayloadParser
 	});
 	const [curriculumData, setCurriculumData] = useState<Curriculum | null>(initialCurriculumData ?? null);
 	const [includedCourses, setIncludedCourses] = useState<Course[]>(initialIncludedCourses);
@@ -228,7 +228,11 @@ export function GWACalculator({
 		}
 
 		const signature = JSON.stringify(sharedState);
+
 		if (signature === appliedSharedPayloadRef.current) return;
+
+		appliedSharedPayloadRef.current = signature;
+
 		pendingSharedPayloadRef.current = sharedState;
 		setSelectedCourseIndex(null);
 		setIncludedCourses([]);
@@ -452,12 +456,12 @@ export function GWACalculator({
 						includedCourses={includedCourses}
 						setSelectedProgram={(program) => {
 							setFilters({
-								program,
-								curriculum: 'latest',
-								major: null,
-								year: null,
-								semester: null,
-								core: false
+								p: program,
+								c: 'latest',
+								m: null,
+								y: null,
+								s: null,
+								co: false
 							})
 							setIncludedCourses([])
 						}}
@@ -469,11 +473,11 @@ export function GWACalculator({
 						includedCourses={includedCourses}
 						setSelectedCurriculum={(curriculum) => {
 							setFilters({
-								curriculum,
-								major: null,
-								year: null,
-								semester: null,
-								core: false
+								c: curriculum,
+								m: null,
+								y: null,
+								s: null,
+								co: false
 							})
 							setIncludedCourses([])
 						}}
@@ -492,12 +496,12 @@ export function GWACalculator({
 								if (!ok) return;
 							}
 							setFilters({
-								program: null,
-								curriculum: null,
-								major: null,
-								year: null,
-								semester: null,
-								core: false,
+								p: null,
+								c: null,
+								m: null,
+								y: null,
+								s: null,
+								co: false,
 							})
 							setIncludedCourses([])
 						}}
@@ -567,10 +571,10 @@ export function GWACalculator({
 
 								if (ok) {
 									setFilters({
-										major: null,
-										year: null,
-										semester: null,
-										core: false
+										m: null,
+										y: null,
+										s: null,
+										co: false
 									})
 									setIncludedCourses([{
 										code: undefined,
@@ -677,7 +681,7 @@ export function GWACalculator({
 								const index = allCourses.findIndex((item) => item.code === course.code && item.name === course.name);
 								return index >= 0 ? [index] : [];
 							});
-							const sharePath = serializeSharePayload(window.location.href, { s: payload });
+							const sharePath = serializeSharePayload(window.location.href, { ss: payload });
 							const shareUrl = `${sharePath}`;
 							try {
 								await navigator.clipboard.writeText(shareUrl);
@@ -1267,12 +1271,12 @@ function PresetInput({
 	selectedSemester: number | null;
 	filterCore: boolean;
 	setFilters: SetValues<{
-		program: SingleParserBuilder<string>;
-		curriculum: SingleParserBuilder<string>;
-		major: SingleParserBuilder<string>;
-		year: SingleParserBuilder<number>;
-		semester: SingleParserBuilder<number>;
-		core: Omit<SingleParserBuilder<boolean>, "parseServerSide"> & {
+		p: SingleParserBuilder<string>;
+		c: SingleParserBuilder<string>;
+		m: SingleParserBuilder<string>;
+		y: SingleParserBuilder<number>;
+		s: SingleParserBuilder<number>;
+		co: Omit<SingleParserBuilder<boolean>, "parseServerSide"> & {
 			readonly defaultValue: boolean;
 			parseServerSide(value: string | string[] | undefined): boolean;
 		};
@@ -1460,7 +1464,7 @@ function PresetInput({
 												}
 												onApplyPreset(collected, snap);
 												setOpen(false);
-												setFilters({ year: null, semester: null, major: pp.major ?? null, core: pp.core ?? false });
+												setFilters({ y: null, s: null, m: pp.major ?? null, co: pp.core ?? false });
 											}}
 											data-checked={lastIncludedSnapshot !== null && equalCodeArrays(lastIncludedSnapshot, snap) && selectedMajor === (pp.major ?? null) && filterCore === !!pp.core}
 										>
@@ -1535,7 +1539,7 @@ function PresetInput({
 															if (!ok) return;
 														}
 														onApplyPreset(courses, snap);
-														setFilters({ year: year, semester: null, major: null, core: false });
+														setFilters({ y: year, s: null, m: null, co: false });
 														setOpen(false);
 													}}
 													data-checked={lastIncludedSnapshot !== null && equalCodeArrays(lastIncludedSnapshot, snap) && selectedYear === year && selectedMajor === (g.key !== 'CORE' ? g.key : null) && filterCore === (g.key === 'CORE')}
@@ -1572,7 +1576,7 @@ function PresetInput({
 																}
 
 																onApplyPreset(courses, snap);
-																setFilters({ year: year, semester: null, major: g.key !== 'CORE' ? g.key : null, core: g.key === 'CORE' });
+																setFilters({ y: year, s: null, m: g.key !== 'CORE' ? g.key : null, co: g.key === 'CORE' });
 																setOpen(false);
 															}}
 															data-checked={lastIncludedSnapshot !== null && equalCodeArrays(lastIncludedSnapshot, snap) && selectedYear === year && selectedMajor === (g.key !== 'CORE' ? g.key : null) && filterCore === (g.key === 'CORE')}
@@ -1646,7 +1650,7 @@ function PresetInput({
 																				if (!ok) return;
 																			}
 
-																			setFilters({ year: p.year, semester: p.semester, major: p.major ?? null, core: p.core ?? false });
+																			setFilters({ y: p.year, s: p.semester, m: p.major ?? null, co: p.core ?? false });
 																			onApplyPreset(newIncluded, snap);
 																			setOpen(false);
 																		}}
@@ -1707,7 +1711,7 @@ function PresetInput({
 																					if (!ok) return;
 																				}
 
-																				setFilters({ year: p.year, semester: p.semester, major: p.major ?? null, core: p.core ?? false });
+																				setFilters({ y: p.year, s: p.semester, m: p.major ?? null, co: p.core ?? false });
 																				onApplyPreset(newIncluded, snap);
 																				setOpen(false);
 																			}}
