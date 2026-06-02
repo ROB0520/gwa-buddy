@@ -594,7 +594,7 @@ export function GWACalculator({
 					</div>
 				</div>
 				{includedCourses.length > 0 ? (
-					<div 
+					<div
 						className={cn(
 							"space-y-2 gap-2 columns-1",
 							includedCourses.length > 1 ? "lg:columns-2 max-w-7xl" : "max-w-2xl",
@@ -667,7 +667,7 @@ export function GWACalculator({
 				<div className={cn(
 					"flex justify-end w-full gap-2",
 					includedCourses.length > 1 ? "max-w-7xl" : "max-w-2xl"
-					)}
+				)}
 				>
 					<Button
 						variant="outline"
@@ -1992,7 +1992,7 @@ function CourseRowGradeSelector({
 			<Label htmlFor={`grade-select-${index}`}>
 				Grade
 			</Label>
-			<Combobox 
+			<Combobox
 				items={["1.00", "1.25", "1.50", "1.75", "2.00", "2.25", "2.50", "2.75", "3.00", "5.00"]}
 				disabled={includedCourses[index].units === undefined}
 				value={includedCourses[index].grade ? Number(includedCourses[index].grade).toFixed(2) : ''}

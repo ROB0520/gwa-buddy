@@ -799,98 +799,98 @@ function ScoreInput({
 						</CardHeader>
 						<CardContent>
 							<div>
-							<span className="max-sm:text-sm">GWA</span> ={" "}
-							<span>
-								Σ((<span className="inline-block relative align-middle text-center">
-									<span className="p-0.5 max-sm:w-24 max-sm:block max-sm:text-xs max-sm:mx-auto">Total Score in Category</span>
-									<Separator className="bg-current" />
-									<span className="p-0.5 max-sm:w-32 max-sm:block max-sm:text-xs max-sm:mx-auto">Total Max Score in Category</span>
-								</span>) × <span className="inline-block relative align-middle text-center"><span className="max-sm:text-xs max-sm:inline-block max-sm:w-14 max-sm:text-center">Category Weight</span></span>)
-							</span>
-						</div>
-						<h2 className="text-lg font-semibold">Solution</h2>
-						<ol className="list-decimal list-inside space-y-2">
-							<li>
-								Calculate how much of the available points you earned in each category.
-								<ol className="list-decimal list-inside ml-4 sm:ml-6 space-y-1">
-									{course.categories.map((category, index) => {
-										const totalScore = category.records.reduce((sum, record) => sum + record.score, 0);
-										const totalMaxScore = category.records.reduce((sum, record) => sum + record.maxScore, 0);
-
-										return (
-											<li key={index}>
-												{category.name}: <span className="max-sm:block">(<span className="inline-block relative align-middle text-center">
-													<span className="relative inline-flex justify-center pt-9 sm:pt-4 sm:w-full sm:min-w-64 p-0.5">
-														<span className="absolute top-1 text-xs text-muted-foreground max-sm:w-34">
-															Total Scores for all records in this category
-														</span>
-														<span className="tabular-nums font-mono">{totalScore}</span>
-													</span>
-													<Separator className="bg-current" />
-													<span className="flex flex-col justify-center p-0.5">
-														<span className="font-mono tabular-nums">
-															{totalMaxScore}
-														</span>
-														<span className="text-xs text-muted-foreground max-sm:w-44">
-															Total Max Scores for all records in this category
-														</span>
-													</span>
-												</span>) × <span className="tabular-nums font-mono">{category.weight.toFixed(2)}</span>%</span>
-											</li>
-										)
-									})}
-								</ol>
-							</li>
-							<li>
-								Multiply each category score by its corresponding weight in the course&apos;s grading system.
-								<ol className="list-decimal list-inside ml-6 space-y-1">
-									{course.categories.map((category, index) => {
-										const percentageScore = category.records.reduce((sum, record) => sum + record.score, 0) / category.records.reduce((sum, record) => sum + record.maxScore, 0);
-										const weightedScores = percentageScore * category.weight;
-
-										return (
-											<li key={index} className="pl-5 -indent-5">
-												{category.name}: <span className="tabular-nums font-mono">{percentageScore.toFixed(3)}</span>% × <span className="tabular-nums font-mono">{category.weight.toFixed(2)}</span>% = <span className="tabular-nums font-mono">{weightedScores.toFixed(2)}</span>%
-											</li>
-										)
-									})}
-								</ol>
-							</li>
-							<li>
-								Add the weighted scores and convert the result using the NEUST grading scale.<br />
-								<span className="inline-flex items-baseline gap-1 sm:w-fit flex-wrap">
-									{(() => {
-										return (
-											<span className="inline-block relative align-middle text-center">
-												<span className="p-0.5">
-													{course.categories.map((category, index) => {
-														const percentageScore = category.records.reduce((sum, record) => sum + record.score, 0) / category.records.reduce((sum, record) => sum + record.maxScore, 0);
-														const weightedScores = percentageScore * category.weight;
-
-														return (
-															<Fragment key={index}>
-																<span className="tabular-nums font-mono">{weightedScores.toFixed(2)}</span>%
-																{index < course.categories.length - 1 ? ' + ' : ''}
-															</Fragment>
-														)
-													})}
-												</span>
-											</span>
-										)
-									})()} = <span className={cn(
-										"inline border-current rounded-lg px-2 py-0.5",
-										Number(getTransmutatedGrade(calculatedGrade)) <= 1.25 ? "bg-green-100 dark:bg-green-500/30 border-green-300 dark:border-green-700/30 text-green-900 dark:text-green-50" :
-											Number(getTransmutatedGrade(calculatedGrade)) <= 1.75 ? "bg-lime-100 dark:bg-lime-500/30 border-lime-300 dark:border-lime-700/30 text-lime-900 dark:text-lime-50" :
-												Number(getTransmutatedGrade(calculatedGrade)) <= 2.50 ? "bg-yellow-100 dark:bg-yellow-500/30 border-yellow-300 dark:border-yellow-700/30 text-yellow-900 dark:text-yellow-50" :
-													Number(getTransmutatedGrade(calculatedGrade)) <= 3.00 ? "bg-amber-100 dark:bg-amber-500/30 border-amber-300 dark:border-amber-700/30 text-amber-900 dark:text-amber-50" :
-														"bg-destructive/50 dark:bg-destructive/30 border-destructive dark:border-destructive/30 text-destructive-foreground"
-									)}>
-										<span className="tabular-nums font-mono font-bold">{calculatedGrade.toFixed(2)}</span>% or <span className="tabular-nums font-mono font-bold">{getTransmutatedGrade(calculatedGrade)}</span>
-									</span>  = Final Grade
+								<span className="max-sm:text-sm">GWA</span> ={" "}
+								<span>
+									Σ((<span className="inline-block relative align-middle text-center">
+										<span className="p-0.5 max-sm:w-24 max-sm:block max-sm:text-xs max-sm:mx-auto">Total Score in Category</span>
+										<Separator className="bg-current" />
+										<span className="p-0.5 max-sm:w-32 max-sm:block max-sm:text-xs max-sm:mx-auto">Total Max Score in Category</span>
+									</span>) × <span className="inline-block relative align-middle text-center"><span className="max-sm:text-xs max-sm:inline-block max-sm:w-14 max-sm:text-center">Category Weight</span></span>)
 								</span>
-							</li>
+							</div>
+							<h2 className="text-lg font-semibold">Solution</h2>
+							<ol className="list-decimal list-inside space-y-2">
+								<li>
+									Calculate how much of the available points you earned in each category.
+									<ol className="list-decimal list-inside ml-4 sm:ml-6 space-y-1">
+										{course.categories.map((category, index) => {
+											const totalScore = category.records.reduce((sum, record) => sum + record.score, 0);
+											const totalMaxScore = category.records.reduce((sum, record) => sum + record.maxScore, 0);
+
+											return (
+												<li key={index}>
+													{category.name}: <span className="max-sm:block">(<span className="inline-block relative align-middle text-center">
+														<span className="relative inline-flex justify-center pt-9 sm:pt-4 sm:w-full sm:min-w-64 p-0.5">
+															<span className="absolute top-1 text-xs text-muted-foreground max-sm:w-34">
+																Total Scores for all records in this category
+															</span>
+															<span className="tabular-nums font-mono">{totalScore}</span>
+														</span>
+														<Separator className="bg-current" />
+														<span className="flex flex-col justify-center p-0.5">
+															<span className="font-mono tabular-nums">
+																{totalMaxScore}
+															</span>
+															<span className="text-xs text-muted-foreground max-sm:w-44">
+																Total Max Scores for all records in this category
+															</span>
+														</span>
+													</span>) × <span className="tabular-nums font-mono">{category.weight.toFixed(2)}</span>%</span>
+												</li>
+											)
+										})}
+									</ol>
+								</li>
+								<li>
+									Multiply each category score by its corresponding weight in the course&apos;s grading system.
+									<ol className="list-decimal list-inside ml-6 space-y-1">
+										{course.categories.map((category, index) => {
+											const percentageScore = category.records.reduce((sum, record) => sum + record.score, 0) / category.records.reduce((sum, record) => sum + record.maxScore, 0);
+											const weightedScores = percentageScore * category.weight;
+
+											return (
+												<li key={index} className="pl-5 -indent-5">
+													{category.name}: <span className="tabular-nums font-mono">{percentageScore.toFixed(3)}</span>% × <span className="tabular-nums font-mono">{category.weight.toFixed(2)}</span>% = <span className="tabular-nums font-mono">{weightedScores.toFixed(2)}</span>%
+												</li>
+											)
+										})}
+									</ol>
+								</li>
+								<li>
+									Add the weighted scores and convert the result using the NEUST grading scale.<br />
+									<span className="inline-flex items-baseline gap-1 sm:w-fit flex-wrap">
+										{(() => {
+											return (
+												<span className="inline-block relative align-middle text-center">
+													<span className="p-0.5">
+														{course.categories.map((category, index) => {
+															const percentageScore = category.records.reduce((sum, record) => sum + record.score, 0) / category.records.reduce((sum, record) => sum + record.maxScore, 0);
+															const weightedScores = percentageScore * category.weight;
+
+															return (
+																<Fragment key={index}>
+																	<span className="tabular-nums font-mono">{weightedScores.toFixed(2)}</span>%
+																	{index < course.categories.length - 1 ? ' + ' : ''}
+																</Fragment>
+															)
+														})}
+													</span>
+												</span>
+											)
+										})()} = <span className={cn(
+											"inline border-current rounded-lg px-2 py-0.5",
+											Number(getTransmutatedGrade(calculatedGrade)) <= 1.25 ? "bg-green-100 dark:bg-green-500/30 border-green-300 dark:border-green-700/30 text-green-900 dark:text-green-50" :
+												Number(getTransmutatedGrade(calculatedGrade)) <= 1.75 ? "bg-lime-100 dark:bg-lime-500/30 border-lime-300 dark:border-lime-700/30 text-lime-900 dark:text-lime-50" :
+													Number(getTransmutatedGrade(calculatedGrade)) <= 2.50 ? "bg-yellow-100 dark:bg-yellow-500/30 border-yellow-300 dark:border-yellow-700/30 text-yellow-900 dark:text-yellow-50" :
+														Number(getTransmutatedGrade(calculatedGrade)) <= 3.00 ? "bg-amber-100 dark:bg-amber-500/30 border-amber-300 dark:border-amber-700/30 text-amber-900 dark:text-amber-50" :
+															"bg-destructive/50 dark:bg-destructive/30 border-destructive dark:border-destructive/30 text-destructive-foreground"
+										)}>
+											<span className="tabular-nums font-mono font-bold">{calculatedGrade.toFixed(2)}</span>% or <span className="tabular-nums font-mono font-bold">{getTransmutatedGrade(calculatedGrade)}</span>
+										</span>  = Final Grade
+									</span>
+								</li>
 								<span className="block">You can see how the NEUST grading scale in our <Link href="/#system-of-grading" className="underline underline-offset-4">System of Grading</Link> section in the home page.</span>
-						</ol>
+							</ol>
 						</CardContent>
 					</Card>
 				)
