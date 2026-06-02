@@ -744,7 +744,7 @@ export function GWACalculator({
 												finalGwa <= 1.75 ? <StarsIcon className="inline text-inherit" /> :
 													finalGwa <= 2.50 ? <SparkleIcon className="inline text-inherit" /> :
 														finalGwa <= 3.00 ? <TrendingUpDownIcon className="inline text-inherit" /> :
-															<TriangleAlertIcon className="inline text-inherit size-[1ch]" />
+															<TriangleAlertIcon className="inline text-inherit" />
 										}
 									</>
 								) : (
