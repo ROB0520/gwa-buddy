@@ -20,6 +20,7 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import Link from "next/link";
 import LZString from "lz-string";
 import { toast } from "sonner";
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 
 type CourseDetails = {
 	name: string;
@@ -130,7 +131,7 @@ export function GradeCalculator({
 	return (
 		<div className="space-y-4">
 			<CourseDetailsForm
-				className="bg-card text-card-foreground border rounded-lg p-4 max-w-3xl mx-auto"
+				className="max-w-3xl mx-auto"
 				setCourse={setCourse}
 				course={course}
 			/>
@@ -266,157 +267,165 @@ function CourseDetailsForm({
 	}
 
 	return (
-		<div className={className}>
-			<h3 className="text-lg font-semibold">Course Setup</h3>
-			<p className="text-sm text-muted-foreground">
-				Define your grading criteria and category weights
-			</p>
-			<form onSubmit={courseSetupForm.handleSubmit(onSubmit)} className="space-y-4 mt-4">
-				<Controller
-					control={courseSetupForm.control}
-					name="name"
-					render={({ field, fieldState }) => (
-						<Field data-invalid={fieldState.invalid}>
-							<FieldLabel htmlFor={field.name}>Course Name</FieldLabel>
-							<Input
-								{...field}
-								id={field.name}
-								aria-invalid={fieldState.invalid}
-							/>
-							{fieldState.error && (<FieldError errors={[fieldState.error]} />)}
-						</Field>
-					)}
-				/>
-				<Controller
-					control={courseSetupForm.control}
-					name="categories"
-					render={({ fieldState }) => (
-						<div
-							className={cn(
-								"bg-muted border border-dashed p-4 rounded-lg",
-								fieldState.invalid ? "border-destructive" : ""
+		<>
+			<form onSubmit={courseSetupForm.handleSubmit(onSubmit)}>
+				<Card className={className}>
+					<CardHeader>
+						<CardTitle>Course Setup</CardTitle>
+						<CardDescription>
+							Define your grading criteria and category weights
+						</CardDescription>
+					</CardHeader>
+					<CardContent className="space-y-4">
+						<Controller
+							control={courseSetupForm.control}
+							name="name"
+							render={({ field, fieldState }) => (
+								<Field data-invalid={fieldState.invalid}>
+									<FieldLabel htmlFor={field.name}>Course Name</FieldLabel>
+									<Input
+										{...field}
+										id={field.name}
+										aria-invalid={fieldState.invalid}
+									/>
+									{fieldState.error && (<FieldError errors={[fieldState.error]} />)}
+								</Field>
 							)}
-						>
-							<FieldLabel className={cn(fieldState.invalid && "text-destructive")}>Grading Categories</FieldLabel>
-							<div className="mt-2 grid grid-cols-[1fr_auto] sm:grid-cols-[1fr_auto_auto] gap-2">
-								{categoryFields.map((category, index) => (
-									(() => {
-										const categoryNameError = errors.categories?.[index]?.name;
-										const categoryWeightError = errors.categories?.[index]?.weight;
-										const isCategoryInvalid = Boolean(categoryNameError || categoryWeightError);
-										const isNameOnlyInvalid = Boolean(categoryNameError && !categoryWeightError);
-
-										return (
-											<div
-												key={category.id}
-												className={cn(
-													"grid grid-cols-subgrid col-span-2 sm:col-span-3 gap-x-2 gap-y-1",
-													isCategoryInvalid
-														? "row-span-3"
-														: "row-span-2",
-												)}
-											>
-												<Controller
-													control={courseSetupForm.control}
-													name={`categories.${index}.name`}
-													render={({ field, fieldState }) => (
-														<Field data-invalid={fieldState.invalid} className={cn("grid grid-rows-subgrid max-sm:col-span-2", fieldState.error ? "row-span-3" : "row-span-2")}>
-															<FieldLabel htmlFor={field.name}>Category #{index + 1} Name</FieldLabel>
-															<Input
-																{...field}
-																id={field.name}
-																aria-invalid={fieldState.invalid}
-															/>
-															{fieldState.error && (<FieldError errors={[fieldState.error]} />)}
-														</Field>
-													)}
-												/>
-												<Controller
-													control={courseSetupForm.control}
-													name={`categories.${index}.weight`}
-													render={({ field, fieldState }) => (
-														<Field data-invalid={fieldState.invalid} className={cn("w-full sm:w-44 grid grid-rows-subgrid", fieldState.error ? "row-span-3" : "row-span-2")}>
-															<FieldLabel htmlFor={field.name}>Weight (%)</FieldLabel>
-															<InputGroup aria-invalid={fieldState.invalid}>
-																<InputGroupInput
-																	value={(field.value || 0).toString()}
-																	onChange={e => field.onChange(e.target.value === "" ? "" : Number(e.target.value))}
-																	id={field.name}
-																	aria-invalid={fieldState.invalid}
-																	ref={field.ref}
-																/>
-																<InputGroupAddon align="inline-end">
-																	<PercentIcon />
-																</InputGroupAddon>
-															</InputGroup>
-															{fieldState.error && (<FieldError errors={[fieldState.error]} />)}
-														</Field>
-													)}
-												/>
-												<div className={cn(
-													"grid grid-rows-subgrid gap-2",
-													isCategoryInvalid
-														? "row-span-3"
-														: "row-span-2",
-													isNameOnlyInvalid
-													&& "max-sm:row-span-2",
-												)}>
-													<Tooltip>
-														<TooltipTrigger asChild>
-															<Button
-																className="mt-auto row-2"
-																variant="destructive"
-																onClick={() => removeCategory(index)}
-																size="icon"
-																type="button"
-																disabled={categoryFields.length === 1}
-																suppressHydrationWarning
-															>
-																<MinusIcon />
-															</Button>
-														</TooltipTrigger>
-														<TooltipContent>
-															Remove Category
-														</TooltipContent>
-													</Tooltip>
-												</div>
-											</div>
-										);
-									})()
-								))}
-							</div>
-							<Button
-								className="w-full mt-4"
-								onClick={() => appendCategory({ name: "", weight: 0 })}
-								type="button"
-								variant="outline"
-							>
-								<PlusIcon />
-								Add Category
-							</Button>
-							<p className="text-sm text-muted-foreground mt-2">
-								Total Weight: <span
+						/>
+						<Controller
+							control={courseSetupForm.control}
+							name="categories"
+							render={({ fieldState }) => (
+								<div
 									className={cn(
-										"font-semibold",
-										categories.reduce((sum, category) => sum + (category.weight || 0), 0) === 100
-											? "text-accent"
-											: "text-destructive",
+										"bg-muted border border-dashed p-4 rounded-lg",
+										fieldState.invalid ? "border-destructive" : ""
 									)}
 								>
-									{categories.reduce((sum, category) => sum + (category.weight || 0), 0)}%
-								</span>
-							</p>
-							{fieldState.error && (<FieldError errors={[fieldState.error.root]} />)}
+									<FieldLabel className={cn(fieldState.invalid && "text-destructive")}>Grading Categories</FieldLabel>
+									<div className="mt-2 grid grid-cols-[1fr_auto] sm:grid-cols-[1fr_auto_auto] gap-2">
+										{categoryFields.map((category, index) => (
+											(() => {
+												const categoryNameError = errors.categories?.[index]?.name;
+												const categoryWeightError = errors.categories?.[index]?.weight;
+												const isCategoryInvalid = Boolean(categoryNameError || categoryWeightError);
+												const isNameOnlyInvalid = Boolean(categoryNameError && !categoryWeightError);
+
+												return (
+													<div
+														key={category.id}
+														className={cn(
+															"grid grid-cols-subgrid col-span-2 sm:col-span-3 gap-x-2 gap-y-1",
+															isCategoryInvalid
+																? "row-span-3"
+																: "row-span-2",
+														)}
+													>
+														<Controller
+															control={courseSetupForm.control}
+															name={`categories.${index}.name`}
+															render={({ field, fieldState }) => (
+																<Field data-invalid={fieldState.invalid} className={cn("grid grid-rows-subgrid max-sm:col-span-2", fieldState.error ? "row-span-3" : "row-span-2")}>
+																	<FieldLabel htmlFor={field.name}>Category #{index + 1} Name</FieldLabel>
+																	<Input
+																		{...field}
+																		id={field.name}
+																		aria-invalid={fieldState.invalid}
+																	/>
+																	{fieldState.error && (<FieldError errors={[fieldState.error]} />)}
+																</Field>
+															)}
+														/>
+														<Controller
+															control={courseSetupForm.control}
+															name={`categories.${index}.weight`}
+															render={({ field, fieldState }) => (
+																<Field data-invalid={fieldState.invalid} className={cn("w-full sm:w-44 grid grid-rows-subgrid", fieldState.error ? "row-span-3" : "row-span-2")}>
+																	<FieldLabel htmlFor={field.name}>Weight (%)</FieldLabel>
+																	<InputGroup aria-invalid={fieldState.invalid}>
+																		<InputGroupInput
+																			value={(field.value || 0).toString()}
+																			onChange={e => field.onChange(e.target.value === "" ? "" : Number(e.target.value))}
+																			id={field.name}
+																			aria-invalid={fieldState.invalid}
+																			ref={field.ref}
+																		/>
+																		<InputGroupAddon align="inline-end">
+																			<PercentIcon />
+																		</InputGroupAddon>
+																	</InputGroup>
+																	{fieldState.error && (<FieldError errors={[fieldState.error]} />)}
+																</Field>
+															)}
+														/>
+														<div className={cn(
+															"grid grid-rows-subgrid gap-2",
+															isCategoryInvalid
+																? "row-span-3"
+																: "row-span-2",
+															isNameOnlyInvalid
+															&& "max-sm:row-span-2",
+														)}>
+															<Tooltip>
+																<TooltipTrigger asChild>
+																	<Button
+																		className="mt-auto row-2"
+																		variant="destructive"
+																		onClick={() => removeCategory(index)}
+																		size="icon"
+																		type="button"
+																		disabled={categoryFields.length === 1}
+																		suppressHydrationWarning
+																	>
+																		<MinusIcon />
+																	</Button>
+																</TooltipTrigger>
+																<TooltipContent collisionPadding={15}>
+																	Remove Category
+																</TooltipContent>
+															</Tooltip>
+														</div>
+													</div>
+												);
+											})()
+										))}
+									</div>
+									<Button
+										className="w-full mt-4"
+										onClick={() => appendCategory({ name: "", weight: 0 })}
+										type="button"
+										variant="outline"
+									>
+										<PlusIcon />
+										Add Category
+									</Button>
+									<p className="text-sm text-muted-foreground mt-2">
+										Total Weight: <span
+											className={cn(
+												"font-semibold",
+												categories.reduce((sum, category) => sum + (category.weight || 0), 0) === 100
+													? "text-accent"
+													: "text-destructive",
+											)}
+										>
+											{categories.reduce((sum, category) => sum + (category.weight || 0), 0)}%
+										</span>
+									</p>
+									{fieldState.error && (<FieldError errors={[fieldState.error.root]} />)}
+								</div>
+							)}
+						/>
+					</CardContent>
+					<CardFooter className="flex-col gap-2 items-start">
+						<Button type="submit" className="w-full">
+							<SaveIcon />
+							Save Course Setup
+						</Button>
+						<div className="text-sm text-muted-foreground">
+							Note: The total weight of all categories must equal 100% to calculate your class standing.
 						</div>
-					)}
-				/>
-				<Button type="submit" className="w-full">
-					<SaveIcon />
-					Save Course Setup
-				</Button>
-				<div className="text-sm text-muted-foreground">
-					Note: The total weight of all categories must equal 100% to calculate your class standing.
-				</div>
+					</CardFooter>
+				</Card>
 			</form>
 			<AlertDialog open={openWarning} onOpenChange={setOpenWarning}>
 				<AlertDialogContent>
@@ -441,7 +450,7 @@ function CourseDetailsForm({
 					</AlertDialogFooter>
 				</AlertDialogContent>
 			</AlertDialog>
-		</div>
+		</>
 	)
 }
 
@@ -615,7 +624,7 @@ function ScoreInput({
 				</p>
 			</div>
 			<Separator />
-			<form className="gap-6 flex flex-col md:flex-row items-start" onSubmit={scoreInputForm.handleSubmit(onSubmit)}>
+			<form className="gap-4 flex flex-col md:flex-row items-start" onSubmit={scoreInputForm.handleSubmit(onSubmit)}>
 				<section className="space-y-4 w-full">
 					{categoryFields.map((category, index) => (
 						<RecordInput
@@ -629,41 +638,51 @@ function ScoreInput({
 					))}
 				</section>
 				<Separator className="sm:hidden" />
-				<section className="sticky top-16 xl:top-4 w-full md:w-4xl">
-					<div className="bg-card text-card-foreground border rounded-lg p-4 w-full">
-						<h2 className="text-lg font-semibold">Category Breakdown</h2>
-						<p className="text-sm text-muted-foreground mb-4">
-							Summary of category totals, weights, and each category&apos;s impact on your overall grade.
-						</p>
-						<Table>
-							<TableHeader>
-								<TableRow>
-									<TableHead>Category</TableHead>
-									<TableHead className="text-right">Total / Max Total</TableHead>
-									<TableHead className="text-right">Weight</TableHead>
-									<TableHead className="text-right max-sm:w-28 max-sm:whitespace-normal">Weighted Impact (%)</TableHead>
-								</TableRow>
-							</TableHeader>
-							<TableBody>
-								{
-									course.categories.map((category, index) => {
-										const totalScore = category.records.reduce((sum, record) => sum + record.score, 0);
-										const totalMaxScore = category.records.reduce((sum, record) => sum + record.maxScore, 0);
-										const weightedScores = totalMaxScore > 0 ? (totalScore / totalMaxScore) * category.weight : 0;
+				<section className="sticky top-16 xl:top-4 w-full md:w-4xl space-y-4">
+					<Card>
+						<CardHeader>
+							<CardTitle>
+								Category Breakdown
+							</CardTitle>
+							<CardDescription>
+								Summary of category totals, weights, and each category&apos;s impact on your overall grade.
+							</CardDescription>
+						</CardHeader>
+						<CardContent>
+							<Table>
+								<TableHeader>
+									<TableRow>
+										<TableHead>Category</TableHead>
+										<TableHead className="text-right">Total <span className="text-muted-foreground text-sm">/</span> Max Total</TableHead>
+										<TableHead className="text-right">Weight</TableHead>
+										<TableHead className="text-right max-sm:w-28 max-sm:whitespace-normal">Weighted Impact (%)</TableHead>
+									</TableRow>
+								</TableHeader>
+								<TableBody>
+									{
+										course.categories.map((category, index) => {
+											const totalScore = category.records.reduce((sum, record) => sum + record.score, 0);
+											const totalMaxScore = category.records.reduce((sum, record) => sum + record.maxScore, 0);
+											const weightedScores = totalMaxScore > 0 ? (totalScore / totalMaxScore) * category.weight : 0;
 
-										return (
-											<TableRow key={index}>
-												<TableCell className="whitespace-normal">{category.name}</TableCell>
-												<TableCell className="text-right font-mono">{(totalScore).toLocaleString()}<span className="text-muted-foreground text-sm">/</span>{(totalMaxScore).toLocaleString()}</TableCell>
-												<TableCell className="text-right font-mono">{category.weight}%</TableCell>
-												<TableCell className="text-right font-mono max-sm:w-24">{weightedScores.toFixed(2)}%</TableCell>
-											</TableRow>
-										)
-									})
-								}
-							</TableBody>
-						</Table>
-						<div className="w-full mt-4 flex flex-col gap-2 items-center justify-center md:flex-row md:justify-start">
+											return (
+												<TableRow key={index}>
+													<TableCell className="whitespace-normal">{category.name}</TableCell>
+													<TableCell className="text-right">
+														<span className="font-mono">{(totalScore).toLocaleString()}</span>
+														<span className="text-muted-foreground text-sm">/</span>
+														<span className="font-mono">{(totalMaxScore).toLocaleString()}</span>
+													</TableCell>
+													<TableCell className="text-right font-mono">{category.weight}%</TableCell>
+													<TableCell className="text-right font-mono max-sm:w-24">{weightedScores.toFixed(2)}%</TableCell>
+												</TableRow>
+											)
+										})
+									}
+								</TableBody>
+							</Table>
+						</CardContent>
+						<CardFooter className="flex-col gap-2 items-center justify-center md:flex-row md:justify-start">
 							<Button
 								type="submit"
 								className="max-md:w-full md:flex-1"
@@ -681,14 +700,14 @@ function ScoreInput({
 								<Share2Icon />
 								Share Template
 							</Button>
-						</div>
-					</div>
+						</CardFooter>
+					</Card>
 					{
 						(calculatedGrade !== null && showResults) ? (
 							<>
 								<div
 									className={cn(
-										"border border-current rounded-lg p-4 w-full mt-4",
+										"border border-current rounded-lg p-4 w-full",
 										Number(getTransmutatedGrade(calculatedGrade)) <= 1.25 ? "bg-green-100 dark:bg-green-500/30 border-green-300 dark:border-green-700/30 text-green-900 dark:text-green-50" :
 											Number(getTransmutatedGrade(calculatedGrade)) <= 1.75 ? "bg-lime-100 dark:bg-lime-500/30 border-lime-300 dark:border-lime-700/30 text-lime-900 dark:text-lime-50" :
 												Number(getTransmutatedGrade(calculatedGrade)) <= 2.50 ? "bg-yellow-100 dark:bg-yellow-500/30 border-yellow-300 dark:border-yellow-700/30 text-yellow-900 dark:text-yellow-50" :
@@ -771,12 +790,15 @@ function ScoreInput({
 			</form>
 			{
 				(showResults && calculatedGrade !== null && showCalculationDetails) && (
-					<div className="bg-card text-card-foreground border rounded-lg p-4 w-full" ref={calcuDetailsRef}>
-						<h2 className="text-lg font-semibold">Calculation Details</h2>
-						<p className="text-sm text-muted-foreground mb-4">
-							Your final grade is calculated by applying each category&apos;s weight to your score and adding the weighted scores together.
-						</p>
-						<div>
+					<Card ref={calcuDetailsRef}>
+						<CardHeader>
+							<CardTitle>Calculation Details</CardTitle>
+							<CardDescription>
+								Your final grade is calculated by applying each category&apos;s weight to your score and adding the weighted scores together.
+							</CardDescription>
+						</CardHeader>
+						<CardContent>
+							<div>
 							<span className="max-sm:text-sm">GWA</span> ={" "}
 							<span>
 								Σ((<span className="inline-block relative align-middle text-center">
@@ -847,14 +869,7 @@ function ScoreInput({
 
 														return (
 															<Fragment key={index}>
-																<span className="relative inline-flex justify-center pt-4">
-																	<span className="absolute top-1 text-xs opacity-80 line-clamp-1">
-																		{category.name}
-																	</span>
-																	<span>
-																		<span className="tabular-nums font-mono">{weightedScores.toFixed(2)}</span>%
-																	</span>
-																</span>
+																<span className="tabular-nums font-mono">{weightedScores.toFixed(2)}</span>%
 																{index < course.categories.length - 1 ? ' + ' : ''}
 															</Fragment>
 														)
@@ -873,10 +888,11 @@ function ScoreInput({
 										<span className="tabular-nums font-mono font-bold">{calculatedGrade.toFixed(2)}</span>% or <span className="tabular-nums font-mono font-bold">{getTransmutatedGrade(calculatedGrade)}</span>
 									</span>  = Final Grade
 								</span>
-								You can see how the NEUST grading scale in our <Link href="/#system-of-grading" className="underline underline-offset-4">System of Grading</Link> section in the home page.
 							</li>
+								<span className="block">You can see how the NEUST grading scale in our <Link href="/#system-of-grading" className="underline underline-offset-4">System of Grading</Link> section in the home page.</span>
 						</ol>
-					</div>
+						</CardContent>
+					</Card>
 				)
 			}
 		</div>
@@ -1124,7 +1140,7 @@ function RecordInput({
 													<MinusIcon />
 												</Button>
 											</TooltipTrigger>
-											<TooltipContent>
+											<TooltipContent collisionPadding={15}>
 												Remove Record
 											</TooltipContent>
 										</Tooltip>
