@@ -6,7 +6,7 @@ import Link from "next/link";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button";
 import { AcadsInfo } from "./acads-info";
-import { GWACalculator } from "./calculator";
+import { GWACalculator } from "./gwa-calculator";
 import { programs as programsData } from "@/data/programs";
 import { Curriculum } from "@/data/types";
 
