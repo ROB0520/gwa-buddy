@@ -441,7 +441,7 @@ export function GWACalculator({
 
 	return (
 		<>
-			<div className="p-4 rounded-lg shadow border w-full max-w-2xl bg-card text-card-foreground">
+			<div className="p-4 rounded-lg border w-full max-w-2xl bg-card text-card-foreground">
 				<h2 className="font-medium mb-4">
 					Select Your Program & Curriculum
 				</h2>
@@ -612,7 +612,7 @@ export function GWACalculator({
 
 					</div>
 				) : (
-					<Empty className="border border-dashed bg-muted/10 dark:bg-muted/20 max-w-2xl shadow">
+					<Empty className="border border-dashed bg-muted/10 dark:bg-muted/20 max-w-2xl">
 						<EmptyHeader>
 							<EmptyMedia variant="icon">
 								<BookXIcon />
@@ -690,7 +690,7 @@ export function GWACalculator({
 						}}
 					>
 						<Share2Icon />
-						Share Selection
+						Share Template
 					</Button>
 					<Button
 						disabled={includedCourses.length === 0 || includedCourses.some(c => c.grade === null || c.grade === undefined)}
@@ -1376,7 +1376,7 @@ function PresetInput({
 	}
 
 	const renderList = (
-		<Command className="rounded-none! md:rounded-xl!">
+		<Command className="rounded-none! md:rounded-xl! md:p-0">
 			<CommandList className="max-md:max-h-[50dvh]">
 				<CommandEmpty>No presets available.</CommandEmpty>
 				{(() => {
@@ -1845,7 +1845,7 @@ function CourseRow({
 	sharedCourseList: ReactNode;
 }) {
 	return (
-		<div className="rounded-md shadow border p-4 grid grid-cols-[1fr_1fr_1fr_auto] md:grid-cols-[1fr_1fr_1fr_1fr_1fr_auto] gap-2 items-end w-full bg-card text-card-foreground">
+		<div className="rounded-md border p-4 grid grid-cols-[1fr_1fr_1fr_auto] md:grid-cols-[1fr_1fr_1fr_1fr_1fr_auto] gap-2 items-end w-full bg-card text-card-foreground">
 			<CourseRowCourseSelector
 				curriculumData={curriculumData}
 				includedCourses={includedCourses}

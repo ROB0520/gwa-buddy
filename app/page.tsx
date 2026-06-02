@@ -259,7 +259,7 @@ export default async function HomePage({ searchParams }: { searchParams?: Search
 					Your companion for calculating and tracking your Grade Weighted Average (GWA) with ease and efficiency.
 				</p>
 			</div>
-			<Alert className="max-w-2xl shadow">
+			<Alert className="max-w-2xl">
 				<AlertCircleIcon />
 				<AlertTitle>Contribute</AlertTitle>
 				<AlertDescription className="md:text-wrap">
