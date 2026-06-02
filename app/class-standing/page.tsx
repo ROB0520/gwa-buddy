@@ -48,49 +48,74 @@ export default async function ClassStandingPage({
   );
 }
 
-function deserializeCourse(
-  compressed: string
+export function deserializeCourse(
+	compressed: string
 ): CourseDetails {
-  const decompressed =
-    LZString.decompressFromEncodedURIComponent(compressed)
+	const decompressed =
+		LZString.decompressFromEncodedURIComponent(
+			compressed
+		);
 
-  if (!decompressed) {
-    throw new Error("Invalid template")
-  }
+	if (!decompressed) {
+		throw new Error("Invalid template");
+	}
 
-  const data = JSON.parse(decompressed) as {
-    n: string
-    c: {
-      n: string
-      w: number
-      r: (number | [string, number])[]
-    }[]
-  }
+	const data = JSON.parse(decompressed) as SharedCourse;
 
+	return {
+		name: data.n,
+		categories: data.c.map(category => ({
+			name: category.n,
+			weight: category.w,
+			records: category.r.map((record, index) => {
+				// Default sequential
+				if (typeof record === "number") {
+					return {
+						name: `${category.n} ${index + 1}` as string,
+						score: 0,
+						maxScore: record,
+					};
+				}
 
-  return {
-    name: data.n,
-    categories: data.c.map(category => ({
-      name: category.n,
-      weight: category.w,
-      records: category.r.map((record, index) => {
-        if (typeof record === "number") {
-          return {
-            name: `${category.n} ${index + 1}`,
-            score: 0,
-            maxScore: record,
-          }
-        }
+				// Prefix + custom number
+				if (
+					Array.isArray(record) &&
+					typeof record[0] === "number"
+				) {
+					return {
+						name: `${category.p} ${record[0]}` as string,
+						score: 0,
+						maxScore: record[1],
+					};
+				}
 
-        return {
-          name: record[0],
-          score: 0,
-          maxScore: record[1],
-        }
-      }),
-    })),
-  }
+				// Fully custom
+				return {
+					name: record[0] as string,
+					score: 0,
+					maxScore: record[1],
+				};
+			}),
+		})),
+	};
 }
+
+type SharedCourse = {
+	n: string;
+	c: SharedCategory[];
+};
+
+type SharedCategory = {
+	n: string;
+	w: number;
+	p?: string; // detected prefix
+	r: SharedRecord[];
+};
+
+type SharedRecord =
+	| number
+	| [number, number]
+	| [string, number];
 
 type CourseDetails = {
   name: string;

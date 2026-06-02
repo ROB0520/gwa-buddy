@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, Fragment, useEffect } from "react";
+import { useState, Fragment, useEffect, Dispatch, SetStateAction, useRef, RefObject } from "react";
 import { z } from "zod";
 import { Controller, useFieldArray, useForm, useFormState, UseFormStateReturn, useWatch } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -38,34 +38,86 @@ type CourseCategoryRecord = {
 	maxScore: number;
 }
 
+type SharedCourse = {
+	n: string;
+	c: SharedCategory[];
+};
+
+type SharedCategory = {
+	n: string;
+	w: number;
+	p?: string; // detected prefix
+	r: SharedRecord[];
+};
+
+type SharedRecord =
+	| number
+	| [number, number]
+	| [string, number];
+
 function serializeCourse(course: CourseDetails): string {
-	const data: {
-		n: string
-		c: {
-			n: string
-			w: number
-			r: (number | [string, number])[]
-		}[]
-	} = {
+	const data: SharedCourse = {
 		n: course.name,
-		c: course.categories.map(category => ({
-			n: category.name,
-			w: category.weight,
-			r: category.records.map((record, index) => {
-				const expectedName = `${category.name} ${index + 1}`
+		c: course.categories.map(category => {
+			const parsedRecords = category.records.map(record =>
+				parseSequentialName(record.name)
+			);
 
-				if (record.name === expectedName) {
-					return record.maxScore
-				}
+			const prefixCounts = new Map<string, number>();
 
-				return [record.name, record.maxScore]
-			}),
-		})),
-	}
+			for (const parsed of parsedRecords) {
+				if (!parsed) continue;
+
+				prefixCounts.set(
+					parsed.prefix,
+					(prefixCounts.get(parsed.prefix) ?? 0) + 1
+				);
+			}
+
+			const detectedPrefix =
+				[...prefixCounts.entries()]
+					.sort((a, b) => b[1] - a[1])[0]?.[0];
+
+			return {
+				n: category.name,
+				w: category.weight,
+				p: detectedPrefix,
+				r: category.records.map((record, index) => {
+					const parsed = parseSequentialName(record.name);
+
+					// Original expected name
+					const defaultName =
+						`${category.name} ${index + 1}`;
+
+					if (record.name === defaultName) {
+						return record.maxScore;
+					}
+
+					// Same prefix but custom numbering
+					if (
+						detectedPrefix &&
+						parsed &&
+						parsed.prefix === detectedPrefix
+					) {
+						return [
+							parsed.number,
+							record.maxScore,
+						] as [number, number];
+					}
+
+					// Fully custom
+					return [
+						record.name,
+						record.maxScore,
+					] as [string, number];
+				}),
+			};
+		}),
+	};
 
 	return LZString.compressToEncodedURIComponent(
 		JSON.stringify(data)
-	)
+	);
 }
 
 export function GradeCalculator({
@@ -88,7 +140,7 @@ export function GradeCalculator({
 						className="space-y-4 max-w-6xl mx-auto"
 						course={course}
 						setCourse={setCourse}
-						key={JSON.stringify(course)} // Reset form when course changes
+						key={course?.name + "-" + course.categories.map(cc => cc.name + "_" + cc.weight)} // Reset form when course changes
 					/>
 				)
 			}
@@ -147,7 +199,7 @@ function CourseDetailsForm({
 }: {
 	className?: string;
 	course: CourseDetails | null;
-	setCourse: (setup: CourseDetails) => void;
+	setCourse: Dispatch<SetStateAction<CourseDetails | null>>;
 }) {
 	const [openWarning, setOpenWarning] = useState<boolean>(false);
 
@@ -444,6 +496,26 @@ const scoreInputSchema = z.object({
 	})),
 });
 
+function useIsVisible(ref: RefObject<HTMLDivElement | null>) {
+	const [isIntersecting, setIntersecting] = useState(false);
+
+	useEffect(() => {
+		const observer = new IntersectionObserver(([entry]) =>
+			setIntersecting(entry.isIntersecting)
+		);
+
+		if (ref.current) {
+			observer.observe(ref.current);
+		}
+
+		return () => {
+			observer.disconnect(); // Clean up on unmount
+		};
+	}, [ref]);
+
+	return isIntersecting;
+}
+
 function ScoreInput({
 	className,
 	course,
@@ -451,11 +523,13 @@ function ScoreInput({
 }: {
 	className?: string;
 	course: CourseDetails;
-	setCourse: (setup: CourseDetails) => void;
+	setCourse: Dispatch<SetStateAction<CourseDetails | null>>;
 }) {
 	const [showResults, setShowResults] = useState<boolean>(false);
 	const [calculatedGrade, setCalculatedGrade] = useState<number | null>(null);
 	const [showCalculationDetails, setShowCalculationDetails] = useState<boolean>(false);
+	const calcuDetailsRef = useRef<HTMLDivElement>(null);
+	const isCalcuDetailsVisible = useIsVisible(calcuDetailsRef);
 
 	const scoreInputForm = useForm<z.infer<typeof scoreInputSchema>>({
 		resolver: zodResolver(scoreInputSchema),
@@ -565,7 +639,7 @@ function ScoreInput({
 							<TableHeader>
 								<TableRow>
 									<TableHead>Category</TableHead>
-									<TableHead className="text-right">Total</TableHead>
+									<TableHead className="text-right">Total / Max Total</TableHead>
 									<TableHead className="text-right">Weight</TableHead>
 									<TableHead className="text-right max-sm:w-28 max-sm:whitespace-normal">Weighted Impact (%)</TableHead>
 								</TableRow>
@@ -664,7 +738,20 @@ function ScoreInput({
 									<Button
 										variant="ghost"
 										className="w-full mt-4"
-										onClick={() => setShowCalculationDetails(prev => !prev)}
+										onClick={() => {
+											setShowCalculationDetails(prev => !prev)
+
+											if (!showCalculationDetails) {
+												setTimeout(() => {
+													if (isCalcuDetailsVisible || !calcuDetailsRef.current) return;
+
+													calcuDetailsRef.current?.scrollIntoView({
+														behavior: "smooth",
+														block: 'start',
+													})
+												}, 500)
+											}
+										}}
 									>
 										<EyeIcon />
 										How is this calculated?
@@ -684,7 +771,7 @@ function ScoreInput({
 			</form>
 			{
 				(showResults && calculatedGrade !== null && showCalculationDetails) && (
-					<div className="bg-card text-card-foreground border rounded-lg p-4 w-full">
+					<div className="bg-card text-card-foreground border rounded-lg p-4 w-full" ref={calcuDetailsRef}>
 						<h2 className="text-lg font-semibold">Calculation Details</h2>
 						<p className="text-sm text-muted-foreground mb-4">
 							Your final grade is calculated by applying each category&apos;s weight to your score and adding the weighted scores together.
@@ -809,6 +896,71 @@ function getTransmutatedGrade(percentage: number): string {
 	return "5.00";
 }
 
+function parseSequentialName(name: string) {
+	const match = name.match(/^(.*?)\s+(\d+(?:\.\d+)?)$/);
+
+	if (!match) {
+		return null;
+	}
+
+	return {
+		prefix: match[1],
+		number: Number(match[2]),
+	};
+}
+
+function getNextSequentialRecordName(
+	categoryName: string,
+	records: { name: string }[]
+) {
+	const prefixCounts = new Map<string, number>();
+
+	for (const record of records) {
+		const parsed = parseSequentialName(record.name);
+
+		if (!parsed) continue;
+
+		prefixCounts.set(
+			parsed.prefix,
+			(prefixCounts.get(parsed.prefix) ?? 0) + 1
+		);
+	}
+
+	const detectedPrefix =
+		[...prefixCounts.entries()]
+			.sort((a, b) => b[1] - a[1])[0]?.[0]
+		?? categoryName;
+
+	let highestNumber = 0;
+	let step = 1;
+
+	for (const record of records) {
+		const parsed = parseSequentialName(record.name);
+
+		if (
+			parsed &&
+			parsed.prefix === detectedPrefix
+		) {
+			highestNumber = Math.max(
+				highestNumber,
+				parsed.number
+			);
+
+			const decimalPart =
+				parsed.number.toString().split(".")[1];
+
+			if (decimalPart) {
+				step = Math.max(
+					step,
+					1 / Math.pow(10, decimalPart.length)
+				);
+			}
+		}
+	}
+
+	return `${detectedPrefix} ${highestNumber + step}`;
+}
+
 function RecordInput({
 	category,
 	index,
@@ -827,16 +979,27 @@ function RecordInput({
 		name: `categories.${index}.records`,
 	});
 
+	const handleAppendRecord = () => {
+		handleFieldChange();
+		const nextName = getNextSequentialRecordName(
+			category.name,
+			recordFields
+		);
+		appendRecord({ name: nextName, score: 0, maxScore: 100 }, { shouldFocus: false })
+	}
+
 	return (
 		<Collapsible className="bg-card text-card-foreground border rounded-lg p-4 @container" defaultOpen>
 			<CollapsibleTrigger className="flex items-center gap-2 w-full">
 				<div className="flex items-center justify-between gap-2 flex-1">
-					<h2 className="text-lg font-semibold">
-						{category.name}
+					<div className="flex items-baseline gap-1 overflow-hidden">
+						<h2 className="text-lg font-semibold line-clamp-1 truncate block">
+							{category.name}
+						</h2>
 						{" "}
 						<span className="text-sm text-muted-foreground">({category.weight}%)</span>
 						{" "}
-					</h2>
+					</div>
 					<Badge variant={recordFields.length > 0 ? "default" : "destructive"}>
 						{
 							recordFields.length > 0
@@ -853,10 +1016,7 @@ function RecordInput({
 				</p>
 				<div className="flex justify-end">
 					<Button
-						onClick={() => {
-							handleFieldChange();
-							appendRecord({ name: `${category.name} ${recordFields.length + 1}`, score: 0, maxScore: 100 }, { shouldFocus: false })
-						}}
+						onClick={handleAppendRecord}
 						type="button"
 						variant="outline"
 					>
@@ -865,20 +1025,20 @@ function RecordInput({
 					</Button>
 				</div>
 				<div className="grid grid-cols-[1fr_1fr_auto] @sm:grid-cols-[1fr_auto_auto_auto] gap-4 @md:gap-2 my-4">
-					<div className="grid grid-cols-subgrid col-span-4 gap-2">
+					<div className="grid grid-cols-subgrid col-span-4 gap-2 @max-sm:hidden">
 						<span className="text-sm text-muted-foreground">Record Name</span>
 						<span className="text-sm text-muted-foreground text-right">Score</span>
 						<span className="text-sm text-muted-foreground text-right">Max Score</span>
 					</div>
 					{
-						recordFields.map((_, recordIndex) => {
+						recordFields.map((field, recordIndex) => {
 							const recordNameError = errors.categories?.[index]?.records?.[recordIndex]?.name;
 							const recordScoreError = errors.categories?.[index]?.records?.[recordIndex]?.score || errors.categories?.[index]?.records?.[recordIndex]?.maxScore;
 							const isRecordInvalid = Boolean(recordNameError || recordScoreError);
 							const isNameOnlyInvalid = Boolean(recordNameError && !recordScoreError);
 
 							return (
-								<div key={recordIndex} className="grid grid-cols-subgrid col-span-4 gap-2">
+								<div key={field.id} className="grid grid-cols-subgrid col-span-4 gap-2">
 									<Controller
 										control={scoreInputForm.control}
 										name={`categories.${index}.records.${recordIndex}.name`}
@@ -951,7 +1111,6 @@ function RecordInput({
 										<Tooltip>
 											<TooltipTrigger asChild>
 												<Button
-													className="mt-auto row-2"
 													variant="destructive"
 													onClick={() => {
 														handleFieldChange();
@@ -977,10 +1136,7 @@ function RecordInput({
 				</div>
 				<div className="flex justify-end">
 					<Button
-						onClick={() => {
-							handleFieldChange();
-							appendRecord({ name: `${category.name} ${recordFields.length + 1}`, score: 0, maxScore: 100 }, { shouldFocus: false })
-						}}
+						onClick={handleAppendRecord}
 						type="button"
 						variant="outline"
 					>
