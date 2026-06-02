@@ -590,7 +590,12 @@ export function GWACalculator({
 					</div>
 				</div>
 				{includedCourses.length > 0 ? (
-					<div className="space-y-2 gap-2 columns-1 lg:columns-2 max-w-7xl">
+					<div 
+						className={cn(
+							"space-y-2 gap-2 columns-1",
+							includedCourses.length > 1 ? "lg:columns-2 max-w-7xl" : "max-w-2xl",
+						)}
+					>
 						{includedCourses.map((_, index) => (
 							<CourseRow
 								key={index}
@@ -607,7 +612,7 @@ export function GWACalculator({
 
 					</div>
 				) : (
-					<Empty className="border border-dashed bg-muted/10 dark:bg-muted/20 max-w-7xl shadow">
+					<Empty className="border border-dashed bg-muted/10 dark:bg-muted/20 max-w-2xl shadow">
 						<EmptyHeader>
 							<EmptyMedia variant="icon">
 								<BookXIcon />
@@ -655,7 +660,11 @@ export function GWACalculator({
 						</EmptyContent>
 					</Empty>
 				)}
-				<div className="flex justify-end w-full max-w-7xl gap-2">
+				<div className={cn(
+					"flex justify-end w-full gap-2",
+					includedCourses.length > 1 ? "max-w-7xl" : "max-w-2xl"
+					)}
+				>
 					<Button
 						variant="outline"
 						disabled={!(selectedProgram && selectedCurriculum) || includedCourses.length == 0}
