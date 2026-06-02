@@ -173,7 +173,7 @@ function CourseDetailsForm({
 				weight: category.weight,
 			})),
 		})
-	}, [course])
+	}, [course, courseSetupForm])
 
 	const { fields: categoryFields, append: appendCategory, remove: removeCategory } = useFieldArray({
 		control: courseSetupForm.control,
@@ -246,7 +246,7 @@ function CourseDetailsForm({
 							)}
 						>
 							<FieldLabel className={cn(fieldState.invalid && "text-destructive")}>Grading Categories</FieldLabel>
-							<div className="space-y-4 mt-2 grid grid-cols-[1fr_auto] sm:grid-cols-[1fr_auto_auto] gap-2">
+							<div className="mt-2 grid grid-cols-[1fr_auto] sm:grid-cols-[1fr_auto_auto] gap-2">
 								{categoryFields.map((category, index) => (
 									(() => {
 										const categoryNameError = errors.categories?.[index]?.name;
@@ -865,6 +865,11 @@ function RecordInput({
 					</Button>
 				</div>
 				<div className="grid grid-cols-[1fr_1fr_auto] @sm:grid-cols-[1fr_auto_auto_auto] gap-4 @md:gap-2 my-4">
+					<div className="grid grid-cols-subgrid col-span-4 gap-2">
+						<span className="text-sm text-muted-foreground">Record Name</span>
+						<span className="text-sm text-muted-foreground text-right">Score</span>
+						<span className="text-sm text-muted-foreground text-right">Max Score</span>
+					</div>
 					{
 						recordFields.map((_, recordIndex) => {
 							const recordNameError = errors.categories?.[index]?.records?.[recordIndex]?.name;
@@ -907,6 +912,7 @@ function RecordInput({
 														id={field.name}
 														aria-invalid={fieldState.invalid}
 														placeholder="Score"
+														className="text-right"
 														onChange={e => {
 															handleFieldChange();
 															field.onChange(e.target.value === "" ? "" : Number(e.target.value))
@@ -926,6 +932,7 @@ function RecordInput({
 														id={field.name}
 														aria-invalid={fieldState.invalid}
 														placeholder="Max Score"
+														className="text-right"
 														onChange={e => {
 															handleFieldChange();
 															field.onChange(e.target.value === "" ? "" : Number(e.target.value))
