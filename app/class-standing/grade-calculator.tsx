@@ -920,8 +920,9 @@ function parseSequentialName(name: string) {
 	}
 
 	return {
-		prefix: match[1],
+		prefix: match[1].trim(),
 		number: Number(match[2]),
+		rawNumber: match[2],
 	};
 }
 
@@ -929,52 +930,38 @@ function getNextSequentialRecordName(
 	categoryName: string,
 	records: { name: string }[]
 ) {
-	const prefixCounts = new Map<string, number>();
-
-	for (const record of records) {
-		const parsed = parseSequentialName(record.name);
-
-		if (!parsed) continue;
-
-		prefixCounts.set(
-			parsed.prefix,
-			(prefixCounts.get(parsed.prefix) ?? 0) + 1
-		);
+	if (records.length === 0) {
+		return `${categoryName} 1`;
 	}
 
-	const detectedPrefix =
-		[...prefixCounts.entries()]
-			.sort((a, b) => b[1] - a[1])[0]?.[0]
-		?? categoryName;
+	const lastRecord = records[records.length - 1];
 
-	let highestNumber = 0;
+	const lastParsed = parseSequentialName(
+		lastRecord.name
+	);
+
+	if (!lastParsed) {
+		return `${lastRecord.name} 1`;
+	}
+
 	let step = 1;
 
-	for (const record of records) {
-		const parsed = parseSequentialName(record.name);
+	const decimalPart =
+		lastParsed.rawNumber.split(".")[1];
 
-		if (
-			parsed &&
-			parsed.prefix === detectedPrefix
-		) {
-			highestNumber = Math.max(
-				highestNumber,
-				parsed.number
-			);
-
-			const decimalPart =
-				parsed.number.toString().split(".")[1];
-
-			if (decimalPart) {
-				step = Math.max(
-					step,
-					1 / Math.pow(10, decimalPart.length)
-				);
-			}
-		}
+	if (decimalPart) {
+		step = 1 / Math.pow(10, decimalPart.length);
 	}
 
-	return `${detectedPrefix} ${highestNumber + step}`;
+	const nextNumber =
+		lastParsed.number + step;
+
+	const formattedNumber =
+		decimalPart
+			? nextNumber.toFixed(decimalPart.length)
+			: nextNumber.toString();
+
+	return `${lastParsed.prefix} ${formattedNumber}`;
 }
 
 function RecordInput({
@@ -1004,7 +991,7 @@ function RecordInput({
 		handleFieldChange();
 		const nextName = getNextSequentialRecordName(
 			category.name,
-			recordFields
+			currentRecords
 		);
 		appendRecord({ name: nextName, score: 0, maxScore: 100 }, { shouldFocus: false })
 	}
