@@ -990,6 +990,11 @@ function RecordInput({
 	errors: UseFormStateReturn<z.infer<typeof scoreInputSchema>>["errors"];
 	handleFieldChange: () => void;
 }) {
+	const currentRecords = useWatch({
+		control: scoreInputForm.control,
+		name: `categories.${index}.records`,
+	});
+
 	const { fields: recordFields, append: appendRecord, remove: removeRecord } = useFieldArray({
 		control: scoreInputForm.control,
 		name: `categories.${index}.records`,
@@ -1016,10 +1021,10 @@ function RecordInput({
 						<span className="text-sm text-muted-foreground">({category.weight}%)</span>
 						{" "}
 					</div>
-					<Badge variant={recordFields.length > 0 ? "default" : "destructive"}>
+					<Badge variant={currentRecords.length > 0 ? "default" : "destructive"}>
 						{
-							recordFields.length > 0
-								? `${recordFields.reduce((sum, record) => sum + record.score, 0).toLocaleString()} / ${recordFields.reduce((sum, record) => sum + record.maxScore, 0).toLocaleString()}`
+							currentRecords.length > 0
+								? `${currentRecords.reduce((sum, record) => sum + record.score, 0).toLocaleString()} / ${currentRecords.reduce((sum, record) => sum + record.maxScore, 0).toLocaleString()}`
 								: "No scores yet"
 						}
 					</Badge>
