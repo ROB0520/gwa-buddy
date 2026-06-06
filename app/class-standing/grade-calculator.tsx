@@ -891,7 +891,7 @@ function ScoreInput({
 										</span>  = Final Grade
 									</span>
 								</li>
-								<span className="block">You can see how the NEUST grading scale in our <Link href="/#system-of-grading" className="underline underline-offset-4">System of Grading</Link> section in the home page.</span>
+								<span className="block">You can see how the NEUST grading scale in our <Link href="/#system-of-grading" className="underline underline-offset-4" target="_blank">System of Grading</Link> section in the home page.</span>
 							</ol>
 						</CardContent>
 					</Card>
