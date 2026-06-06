@@ -8,7 +8,7 @@ import { Field, FieldError, FieldLabel } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { InputGroup, InputGroupAddon, InputGroupInput } from "@/components/ui/input-group";
-import { CalculatorIcon, ChevronsUpDownIcon, EyeIcon, MinusIcon, PartyPopperIcon, PercentIcon, PlusIcon, SaveIcon, Share2Icon, SparkleIcon, StarsIcon, TrendingUpDownIcon, TriangleAlertIcon } from "lucide-react";
+import { CalculatorIcon, ChevronDownIcon, ChevronsUpDownIcon, EyeIcon, MinusIcon, PartyPopperIcon, PercentIcon, PlusIcon, SaveIcon, Share2Icon, SparkleIcon, StarsIcon, TrendingUpDownIcon, TriangleAlertIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { Separator } from "@/components/ui/separator";
@@ -21,6 +21,8 @@ import Link from "next/link";
 import LZString from "lz-string";
 import { toast } from "sonner";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
+import { ButtonGroup } from "@/components/ui/button-group";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 
 type CourseDetails = {
 	name: string;
@@ -987,14 +989,24 @@ function RecordInput({
 		name: `categories.${index}.records`,
 	});
 
-	const handleAppendRecord = () => {
+	const handleAppendRecord = (amount: number = 1) => {
+		if (amount < 1) return;
+
+		// Generate new records with sequential names based on the last record and amount to add
+		const newRecords: { name: string; score: number; maxScore: number }[] = [];
+		for (let i = 0; i < amount; i++) {
+			const name = getNextSequentialRecordName(
+				category.name,
+				[...currentRecords, ...newRecords]
+			);
+			newRecords.push({ name, score: 0, maxScore: 100 });
+		}
+
+		appendRecord(newRecords, { shouldFocus: false });
 		handleFieldChange();
-		const nextName = getNextSequentialRecordName(
-			category.name,
-			currentRecords
-		);
-		appendRecord({ name: nextName, score: 0, maxScore: 100 }, { shouldFocus: false })
 	}
+
+
 
 	return (
 		<Collapsible className="bg-card text-card-foreground border rounded-lg p-4 @container" defaultOpen>
@@ -1023,14 +1035,7 @@ function RecordInput({
 					Input your scores for each record in the {category.name} category.
 				</p>
 				<div className="flex justify-end">
-					<Button
-						onClick={handleAppendRecord}
-						type="button"
-						variant="outline"
-					>
-						<PlusIcon />
-						Add Record
-					</Button>
+					<AddRecordButton handleAppendRecord={handleAppendRecord} />
 				</div>
 				<div className="grid grid-cols-[1fr_1fr_auto] @sm:grid-cols-[1fr_auto_auto_auto] gap-4 @md:gap-2 my-4">
 					<div className="grid grid-cols-subgrid col-span-4 gap-2 @max-sm:hidden">
@@ -1143,16 +1148,73 @@ function RecordInput({
 					}
 				</div>
 				<div className="flex justify-end">
-					<Button
-						onClick={handleAppendRecord}
-						type="button"
-						variant="outline"
-					>
-						<PlusIcon />
-						Add Record
-					</Button>
+					<AddRecordButton handleAppendRecord={handleAppendRecord} />
 				</div>
 			</CollapsibleContent>
 		</Collapsible>
+	)
+}
+
+function AddRecordButton({
+	handleAppendRecord,
+}: {
+	handleAppendRecord: (amount?: number) => void;
+}) {
+	const [bulkAmount, setBulkAmount] = useState<number>(1);
+	const [error, setError] = useState<string | null>(null);
+
+	const handleBulkAdd = () => {
+		if (bulkAmount < 1) {
+			setError("Please enter a valid number of records to add.");
+			return;
+		}
+		setError(null);
+		handleAppendRecord(bulkAmount);
+		toast.success(`${bulkAmount} record${bulkAmount > 1 ? "s" : ""} added successfully.`, {
+			icon: <PlusIcon className="size-4" />
+		});
+	}
+
+	return (
+		<ButtonGroup>
+			<Button
+				onClick={() => handleAppendRecord()}
+				type="button"
+				variant="outline"
+			>
+				<PlusIcon />
+				Add Record
+			</Button>
+			<Popover onOpenChange={(open) => {
+				if (!open) {
+					setBulkAmount(1);
+					setError(null);
+				}
+			}}>
+				<PopoverTrigger asChild>
+					<Button variant="outline" size="icon">
+						<ChevronDownIcon />
+					</Button>
+				</PopoverTrigger>
+				<PopoverContent align="end" collisionPadding={15}>
+					<h2 className="text-sm font-semibold mb-2">Bulk Add Records</h2>
+						<Field>
+							<FieldLabel>Number of records to add</FieldLabel>
+							<Input
+								type="number"
+								min={1}
+								value={bulkAmount}
+								onChange={e => setBulkAmount(Number(e.target.value))}
+								placeholder="Amount"
+							/>
+							{error && (<FieldError errors={[{ message: error }]} />)}
+						</Field>
+						<Button onClick={handleBulkAdd} type="button">
+							<PlusIcon />
+							 Add
+						</Button>
+				</PopoverContent>
+			</Popover>
+		</ButtonGroup>
 	)
 }
