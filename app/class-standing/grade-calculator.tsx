@@ -963,7 +963,7 @@ function getNextSequentialRecordName(
 			? nextNumber.toFixed(decimalPart.length)
 			: nextNumber.toString();
 
-	return `${lastParsed.prefix} ${formattedNumber}`;
+	return `${lastParsed.prefix.trimEnd()} ${formattedNumber}`;
 }
 
 function RecordInput({
@@ -1198,14 +1198,14 @@ function AddRecordButton({
 				</PopoverTrigger>
 				<PopoverContent align="end" collisionPadding={15}>
 					<h2 className="text-sm font-semibold mb-2">Bulk Add Records</h2>
-						<Field>
+						<Field data-invalid={!!error}>
 							<FieldLabel>Number of records to add</FieldLabel>
 							<Input
 								type="number"
 								min={1}
 								value={bulkAmount}
 								onChange={e => setBulkAmount(Number(e.target.value))}
-								placeholder="Amount"
+								aria-invalid={!!error}
 							/>
 							{error && (<FieldError errors={[{ message: error }]} />)}
 						</Field>
