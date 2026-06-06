@@ -648,7 +648,7 @@ function ScoreInput({
 					})
 					.sort((a, b) => b.potentialGain - a.potentialGain);
 
-			const recordInsights =
+			const recordInsights = 
 				updatedCourse.categories
 					.flatMap(category => {
 						const categoryTotal = category.records.reduce((sum, record) => sum + record.maxScore, 0);
@@ -966,25 +966,38 @@ function ScoreInput({
 
 												<div>
 													<h3 className="font-semibold">
-														Activities Hurting Your Grade
+														Activities Hurting Your Grade (Top {Math.min(5, goalAnalysis.recordInsights.length)})
 													</h3>
 													<p className="text-xs text-muted-foreground mb-2">
 														These are the records where you lost the most points. Similar activities are key areas to focus on if you want to improve your standing.
 													</p>
 
-													<ul className="list-disc ml-5">
-														{goalAnalysis.recordInsights.map(
-															record => (
-																<li key={record.category + record.record}>
-																	{record.record}
-																	{" "}
-																	({record.category})
-																	{" "}
-																	Impact: {record.impact.toFixed(2)}%
-																</li>
-															)
-														)}
-													</ul>
+													<Table>
+														<TableHeader>
+															<TableRow>
+																<TableHead>Category</TableHead>
+																<TableHead>Record</TableHead>
+																<TableHead className="text-right">Missing Points</TableHead>
+																<TableHead className="text-right">Impact on Grade (%)</TableHead>
+															</TableRow>
+														</TableHeader>
+														<TableBody>
+															{
+																goalAnalysis.recordInsights.map((record, index) => (
+																	<TableRow key={index}>
+																		<TableCell className="whitespace-normal">{record.category}</TableCell>
+																		<TableCell className="whitespace-normal">{record.record}</TableCell>
+																		<TableCell className="text-right">
+																			<span className="font-mono">{record.missingPoints.toLocaleString()}</span>
+																		</TableCell>
+																		<TableCell className="text-right">
+																			<span className="font-mono">{record.impact.toFixed(2)}%</span>
+																		</TableCell>
+																	</TableRow>
+																))
+															}
+														</TableBody>
+													</Table>
 												</div>
 											</CardContent>
 										</Card>
