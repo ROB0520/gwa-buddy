@@ -4,7 +4,7 @@ import { useState, Fragment, useEffect, Dispatch, SetStateAction, useRef, RefObj
 import { z } from "zod";
 import { Controller, useFieldArray, useForm, useFormState, UseFormStateReturn, useWatch } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Field, FieldError, FieldLabel } from "@/components/ui/field";
+import { Field, FieldDescription, FieldError, FieldLabel } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { InputGroup, InputGroupAddon, InputGroupInput } from "@/components/ui/input-group";
@@ -23,6 +23,7 @@ import { toast } from "sonner";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { ButtonGroup } from "@/components/ui/button-group";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Combobox, ComboboxContent, ComboboxEmpty, ComboboxInput, ComboboxItem, ComboboxList } from "@/components/ui/combobox";
 
 type CourseDetails = {
 	name: string;
@@ -188,6 +189,7 @@ const courseSetupSchema = z.object({
 				});
 			}
 		}),
+	goalGrade: z.enum(["1.00", "1.25", "1.50", "1.75", "2.00", "2.25", "2.50", "2.75", "3.00", "5.00"], { error: "Invalid goal grade" }).optional(),
 }).refine(course => {
 	// Ensure total weight of categories equals 100
 	const totalWeight = course.categories.reduce((sum, category) => sum + category.weight, 0);
@@ -505,6 +507,7 @@ const scoreInputSchema = z.object({
 			});
 		}),
 	})),
+	goalGrade: z.enum(["1.00", "1.25", "1.50", "1.75", "2.00", "2.25", "2.50", "2.75", "3.00", "5.00"], { error: "Invalid goal grade" }).optional(),
 });
 
 function useIsVisible(ref: RefObject<HTMLDivElement | null>) {
@@ -539,6 +542,22 @@ function ScoreInput({
 	const [showResults, setShowResults] = useState<boolean>(false);
 	const [calculatedGrade, setCalculatedGrade] = useState<number | null>(null);
 	const [showCalculationDetails, setShowCalculationDetails] = useState<boolean>(false);
+	const [goalAnalysis, setGoalAnalysis] = useState<{
+		targetPercentage: number;
+		gap: number;
+		categoryInsights: {
+			name: string;
+			currentPercentage: number;
+			weight: number;
+			potentialGain: number;
+		}[];
+		recordInsights: {
+			category: string;
+			record: string;
+			impact: number;
+			missingPoints: number;
+		}[];
+	} | null>(null);
 	const calcuDetailsRef = useRef<HTMLDivElement>(null);
 	const isCalcuDetailsVisible = useIsVisible(calcuDetailsRef);
 
@@ -555,7 +574,13 @@ function ScoreInput({
 					maxScore: record.maxScore,
 				})),
 			})),
+			goalGrade: undefined,
 		},
+	});
+
+	const goalGrade = useWatch({
+		control: scoreInputForm.control,
+		name: "goalGrade",
 	});
 
 	const { fields: categoryFields } = useFieldArray({
@@ -588,12 +613,68 @@ function ScoreInput({
 		};
 		setCourse(updatedCourse);
 		setShowResults(true);
-		setCalculatedGrade(updatedCourse.categories.reduce((overallGrade, category) => {
+
+		const calculatedGradeValue = updatedCourse.categories.reduce((overallGrade, category) => {
 			const totalScore = category.records.reduce((sum, record) => sum + record.score, 0);
 			const totalMaxScore = category.records.reduce((sum, record) => sum + record.maxScore, 0);
 			const weightedScores = totalMaxScore > 0 ? (totalScore / totalMaxScore) * category.weight : 0;
 			return overallGrade + weightedScores;
-		}, 0));
+		}, 0);
+		setCalculatedGrade(calculatedGradeValue);
+
+		const targetPercentage = data.goalGrade ? gradeRequirements[data.goalGrade] : null;
+
+		if (targetPercentage !== null) {
+			const gap = targetPercentage - calculatedGradeValue;
+
+			const categoryInsights =
+				updatedCourse.categories
+					.map(category => {
+						const totalScore =
+							category.records.reduce((sum, record) => sum + record.score, 0);
+
+						const totalMaxScore = category.records.reduce((sum, record) => sum + record.maxScore, 0);
+
+						const currentPercentage = totalMaxScore > 0 ? (totalScore / totalMaxScore) * 100 : 0;
+
+						const potentialGain = ((100 - currentPercentage) / 100) * category.weight;
+
+						return {
+							name: category.name,
+							currentPercentage,
+							weight: category.weight,
+							potentialGain,
+						};
+					})
+					.sort((a, b) => b.potentialGain - a.potentialGain);
+
+			const recordInsights =
+				updatedCourse.categories
+					.flatMap(category => {
+						const categoryTotal = category.records.reduce((sum, record) => sum + record.maxScore, 0);
+
+						return category.records.map(
+							record => ({
+								category: category.name,
+								record: record.name,
+								missingPoints: record.maxScore - record.score,
+								impact: ((record.maxScore - record.score) / categoryTotal) * category.weight,
+							})
+						);
+					})
+					.sort((a, b) => b.impact - a.impact)
+					.slice(0, 5);
+
+			setGoalAnalysis({
+				targetPercentage,
+				gap,
+				categoryInsights,
+				recordInsights,
+			});
+		}
+		else {
+			setGoalAnalysis(null);
+		}
 	}
 
 	const handleShare = async () => {
@@ -640,7 +721,7 @@ function ScoreInput({
 					))}
 				</section>
 				<Separator className="sm:hidden" />
-				<section className="sticky top-16 xl:top-4 w-full md:w-4xl space-y-4">
+				<section className="sticky top-16 xl:top-4 w-full md:w-4xl space-y-4 max-h-[calc(100vh-5rem)] xl:max-h-[calc(100vh-2rem)] overflow-y-auto">
 					<Card>
 						<CardHeader>
 							<CardTitle>
@@ -683,6 +764,41 @@ function ScoreInput({
 									}
 								</TableBody>
 							</Table>
+							<p className="text-sm text-muted-foreground italic mt-2">
+								Note: This table will only update after you click &quot;Calculate Class Standing&quot;. It provides a breakdown of how each category contributes to your overall grade based on the scores you entered.
+							</p>
+							<Controller
+								control={scoreInputForm.control}
+								name="goalGrade"
+								render={({ field, fieldState }) => (
+									<Field data-invalid={fieldState.invalid} className="mt-4">
+										<FieldLabel htmlFor={field.name}>Goal Grade (Optional)</FieldLabel>
+										<Combobox
+											items={["1.00", "1.25", "1.50", "1.75", "2.00", "2.25", "2.50", "2.75", "3.00", "5.00"]}
+											value={field.value ?? ""}
+											onValueChange={value => field.onChange(value)}
+											id={field.name}
+											aria-invalid={fieldState.invalid}
+										>
+											<ComboboxInput />
+											<ComboboxContent>
+												<ComboboxEmpty>No grade found.</ComboboxEmpty>
+												<ComboboxList>
+													{(grade) => (
+														<ComboboxItem value={grade} key={grade}>
+															{grade}
+														</ComboboxItem>
+													)}
+												</ComboboxList>
+											</ComboboxContent>
+										</Combobox>
+										<FieldDescription>
+											Setting a goal grade allows you to see how your current standing compares to your target. It will show you how much you need to score in remaining activities to achieve that grade.
+										</FieldDescription>
+										{fieldState.error && (<FieldError errors={[fieldState.error]} />)}
+									</Field>
+								)}
+							/>
 						</CardContent>
 						<CardFooter className="flex-col gap-2 items-center justify-center md:flex-row md:justify-start">
 							<Button
@@ -785,6 +901,95 @@ function ScoreInput({
 										Estimated class standing based on your entered scores. Actual grades may vary depending on your instructor&apos;s grading policies.
 									</AlertDescription>
 								</Alert>
+								{
+									goalAnalysis && (
+										<Card>
+											<CardHeader>
+												<CardTitle>
+													Goal Grade Analysis
+												</CardTitle>
+												<CardDescription>
+													See what areas will have the
+													biggest impact on reaching
+													your target grade.
+												</CardDescription>
+											</CardHeader>
+
+											<CardContent className="space-y-4">
+												{
+													goalAnalysis.gap <= 0 ? (
+														<Alert>
+															<PartyPopperIcon />
+															<AlertTitle>Goal Achieved</AlertTitle>
+															<AlertDescription>You have already reached your target grade.</AlertDescription>
+														</Alert>
+													) : (
+														<Alert>
+															<TriangleAlertIcon />
+															<AlertTitle>Goal Progress</AlertTitle>
+															<AlertDescription>
+																You need an additional
+																{" "}
+																{goalAnalysis.gap.toFixed(2)}%
+																{" "}
+																to reach your target.
+															</AlertDescription>
+														</Alert>
+													)
+												}
+
+												<div>
+													<p>Goal: <strong>{goalGrade}</strong></p>
+													<p>Required: <strong>{goalAnalysis.targetPercentage}%</strong></p>
+													<p>Current: <strong>{calculatedGrade?.toFixed(2)}%</strong></p>
+													<p>Gap: <strong>{goalAnalysis.gap.toFixed(2)}%</strong></p>
+												</div>
+
+												<div>
+													<h3 className="font-semibold">
+														Biggest Opportunities (Top {Math.min(3, goalAnalysis.categoryInsights.length)})
+													</h3>
+													<p className="text-xs text-muted-foreground mb-2">
+														These categories have the highest potential to boost your grade and help you reach your target.
+													</p>
+
+													<ul className="list-disc ml-5">
+														{goalAnalysis.categoryInsights
+															.slice(0, 3)
+															.map(category => (
+																<li key={category.name}>
+																	{category.name} (+{category.potentialGain.toFixed(2)}%)
+																</li>
+															))}
+													</ul>
+												</div>
+
+												<div>
+													<h3 className="font-semibold">
+														Activities Hurting Your Grade
+													</h3>
+													<p className="text-xs text-muted-foreground mb-2">
+														These are the records where you lost the most points. Similar activities are key areas to focus on if you want to improve your standing.
+													</p>
+
+													<ul className="list-disc ml-5">
+														{goalAnalysis.recordInsights.map(
+															record => (
+																<li key={record.category + record.record}>
+																	{record.record}
+																	{" "}
+																	({record.category})
+																	{" "}
+																	Impact: {record.impact.toFixed(2)}%
+																</li>
+															)
+														)}
+													</ul>
+												</div>
+											</CardContent>
+										</Card>
+									)
+								}
 							</>
 						) : null
 					}
@@ -914,6 +1119,19 @@ function getTransmutatedGrade(percentage: number): string {
 	return "5.00";
 }
 
+const gradeRequirements: Record<string, number> = {
+	"1.00": 96.64,
+	"1.25": 93.31,
+	"1.50": 89.98,
+	"1.75": 86.65,
+	"2.00": 83.32,
+	"2.25": 79.99,
+	"2.50": 76.66,
+	"2.75": 73.33,
+	"3.00": 70.0,
+	"5.00": 0,
+};
+
 function parseSequentialName(name: string) {
 	const match = name.match(/^(.*?)\s+(\d+(?:\.\d+)?)$/);
 
@@ -1006,12 +1224,10 @@ function RecordInput({
 		handleFieldChange();
 	}
 
-
-
 	return (
 		<Collapsible className="bg-card text-card-foreground border rounded-lg p-4 @container" defaultOpen>
 			<CollapsibleTrigger className="flex items-center gap-2 w-full">
-				<div className="flex items-center justify-between gap-2 flex-1">
+				<div className="flex items-center justify-between gap-2 flex-1 overflow-hidden">
 					<div className="flex items-baseline gap-1 overflow-hidden">
 						<h2 className="text-lg font-semibold line-clamp-1 truncate block">
 							{category.name}
@@ -1198,21 +1414,21 @@ function AddRecordButton({
 				</PopoverTrigger>
 				<PopoverContent align="end" collisionPadding={15}>
 					<h2 className="text-sm font-semibold mb-2">Bulk Add Records</h2>
-						<Field data-invalid={!!error}>
-							<FieldLabel>Number of records to add</FieldLabel>
-							<Input
-								type="number"
-								min={1}
-								value={bulkAmount}
-								onChange={e => setBulkAmount(Number(e.target.value))}
-								aria-invalid={!!error}
-							/>
-							{error && (<FieldError errors={[{ message: error }]} />)}
-						</Field>
-						<Button onClick={handleBulkAdd} type="button">
-							<PlusIcon />
-							 Add
-						</Button>
+					<Field data-invalid={!!error}>
+						<FieldLabel>Number of records to add</FieldLabel>
+						<Input
+							type="number"
+							min={1}
+							value={bulkAmount}
+							onChange={e => setBulkAmount(Number(e.target.value))}
+							aria-invalid={!!error}
+						/>
+						{error && (<FieldError errors={[{ message: error }]} />)}
+					</Field>
+					<Button onClick={handleBulkAdd} type="button">
+						<PlusIcon />
+						Add
+					</Button>
 				</PopoverContent>
 			</Popover>
 		</ButtonGroup>
