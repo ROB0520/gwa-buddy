@@ -311,7 +311,7 @@ export default async function HomePage({ searchParams }: { searchParams?: Search
 			</Card>
 
 			<AcadsInfo />
-			
+
 			<footer className="italic text-xs text-center text-muted-foreground max-w-lg md:max-w-3xl">
 				Developed by <span className="font-mono">alecz.r</span>.
 			</footer>

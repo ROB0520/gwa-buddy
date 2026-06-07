@@ -2,13 +2,27 @@
 
 import { useState, Fragment, useEffect, Dispatch, SetStateAction, useRef, RefObject } from "react";
 import { z } from "zod";
+import {
+	PDFDocument,
+	PDFFont,
+	PDFName,
+	PDFObject,
+	PDFPage,
+	PDFString,
+	rgb,
+} from "pdf-lib";
+import {
+	CustomStyledText,
+	drawTable,
+} from "pdf-lib-draw-table-beta";
+import fontkit from '@pdf-lib/fontkit'
 import { Controller, useFieldArray, useForm, useFormState, UseFormStateReturn, useWatch } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Field, FieldDescription, FieldError, FieldLabel } from "@/components/ui/field";
+import { Field, FieldContent, FieldDescription, FieldError, FieldLabel, FieldTitle } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { InputGroup, InputGroupAddon, InputGroupInput } from "@/components/ui/input-group";
-import { CalculatorIcon, ChevronDownIcon, ChevronsUpDownIcon, EyeIcon, MinusIcon, PartyPopperIcon, PercentIcon, PlusIcon, SaveIcon, Share2Icon, SparkleIcon, StarsIcon, TrendingUpDownIcon, TriangleAlertIcon } from "lucide-react";
+import { CalculatorIcon, ChevronDownIcon, ChevronsUpDownIcon, EyeIcon, MinusIcon, PartyPopperIcon, PercentIcon, PlusIcon, SaveIcon, Share2Icon, SparkleIcon, StarsIcon, Trash2Icon, TrendingUpDownIcon, TriangleAlertIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { Separator } from "@/components/ui/separator";
@@ -24,6 +38,9 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { ButtonGroup } from "@/components/ui/button-group";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Combobox, ComboboxContent, ComboboxEmpty, ComboboxInput, ComboboxItem, ComboboxList } from "@/components/ui/combobox";
+import { DrawTableOptions, TableDimensions } from "pdf-lib-draw-table-beta/build/types";
+import { Checkbox } from "@/components/ui/checkbox";
+import { confirm } from "@/components/confirm-dialog";
 
 type CourseDetails = {
 	name: string;
@@ -41,6 +58,26 @@ type CourseCategoryRecord = {
 	score: number;
 	maxScore: number;
 }
+
+type CategorySummary = {
+	name: string;
+	totalScore: number;
+	totalMaxScore: number;
+	weight: number;
+	percentageScore: number;
+	weightedImpact: number;
+	records: CourseCategoryRecord[];
+}
+
+type CalculationSnapshot = {
+	courseName: string;
+	generatedAt: string;
+	overallPercentage: number;
+	transmutatedGrade: string;
+	templateEncoded: string;
+	categorySummaries: CategorySummary[];
+}
+
 
 type SharedCourse = {
 	n: string;
@@ -122,6 +159,746 @@ function serializeCourse(course: CourseDetails): string {
 	return LZString.compressToEncodedURIComponent(
 		JSON.stringify(data)
 	);
+}
+
+function calculateCategorySummary(category: CourseCategory): CategorySummary {
+	const totalScore = category.records.reduce((sum, record) => sum + record.score, 0);
+	const totalMaxScore = category.records.reduce((sum, record) => sum + record.maxScore, 0);
+	const percentageScore = totalMaxScore > 0 ? totalScore / totalMaxScore : 0;
+	const weightedImpact = percentageScore * category.weight;
+
+	return {
+		name: category.name,
+		totalScore,
+		totalMaxScore,
+		weight: category.weight,
+		percentageScore,
+		weightedImpact,
+		records: category.records,
+	};
+}
+
+function calculateCourseSnapshot(course: CourseDetails): CalculationSnapshot {
+	const categorySummaries = course.categories.map(calculateCategorySummary);
+	const overallPercentage = categorySummaries.reduce(
+		(total, category) => total + category.weightedImpact,
+		0
+	);
+
+	return {
+		courseName: course.name,
+		generatedAt: new Date().toISOString(),
+		overallPercentage,
+		transmutatedGrade: getTransmutatedGrade(overallPercentage),
+		templateEncoded: serializeCourse({
+			name: course.name,
+			categories: course.categories
+		}),
+		categorySummaries,
+	};
+}
+
+function sanitizeFilenameSegment(value: string) {
+	return value
+		.trim()
+		.toLowerCase()
+		.replace(/[^a-z0-9]+/g, "-")
+		.replace(/^-+|-+$/g, "") || "course";
+}
+
+function formatScoreValue(value: number) {
+	return Number.isInteger(value) ? value.toLocaleString() : value.toLocaleString(undefined, {
+		minimumFractionDigits: 0,
+		maximumFractionDigits: 2,
+	});
+}
+
+function buildCourseInfoText(snapshot: CalculationSnapshot) {
+	const generatedAt = new Date(snapshot.generatedAt).toLocaleString("en-PH", {
+		month: "short",
+		day: "numeric",
+		year: "numeric",
+		hour: "2-digit",
+		minute: "2-digit",
+		hour12: true,
+	});
+
+	return [
+		`Course: ${snapshot.courseName}`,
+		`Generated: ${generatedAt}`,
+		`Class Standing: ${snapshot.overallPercentage.toFixed(2)}%`,
+		`Equivalent Grade: ${snapshot.transmutatedGrade}`,
+	].join("\n");
+}
+
+function buildFormulaText(snapshot: CalculationSnapshot) {
+	const lines = [
+		"Overall Percentage = Sum of ((Total Score in Category / Total Max Score in Category) x Category Weight)",
+		"",
+	];
+
+	for (const category of snapshot.categorySummaries) {
+		lines.push(
+			`${category.name}: (${formatScoreValue(category.totalScore)} / ${formatScoreValue(category.totalMaxScore)}) x ${category.weight.toFixed(2)}% = ${category.weightedImpact.toFixed(2)}%`
+		);
+	}
+
+	lines.push(
+		"",
+		`Final Grade: ${snapshot.categorySummaries.map(category => category.weightedImpact.toFixed(2)).join(" + ")} = ${snapshot.overallPercentage.toFixed(2)}% or ${snapshot.transmutatedGrade}`
+	);
+
+	return lines.join("\n");
+}
+
+function splitLongToken(
+	token: string,
+	font: PDFFont,
+	fontSize: number,
+	maxWidth: number
+) {
+	const parts: string[] = [];
+	let current = "";
+
+	for (const char of token) {
+		const test = current + char;
+
+		if (font.widthOfTextAtSize(test, fontSize) <= maxWidth) {
+			current = test;
+		} else {
+			if (current) parts.push(current);
+			current = char;
+		}
+	}
+
+	if (current) parts.push(current);
+
+	return parts;
+}
+
+function wrapTextToLines(
+	text: string,
+	font: PDFFont,
+	fontSize: number,
+	maxWidth: number
+) {
+	const lines: string[] = [];
+
+	for (const paragraph of text.split(/\r?\n/)) {
+		if (!paragraph.trim()) {
+			lines.push("");
+			continue;
+		}
+
+		const isUrl = /^https?:\/\//i.test(paragraph) || paragraph.includes("www.");
+		if (isUrl) {
+			const urlParts = paragraph
+				.split(/(?=[/?&#=_-])|(?<=[/?&#=_-])/g)
+				.filter(Boolean);
+
+			let currentLine = "";
+
+			for (const part of urlParts) {
+				const candidate = currentLine + part;
+
+				if (font.widthOfTextAtSize(candidate, fontSize) <= maxWidth) {
+					currentLine = candidate;
+					continue;
+				}
+
+				if (currentLine) {
+					lines.push(currentLine);
+					currentLine = "";
+				}
+
+				if (font.widthOfTextAtSize(part, fontSize) <= maxWidth) {
+					currentLine = part;
+				} else {
+					lines.push(...splitLongToken(part, font, fontSize, maxWidth));
+				}
+			}
+
+			if (currentLine) lines.push(currentLine);
+			continue;
+		}
+
+		const words = paragraph.split(/\s+/);
+		let currentLine = "";
+
+		for (const word of words) {
+			const candidate = currentLine ? `${currentLine} ${word}` : word;
+
+			if (font.widthOfTextAtSize(candidate, fontSize) <= maxWidth) {
+				currentLine = candidate;
+				continue;
+			}
+
+			if (currentLine) {
+				lines.push(currentLine);
+			}
+
+			if (font.widthOfTextAtSize(word, fontSize) <= maxWidth) {
+				currentLine = word;
+			} else {
+				lines.push(...splitLongToken(word, font, fontSize, maxWidth));
+				currentLine = "";
+			}
+		}
+
+		if (currentLine) lines.push(currentLine);
+	}
+
+	return lines;
+}
+
+function drawWrappedParagraph(
+	page: PDFPage,
+	text: string,
+	font: PDFFont,
+	fontSize: number,
+	x: number,
+	y: number,
+	maxWidth: number,
+	lineGap = 4,
+	color = rgb(0.08, 0.09, 0.11)
+) {
+	const lines = wrapTextToLines(text, font, fontSize, maxWidth);
+	let currentY = y;
+
+	for (const line of lines) {
+		page.drawText(line, {
+			x,
+			y: currentY,
+			size: fontSize,
+			font,
+			color,
+		});
+
+		currentY -= fontSize + lineGap;
+	}
+
+	return currentY;
+}
+
+function wrapUrlToLines(
+	url: string,
+	font: PDFFont,
+	fontSize: number,
+	maxWidth: number
+) {
+	const parts = url.split(/(?=[/?&#=_-])|(?<=[/?&#=_-])/g).filter(Boolean);
+	const lines: string[] = [];
+	let currentLine = "";
+
+	for (const part of parts) {
+		const candidate = currentLine + part;
+
+		if (font.widthOfTextAtSize(candidate, fontSize) <= maxWidth) {
+			currentLine = candidate;
+			continue;
+		}
+
+		if (currentLine) {
+			lines.push(currentLine);
+			currentLine = "";
+		}
+
+		if (font.widthOfTextAtSize(part, fontSize) <= maxWidth) {
+			currentLine = part;
+		} else {
+			let chunk = "";
+			for (const char of part) {
+				const next = chunk + char;
+				if (font.widthOfTextAtSize(next, fontSize) <= maxWidth) {
+					chunk = next;
+				} else {
+					if (chunk) lines.push(chunk);
+					chunk = char;
+				}
+			}
+			currentLine = chunk;
+		}
+	}
+
+	if (currentLine) {
+		lines.push(currentLine);
+	}
+
+	return lines;
+}
+
+function addLinkAnnotation(
+	page: PDFPage,
+	uri: string,
+	x: number,
+	y: number,
+	width: number,
+	height: number
+) {
+	const annotation = page.doc.context.register(
+		page.doc.context.obj({
+			Type: "Annot",
+			Subtype: "Link",
+			Rect: [x, y, x + width, y + height],
+			Border: [0, 0, 0],
+			A: {
+				Type: "Action",
+				S: "URI",
+				URI: PDFString.of(uri),
+			},
+		})
+	);
+
+	const annotsKey = PDFName.of("Annots");
+	const existingAnnots = page.node.get(annotsKey) as PDFObject & { asArray?: () => PDFObject[] };
+
+	if (existingAnnots) {
+		page.node.set(
+			annotsKey,
+			page.doc.context.obj([
+				...(existingAnnots.asArray?.() ?? []),
+				annotation,
+			])
+		);
+	} else {
+		page.node.set(annotsKey, page.doc.context.obj([annotation]));
+	}
+}
+
+function drawWrappedUrlParagraph(
+	page: PDFPage,
+	url: string,
+	font: PDFFont,
+	fontSize: number,
+	x: number,
+	y: number,
+	maxWidth: number,
+	lineGap = 4,
+	color = rgb(0.11, 0.30, 0.80)
+) {
+	const lines = wrapUrlToLines(url, font, fontSize, maxWidth);
+	let currentY = y;
+
+	for (const line of lines) {
+		page.drawText(line, {
+			x,
+			y: currentY,
+			size: fontSize,
+			font,
+			color,
+		});
+
+		addLinkAnnotation(
+			page,
+			url,
+			x,
+			currentY - 1,
+			font.widthOfTextAtSize(line, fontSize),
+			fontSize + 2
+		);
+
+		currentY -= fontSize + lineGap;
+	}
+
+	return currentY;
+}
+
+const SECTION_GAP = 18;
+const TITLE_GAP = -8;
+const RECORD_NAME_COL_WIDTH = 340;
+const SCORE_COL_WIDTH = 80;
+const MAX_SCORE_COL_WIDTH = 80;
+
+function chunkRecordsAccurately(
+	records: CourseCategoryRecord[],
+	font: PDFFont,
+	fontSize: number,
+	overrideWidths: number[],
+	availableFirstPageHeight: number,
+	fullPageHeight: number
+) {
+	if (records.length === 0) return [[]];
+
+	const chunks: CourseCategoryRecord[][] = [];
+	let currentChunk: CourseCategoryRecord[] = [];
+	let isFirstPage = true;
+
+	const headerHeight = 20;
+	const rowPadding = 3;
+	const lineHeight = fontSize * 1.2;
+
+	let currentHeight = headerHeight;
+	const SAFETY_BUFFER = 40; // <-- Absorbs fraction-of-a-pixel math discrepancies
+
+	for (const record of records) {
+		const col1Lines = wrapTextToLines(record.name, font, fontSize, overrideWidths[0] - 8).length;
+		const col2Lines = wrapTextToLines(formatScoreValue(record.score), font, fontSize, overrideWidths[1] - 8).length;
+		const col3Lines = wrapTextToLines(formatScoreValue(record.maxScore), font, fontSize, overrideWidths[2] - 8).length;
+
+		const maxLines = Math.max(1, col1Lines, col2Lines, col3Lines);
+		const rowHeight = (maxLines * lineHeight) + rowPadding;
+
+		// Apply the safety buffer to the maximum allowed height
+		const maxAllowedHeight = (isFirstPage ? availableFirstPageHeight : fullPageHeight) - SAFETY_BUFFER;
+
+		if (currentHeight + rowHeight > maxAllowedHeight && currentChunk.length > 0) {
+			chunks.push(currentChunk);
+			currentChunk = [record];
+			currentHeight = headerHeight + rowHeight;
+			isFirstPage = false;
+		} else {
+			currentChunk.push(record);
+			currentHeight += rowHeight;
+		}
+	}
+
+	if (currentChunk.length > 0) {
+		chunks.push(currentChunk);
+	}
+
+	return chunks;
+}
+
+async function exportClassStandingPdf(
+	snapshot: CalculationSnapshot,
+	includeFormulaBreakdown: boolean
+) {
+	const pdfDoc = await PDFDocument.create();
+
+	const [logoBytes, regularFontBytes, boldFontBytes] =
+		await Promise.all([
+			fetch("/web-app-manifest-192x192.png")
+				.then(res => res.arrayBuffer()),
+			fetch("/fonts/Figtree-Regular.ttf")
+				.then(res => res.arrayBuffer()),
+			fetch("/fonts/Figtree-Bold.ttf")
+				.then(res => res.arrayBuffer()),
+		]);
+
+	if (!(logoBytes instanceof ArrayBuffer && regularFontBytes instanceof ArrayBuffer && boldFontBytes instanceof ArrayBuffer)) {
+		console.error("Failed to load font or logo bytes for PDF generation.");
+		toast.error("Failed to load necessary resources for PDF generation.");
+		return;
+	}
+
+	pdfDoc.registerFontkit(fontkit);
+	const regularFont = await pdfDoc.embedFont(regularFontBytes);
+	const boldFont = await pdfDoc.embedFont(boldFontBytes);
+
+	const logoImage = await pdfDoc.embedPng(logoBytes);
+
+	const PAGE_WIDTH = 595.28;
+	const PAGE_HEIGHT = 841.89;
+	const LEFT = 40;
+	const RIGHT = 40;
+	const CONTENT_WIDTH = PAGE_WIDTH - LEFT - RIGHT;
+	const BOTTOM_SAFE = 50;
+
+	const generatedAt = new Date(snapshot.generatedAt).toLocaleString("en-PH", {
+		month: "short",
+		day: "numeric",
+		year: "numeric",
+		hour: "2-digit",
+		minute: "2-digit",
+		hour12: true,
+	});
+
+	const shareUrl = new URL(window.location.href);
+
+	shareUrl.searchParams.set("template", snapshot.templateEncoded);
+
+	const drawChrome = (page: PDFPage, pageNumber: number) => {
+		page.drawImage(logoImage, {
+			x: LEFT,
+			y: PAGE_HEIGHT - 70,
+			width: 30,
+			height: 30,
+		});
+
+		page.drawText("GWA Buddy", {
+			x: 78,
+			y: PAGE_HEIGHT - 55,
+			size: 18,
+			font: boldFont,
+			color: rgb(0.08, 0.09, 0.11),
+		});
+
+		page.drawText("Class Standing Report", {
+			x: 78,
+			y: PAGE_HEIGHT - 68,
+			size: 9,
+			font: regularFont,
+			color: rgb(0.09, 0.58, 0.38),
+		});
+
+		page.drawLine({
+			start: { x: LEFT, y: PAGE_HEIGHT - 78 },
+			end: { x: PAGE_WIDTH - RIGHT, y: PAGE_HEIGHT - 78 },
+			thickness: 1,
+			color: rgb(0.89, 0.906, 0.91),
+		});
+
+		page.drawText(`Generated ${generatedAt}`, {
+			x: LEFT,
+			y: 22,
+			size: 8,
+			font: regularFont,
+			color: rgb(0.42, 0.45, 0.49),
+		});
+
+		page.drawText(`Page ${pageNumber}`, {
+			x: PAGE_WIDTH - RIGHT - 40,
+			y: 22,
+			size: 8,
+			font: regularFont,
+			color: rgb(0.42, 0.45, 0.49),
+		});
+	};
+
+	const createPage = (pageNumber: number) => {
+		const page = pdfDoc.addPage([PAGE_WIDTH, PAGE_HEIGHT]);
+		drawChrome(page, pageNumber);
+		return page;
+	};
+
+	// Page 1, summary
+	let pageNumber = 1;
+	const summaryPage = createPage(pageNumber);
+
+	let y = PAGE_HEIGHT - 108;
+
+	summaryPage.drawText("Course Information", {
+		x: LEFT,
+		y,
+		size: 13,
+		font: boldFont,
+		color: rgb(0.08, 0.09, 0.11),
+	});
+
+	y -= 18;
+	y = drawWrappedParagraph(
+		summaryPage,
+		buildCourseInfoText(snapshot),
+		regularFont,
+		10,
+		LEFT,
+		y,
+		CONTENT_WIDTH,
+		4
+	);
+
+	y -= 10;
+
+	if (includeFormulaBreakdown) {
+		summaryPage.drawText("Formula Breakdown", {
+			x: LEFT,
+			y,
+			size: 13,
+			font: boldFont,
+			color: rgb(0.08, 0.09, 0.11),
+		});
+
+		y -= 18;
+		y = drawWrappedParagraph(
+			summaryPage,
+			buildFormulaText(snapshot),
+			regularFont,
+			10,
+			LEFT,
+			y,
+			CONTENT_WIDTH,
+			3
+		);
+
+		y -= 10;
+	}
+
+	summaryPage.drawText("Encoded Course Setup", {
+		x: LEFT,
+		y,
+		size: 13,
+		font: boldFont,
+		color: rgb(0.08, 0.09, 0.11),
+	});
+
+	y -= 18;
+	y = drawWrappedUrlParagraph(
+		summaryPage,
+		shareUrl.toString(),
+		regularFont,
+		8,
+		LEFT,
+		y,
+		CONTENT_WIDTH,
+		3,
+		rgb(0.11, 0.30, 0.80)
+	);
+
+	y -= 10;
+	summaryPage.drawText("Category Summary", {
+		x: LEFT,
+		y,
+		size: 13,
+		font: boldFont,
+		color: rgb(0.08, 0.09, 0.11),
+	});
+
+	y -= 8;
+
+	const summaryTable = [
+		["Category", "Total / Max", "Weight", "Impact"],
+		...snapshot.categorySummaries.map(category => ([
+			category.name,
+			`${formatScoreValue(category.totalScore)} / ${formatScoreValue(category.totalMaxScore)}`,
+			`${category.weight.toFixed(2)}%`,
+			`${category.weightedImpact.toFixed(2)}%`,
+		])),
+	];
+
+	await drawTable(
+		pdfDoc,
+		summaryPage,
+		summaryTable,
+		LEFT,
+		y,
+		{
+			header: {
+				hasHeaderRow: true,
+				backgroundColor: rgb(0.082, 0.729, 0.506),
+				textColor: rgb(0.078, 0.09, 0.11),
+				textSize: 12
+			},
+			textSize: 10,
+			border: {
+				color: rgb(0.078, 0.09, 0.11),
+			},
+		}
+	);
+
+	// Pages 2 and onwards, pack as many category tables per page as possible
+	pageNumber += 1;
+	let recordsPage = createPage(pageNumber);
+	let currentY = PAGE_HEIGHT - 108;
+
+	const startNewRecordsPage = () => {
+		pageNumber += 1;
+		recordsPage = createPage(pageNumber);
+		currentY = PAGE_HEIGHT - 108;
+	};
+
+	recordsPage.drawText("Encoded Records", {
+		x: LEFT,
+		y: currentY,
+		size: 15,
+		font: boldFont,
+		color: rgb(0.08, 0.09, 0.11),
+	});
+
+	currentY -= 28;
+
+	for (const category of snapshot.categorySummaries) {
+		const title = `${category.name} (${category.weight.toFixed(2)}%)`;
+		const titleLines = wrapTextToLines(title, boldFont, 12, CONTENT_WIDTH);
+		const titleHeight = titleLines.length * 15;
+
+		const tableOptions = {
+			border: { color: rgb(0.078, 0.09, 0.11) },
+			header: {
+				hasHeaderRow: true,
+				backgroundColor: rgb(0.082, 0.729, 0.506),
+				textColor: rgb(0.078, 0.09, 0.11),
+				textSize: 12,
+				font: boldFont,
+			},
+			column: {
+				overrideWidths: [RECORD_NAME_COL_WIDTH, SCORE_COL_WIDTH, MAX_SCORE_COL_WIDTH],
+			},
+			textSize: 10,
+			lineHeight: 1.2,
+			font: regularFont,
+		} as DrawTableOptions;
+
+		const headerHeight = 20;
+		// <-- Add 25px here to ensure there's enough room for at least ONE record row 
+		const minimumNeededSpace = titleHeight + TITLE_GAP + headerHeight + 25 + SECTION_GAP;
+
+		// Force new page if we can't fit the category title, the table header, and 1 row
+		if (currentY - minimumNeededSpace < BOTTOM_SAFE) {
+			startNewRecordsPage();
+			recordsPage.drawText("Encoded Records", {
+				x: LEFT, y: currentY, size: 15, font: boldFont, color: rgb(0.08, 0.09, 0.11),
+			});
+			currentY -= 28;
+		}
+
+		const availableFirstPageSpace = currentY - BOTTOM_SAFE - titleHeight - TITLE_GAP;
+		const availableFullPageSpace = PAGE_HEIGHT - 108 - 28 - BOTTOM_SAFE - titleHeight - TITLE_GAP;
+
+		const chunks = chunkRecordsAccurately(
+			category.records,
+			regularFont,
+			10,
+			tableOptions.column!.overrideWidths as number[],
+			availableFirstPageSpace,
+			availableFullPageSpace
+		);
+
+		for (let i = 0; i < chunks.length; i++) {
+			const chunk = chunks[i];
+
+			if (i > 0) {
+				startNewRecordsPage();
+				recordsPage.drawText("Encoded Records", {
+					x: LEFT, y: currentY, size: 15, font: boldFont, color: rgb(0.08, 0.09, 0.11),
+				});
+				currentY -= 28;
+			}
+
+			const chunkTitle = i === 0 ? title : `${title} (Continued)`;
+
+			currentY = drawWrappedParagraph(
+				recordsPage, chunkTitle, boldFont, 12, LEFT, currentY, CONTENT_WIDTH, 3
+			);
+			currentY -= TITLE_GAP;
+
+			const categoryTable = [
+				["Record Name", "Score", "Max Score"],
+				...chunk.map(record => ([
+					record.name,
+					{ text: formatScoreValue(record.score), align: "right", type: "text" } as CustomStyledText,
+					{ text: formatScoreValue(record.maxScore), align: "right", type: "text" } as CustomStyledText,
+				])),
+			];
+
+			const tableDimensions = await drawTable(
+				pdfDoc,
+				recordsPage,
+				categoryTable,
+				LEFT,
+				currentY,
+				tableOptions
+			) as TableDimensions;
+
+			const actualDrawnHeight = tableDimensions?.height
+			// ?? tableDimensions?.tableHeight
+			// ?? (tableDimensions?.y && tableDimensions?.bottom ? Math.abs(tableDimensions.y - tableDimensions.bottom) : calculateExactTableHeight(chunk, regularFont, 10, tableOptions.column!.overrideWidths as number[]));
+
+			currentY -= actualDrawnHeight + SECTION_GAP;
+		}
+	}
+
+	const pdfBytes = await pdfDoc.save().then(bytes => new Uint8Array(bytes));
+
+	const blob = new Blob([pdfBytes], {
+		type: "application/pdf",
+	});
+
+	const url = URL.createObjectURL(blob);
+	const link = document.createElement("a");
+	link.href = url;
+	link.download = `class-standing-report-${sanitizeFilenameSegment(snapshot.courseName)}.pdf`;
+	link.click();
+	URL.revokeObjectURL(url);
 }
 
 export function GradeCalculator({
@@ -542,6 +1319,9 @@ function ScoreInput({
 	const [showResults, setShowResults] = useState<boolean>(false);
 	const [calculatedGrade, setCalculatedGrade] = useState<number | null>(null);
 	const [showCalculationDetails, setShowCalculationDetails] = useState<boolean>(false);
+	const [includeFormulaBreakdown, setIncludeFormulaBreakdown] = useState<boolean>(false);
+	const [isExportingPdf, setIsExportingPdf] = useState<boolean>(false);
+	const [lastCalculatedSnapshot, setLastCalculatedSnapshot] = useState<CalculationSnapshot | null>(null);
 	const [goalAnalysis, setGoalAnalysis] = useState<{
 		targetPercentage: number;
 		gap: number;
@@ -592,11 +1372,13 @@ function ScoreInput({
 		control: scoreInputForm.control,
 		exact: false,
 	});
+	const categorySummaries = course.categories.map(calculateCategorySummary);
 
 	const handleFieldChange = () => {
 		setShowResults(false);
 		setCalculatedGrade(null);
 		setShowCalculationDetails(false);
+		setLastCalculatedSnapshot(null);
 	};
 
 	const onSubmit = (data: z.infer<typeof scoreInputSchema>) => {
@@ -613,14 +1395,10 @@ function ScoreInput({
 		};
 		setCourse(updatedCourse);
 		setShowResults(true);
-
-		const calculatedGradeValue = updatedCourse.categories.reduce((overallGrade, category) => {
-			const totalScore = category.records.reduce((sum, record) => sum + record.score, 0);
-			const totalMaxScore = category.records.reduce((sum, record) => sum + record.maxScore, 0);
-			const weightedScores = totalMaxScore > 0 ? (totalScore / totalMaxScore) * category.weight : 0;
-			return overallGrade + weightedScores;
-		}, 0);
+		const snapshot = calculateCourseSnapshot(updatedCourse);
+		const calculatedGradeValue = snapshot.overallPercentage;
 		setCalculatedGrade(calculatedGradeValue);
+		setLastCalculatedSnapshot(snapshot);
 
 		const targetPercentage = data.goalGrade ? gradeRequirements[data.goalGrade] : null;
 
@@ -648,7 +1426,7 @@ function ScoreInput({
 					})
 					.sort((a, b) => b.potentialGain - a.potentialGain);
 
-			const recordInsights = 
+			const recordInsights =
 				updatedCourse.categories
 					.flatMap(category => {
 						const categoryTotal = category.records.reduce((sum, record) => sum + record.maxScore, 0);
@@ -674,6 +1452,27 @@ function ScoreInput({
 		}
 		else {
 			setGoalAnalysis(null);
+		}
+	}
+
+	const handleExportPdf = async () => {
+		if (!lastCalculatedSnapshot) {
+			return;
+		}
+
+		try {
+			setIsExportingPdf(true);
+			await exportClassStandingPdf(lastCalculatedSnapshot, includeFormulaBreakdown);
+			toast.success("Class standing report exported.", {
+				icon: <SaveIcon className="size-4" />
+			});
+		}
+		catch (err) {
+			console.error("Error exporting PDF:", err);
+			toast.error("Failed to export the PDF report.");
+		}
+		finally {
+			setIsExportingPdf(false);
 		}
 	}
 
@@ -743,21 +1542,17 @@ function ScoreInput({
 								</TableHeader>
 								<TableBody>
 									{
-										course.categories.map((category, index) => {
-											const totalScore = category.records.reduce((sum, record) => sum + record.score, 0);
-											const totalMaxScore = category.records.reduce((sum, record) => sum + record.maxScore, 0);
-											const weightedScores = totalMaxScore > 0 ? (totalScore / totalMaxScore) * category.weight : 0;
-
+										categorySummaries.map((category, index) => {
 											return (
 												<TableRow key={index}>
 													<TableCell className="whitespace-normal">{category.name}</TableCell>
 													<TableCell className="text-right">
-														<span className="font-mono">{(totalScore).toLocaleString()}</span>
+														<span className="font-mono">{formatScoreValue(category.totalScore)}</span>
 														<span className="text-muted-foreground text-sm">/</span>
-														<span className="font-mono">{(totalMaxScore).toLocaleString()}</span>
+														<span className="font-mono">{formatScoreValue(category.totalMaxScore)}</span>
 													</TableCell>
 													<TableCell className="text-right font-mono">{category.weight}%</TableCell>
-													<TableCell className="text-right font-mono max-sm:w-24">{weightedScores.toFixed(2)}%</TableCell>
+													<TableCell className="text-right font-mono max-sm:w-24">{category.weightedImpact.toFixed(2)}%</TableCell>
 												</TableRow>
 											)
 										})
@@ -776,11 +1571,11 @@ function ScoreInput({
 										<Combobox
 											items={["1.00", "1.25", "1.50", "1.75", "2.00", "2.25", "2.50", "2.75", "3.00", "5.00"]}
 											value={field.value ?? ""}
-											onValueChange={value => field.onChange(value)}
+											onValueChange={value => field.onChange(value ?? undefined)}
 											id={field.name}
 											aria-invalid={fieldState.invalid}
 										>
-											<ComboboxInput />
+											<ComboboxInput showClear />
 											<ComboboxContent>
 												<ComboboxEmpty>No grade found.</ComboboxEmpty>
 												<ComboboxList>
@@ -894,6 +1689,7 @@ function ScoreInput({
 										How is this calculated?
 									</Button>
 								</div>
+
 								<Alert variant="destructive" className="mt-4">
 									<TriangleAlertIcon />
 									<AlertTitle>Important Note</AlertTitle>
@@ -901,6 +1697,46 @@ function ScoreInput({
 										Estimated class standing based on your entered scores. Actual grades may vary depending on your instructor&apos;s grading policies.
 									</AlertDescription>
 								</Alert>
+
+								<Card>
+									<CardHeader>
+										<CardTitle>
+											Export Results as PDF
+										</CardTitle>
+										<CardDescription>
+											Download a report — a summary page with course info and category grades, plus a detailed score records page.
+										</CardDescription>
+									</CardHeader>
+									<CardContent>
+										<FieldLabel htmlFor="kubernetes-r2h">
+											<Field orientation="horizontal">
+												<Checkbox
+													id="kubernetes-r2h"
+													checked={includeFormulaBreakdown}
+													onCheckedChange={checked => setIncludeFormulaBreakdown(checked === true)}
+												/>
+												<FieldContent>
+													<FieldTitle>Include Formula Breakdown</FieldTitle>
+													<FieldDescription>
+														Appends the weighted score computation for each category on the summary page.
+													</FieldDescription>
+												</FieldContent>
+											</Field>
+										</FieldLabel>
+									</CardContent>
+									<CardFooter>
+										<Button
+											type="button"
+											className="w-full"
+											onClick={handleExportPdf}
+											disabled={isExportingPdf || !lastCalculatedSnapshot}
+										>
+											<SaveIcon />
+											{isExportingPdf ? "Exporting PDF..." : "Export PDF"}
+										</Button>
+									</CardFooter>
+								</Card>
+
 								{
 									goalAnalysis && (
 										<Card>
@@ -1033,10 +1869,7 @@ function ScoreInput({
 								<li>
 									Calculate how much of the available points you earned in each category.
 									<ol className="list-decimal list-inside ml-4 sm:ml-6 space-y-1">
-										{course.categories.map((category, index) => {
-											const totalScore = category.records.reduce((sum, record) => sum + record.score, 0);
-											const totalMaxScore = category.records.reduce((sum, record) => sum + record.maxScore, 0);
-
+										{categorySummaries.map((category, index) => {
 											return (
 												<li key={index}>
 													{category.name}: <span className="max-sm:block">(<span className="inline-block relative align-middle text-center">
@@ -1044,12 +1877,12 @@ function ScoreInput({
 															<span className="absolute top-1 text-xs text-muted-foreground max-sm:w-34">
 																Total Scores for all records in this category
 															</span>
-															<span className="tabular-nums font-mono">{totalScore}</span>
+															<span className="tabular-nums font-mono">{formatScoreValue(category.totalScore)}</span>
 														</span>
 														<Separator className="bg-current" />
 														<span className="flex flex-col justify-center p-0.5">
 															<span className="font-mono tabular-nums">
-																{totalMaxScore}
+																{formatScoreValue(category.totalMaxScore)}
 															</span>
 															<span className="text-xs text-muted-foreground max-sm:w-44">
 																Total Max Scores for all records in this category
@@ -1064,13 +1897,10 @@ function ScoreInput({
 								<li>
 									Multiply each category score by its corresponding weight in the course&apos;s grading system.
 									<ol className="list-decimal list-inside ml-6 space-y-1">
-										{course.categories.map((category, index) => {
-											const percentageScore = category.records.reduce((sum, record) => sum + record.score, 0) / category.records.reduce((sum, record) => sum + record.maxScore, 0);
-											const weightedScores = percentageScore * category.weight;
-
+										{categorySummaries.map((category, index) => {
 											return (
 												<li key={index} className="pl-5 -indent-5">
-													{category.name}: <span className="tabular-nums font-mono">{percentageScore.toFixed(3)}</span>% × <span className="tabular-nums font-mono">{category.weight.toFixed(2)}</span>% = <span className="tabular-nums font-mono">{weightedScores.toFixed(2)}</span>%
+													{category.name}: <span className="tabular-nums font-mono">{category.percentageScore.toFixed(3)}</span> × <span className="tabular-nums font-mono">{category.weight.toFixed(2)}</span>% = <span className="tabular-nums font-mono">{category.weightedImpact.toFixed(2)}</span>%
 												</li>
 											)
 										})}
@@ -1083,14 +1913,11 @@ function ScoreInput({
 											return (
 												<span className="inline-block relative align-middle text-center">
 													<span className="p-0.5">
-														{course.categories.map((category, index) => {
-															const percentageScore = category.records.reduce((sum, record) => sum + record.score, 0) / category.records.reduce((sum, record) => sum + record.maxScore, 0);
-															const weightedScores = percentageScore * category.weight;
-
+														{categorySummaries.map((category, index) => {
 															return (
 																<Fragment key={index}>
-																	<span className="tabular-nums font-mono">{weightedScores.toFixed(2)}</span>%
-																	{index < course.categories.length - 1 ? ' + ' : ''}
+																	<span className="tabular-nums font-mono">{category.weightedImpact.toFixed(2)}</span>%
+																	{index < categorySummaries.length - 1 ? ' + ' : ''}
 																</Fragment>
 															)
 														})}
@@ -1237,8 +2064,19 @@ function RecordInput({
 		handleFieldChange();
 	}
 
+	const handleClearRecords = () => {
+		if (currentRecords.length === 0) return;
+		removeRecord(currentRecords.map((_, idx) => idx));
+		appendRecord({
+			name: `${category.name} 1`,
+			score: 0,
+			maxScore: 100,
+		})
+		handleFieldChange();
+	}
+
 	return (
-		<Collapsible className="bg-card text-card-foreground border rounded-lg p-4 @container" defaultOpen>
+		<Collapsible className="bg-card text-card-foreground rounded-lg p-4 @container" defaultOpen>
 			<CollapsibleTrigger className="flex items-center gap-2 w-full">
 				<div className="flex items-center justify-between gap-2 flex-1 overflow-hidden">
 					<div className="flex items-baseline gap-1 overflow-hidden">
@@ -1260,11 +2098,12 @@ function RecordInput({
 				<ChevronsUpDownIcon className="size-4 text-muted-foreground" />
 			</CollapsibleTrigger>
 			<CollapsibleContent>
-				<p className="text-sm text-muted-foreground">
+				<p className="text-sm text-muted-foreground mb-4">
 					Input your scores for each record in the {category.name} category.
 				</p>
-				<div className="flex justify-end">
+				<div className="flex justify-end gap-2 flex-wrap">
 					<AddRecordButton handleAppendRecord={handleAppendRecord} />
+					<ClearAllButton handleClearAll={handleClearRecords} category={category.name} disabled={currentRecords.length <= 1} />
 				</div>
 				<div className="grid grid-cols-[1fr_1fr_auto] @sm:grid-cols-[1fr_auto_auto_auto] gap-4 @md:gap-2 my-4">
 					<div className="grid grid-cols-subgrid col-span-4 gap-2 @max-sm:hidden">
@@ -1376,8 +2215,9 @@ function RecordInput({
 						})
 					}
 				</div>
-				<div className="flex justify-end">
+				<div className="flex justify-end gap-2 flex-wrap">
 					<AddRecordButton handleAppendRecord={handleAppendRecord} />
+					<ClearAllButton handleClearAll={handleClearRecords} category={category.name} disabled={currentRecords.length <= 1} />
 				</div>
 			</CollapsibleContent>
 		</Collapsible>
@@ -1389,6 +2229,7 @@ function AddRecordButton({
 }: {
 	handleAppendRecord: (amount?: number) => void;
 }) {
+	const [isOpen, setIsOpen] = useState(false);
 	const [bulkAmount, setBulkAmount] = useState<number>(1);
 	const [error, setError] = useState<string | null>(null);
 
@@ -1402,6 +2243,7 @@ function AddRecordButton({
 		toast.success(`${bulkAmount} record${bulkAmount > 1 ? "s" : ""} added successfully.`, {
 			icon: <PlusIcon className="size-4" />
 		});
+		setIsOpen(false);
 	}
 
 	return (
@@ -1414,12 +2256,15 @@ function AddRecordButton({
 				<PlusIcon />
 				Add Record
 			</Button>
-			<Popover onOpenChange={(open) => {
-				if (!open) {
-					setBulkAmount(1);
-					setError(null);
-				}
-			}}>
+			<Popover
+				open={isOpen}
+				onOpenChange={(open) => {
+					if (!open) {
+						setBulkAmount(1);
+						setError(null);
+					}
+					setIsOpen(open);
+				}}>
 				<PopoverTrigger asChild>
 					<Button variant="outline" size="icon">
 						<ChevronDownIcon />
@@ -1434,6 +2279,12 @@ function AddRecordButton({
 							min={1}
 							value={bulkAmount}
 							onChange={e => setBulkAmount(Number(e.target.value))}
+							onKeyDown={e => {
+								if (e.key === "Enter") {
+									e.preventDefault();
+									handleBulkAdd();
+								}
+							}}
 							aria-invalid={!!error}
 						/>
 						{error && (<FieldError errors={[{ message: error }]} />)}
@@ -1445,5 +2296,38 @@ function AddRecordButton({
 				</PopoverContent>
 			</Popover>
 		</ButtonGroup>
+	)
+}
+
+function ClearAllButton({
+	handleClearAll,
+	disabled,
+	category,
+}: {
+	handleClearAll: () => void;
+	disabled: boolean;
+	category: string
+}) {
+	return (
+		<Button
+			onClick={async () => {
+				const ok = await confirm({
+					title: "Clear All Records",
+					message: `Are you sure you want to clear all your records in the "${category}" category? This action cannot be undone.`,
+					buttonMessage: "Yes, clear all",
+					buttonVariant: "destructive",
+				})
+
+				if (!ok) return;
+
+				handleClearAll();
+			}}
+			type="button"
+			variant="destructive"
+			disabled={disabled}
+		>
+			<Trash2Icon />
+			Clear All
+		</Button>
 	)
 }
