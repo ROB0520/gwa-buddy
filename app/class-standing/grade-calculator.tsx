@@ -1708,10 +1708,10 @@ function ScoreInput({
 										</CardDescription>
 									</CardHeader>
 									<CardContent>
-										<FieldLabel htmlFor="kubernetes-r2h">
+										<FieldLabel htmlFor="formula-breakdown">
 											<Field orientation="horizontal">
 												<Checkbox
-													id="kubernetes-r2h"
+													id="formula-breakdown"
 													checked={includeFormulaBreakdown}
 													onCheckedChange={checked => setIncludeFormulaBreakdown(checked === true)}
 												/>
