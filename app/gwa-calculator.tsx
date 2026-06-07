@@ -777,7 +777,7 @@ export function GWACalculator({
 						<Collapsible>
 							<CollapsibleTrigger asChild>
 								<Button
-									variant='default'
+									variant='ghost'
 									size='lg'
 									className="w-full mt-2"
 								>
