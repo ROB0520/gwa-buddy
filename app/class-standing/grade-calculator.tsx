@@ -605,7 +605,7 @@ async function exportClassStandingPdf(
 
 	const shareUrl = new URL(window.location.href);
 
-	shareUrl.searchParams.set("template", snapshot.templateEncoded);
+	shareUrl.searchParams.set("t", snapshot.templateEncoded);
 
 	const drawChrome = (page: PDFPage, pageNumber: number) => {
 		page.drawImage(logoImage, {
@@ -1486,7 +1486,7 @@ function ScoreInput({
 
 		const url = new URL(window.location.href)
 
-		url.searchParams.set("template", encoded)
+		url.searchParams.set("t", encoded)
 
 		await navigator.clipboard.writeText(
 			url.toString()

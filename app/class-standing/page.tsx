@@ -18,8 +18,6 @@ export const metadata: Metadata = {
     images: '/og-image.png',
   },
   other: {
-    "darkreader-lock": "true",
-    "theme-color": "#15ba81",
     "apple-mobile-web-app-title": "Class Standing Calculator | GWA Buddy",
   },
 };
@@ -29,7 +27,7 @@ export default async function ClassStandingPage({
 }: {
   searchParams: Promise<{ [key: string]: string | string[] | undefined }>
 }) {
-  const template = (await searchParams).template as string | undefined
+  const template = (await searchParams).t as string | undefined
   const course = template ? deserializeCourse(template) : undefined
 
   return (
@@ -39,7 +37,7 @@ export default async function ClassStandingPage({
         <Link href="/"><h1 className="text-4xl font-extrabold tracking-tight text-balance">GWA Buddy</h1></Link>
         <h2 className="text-2xl font-semibold text-accent">Class Standing Calculator</h2>
         <p className="text-center text-muted-foreground max-w-2xl leading-7">
-          Calculate your class standing based on grading criteria, category weights, and activity scores. Track your performance in real time and instantly estimate your subject grade.
+          Calculate your class standing based on grading criteria and activity scores. Track your performance in real time and instantly estimate your subject grade.
         </p>
       </div>
 
