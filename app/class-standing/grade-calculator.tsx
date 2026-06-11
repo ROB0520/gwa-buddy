@@ -2240,6 +2240,7 @@ function RecordInput({
 														placeholder="Score"
 														className="text-right"
 														onChange={(e) => {
+															handleFieldChange();
 															const value =
 																e.target.value === ""
 																	? ""
@@ -2271,6 +2272,7 @@ function RecordInput({
 														placeholder="Max Score"
 														className="text-right"
 														onChange={(e) => {
+															handleFieldChange();
 															const value =
 																e.target.value === ""
 																	? ""
