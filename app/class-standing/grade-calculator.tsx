@@ -1112,6 +1112,7 @@ function CourseDetailsForm({
 																		{...field}
 																		id={field.name}
 																		aria-invalid={fieldState.invalid}
+																		placeholder={`e.g. Laboratories, Quizzes, Exams...`}
 																	/>
 																	{fieldState.error && (<FieldError errors={[fieldState.error]} />)}
 																</Field>
