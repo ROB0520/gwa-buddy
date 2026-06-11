@@ -2215,7 +2215,10 @@ function RecordInput({
 													id={field.name}
 													aria-invalid={fieldState.invalid}
 													placeholder={`Record #${recordIndex + 1} Name`}
-
+													onChange={(e) => {
+														handleFieldChange();
+														field.onChange(e);
+													}}
 												/>
 												{fieldState.error && (<FieldError errors={[fieldState.error]} />)}
 											</Field>
