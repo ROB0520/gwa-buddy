@@ -2215,21 +2215,7 @@ function RecordInput({
 													id={field.name}
 													aria-invalid={fieldState.invalid}
 													placeholder={`Record #${recordIndex + 1} Name`}
-													onChange={(e) => {
-														const value =
-															e.target.value === ""
-																? ""
-																: Number(e.target.value);
 
-														field.onChange(value);
-
-														if (autoCalcuTable) {
-															scoreInputForm.trigger([
-																`categories.${index}.records.${recordIndex}.score`,
-																`categories.${index}.records.${recordIndex}.maxScore`,
-															]);
-														}
-													}}
 												/>
 												{fieldState.error && (<FieldError errors={[fieldState.error]} />)}
 											</Field>
@@ -2281,9 +2267,20 @@ function RecordInput({
 														aria-invalid={fieldState.invalid}
 														placeholder="Max Score"
 														className="text-right"
-														onChange={e => {
-															handleFieldChange();
-															field.onChange(e.target.value === "" ? "" : Number(e.target.value))
+														onChange={(e) => {
+															const value =
+																e.target.value === ""
+																	? ""
+																	: Number(e.target.value);
+
+															field.onChange(value);
+
+															if (autoCalcuTable) {
+																scoreInputForm.trigger([
+																	`categories.${index}.records.${recordIndex}.score`,
+																	`categories.${index}.records.${recordIndex}.maxScore`,
+																]);
+															}
 														}}
 													/>
 													{fieldState.error && (<FieldError errors={[fieldState.error]} />)}
