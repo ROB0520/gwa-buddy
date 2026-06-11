@@ -1593,7 +1593,7 @@ function ScoreInput({
 					))}
 				</section>
 				<Separator className="sm:hidden" />
-				<section className="sticky top-16 xl:top-4 w-full md:w-4xl space-y-4 max-h-[calc(100vh-5rem)] xl:max-h-[calc(100vh-2rem)] overflow-y-auto">
+				<section className="sticky top-16 xl:top-4 w-full md:w-4xl space-y-4 md:max-h-[calc(100vh-5rem)] xl:max-h-[calc(100vh-2rem)] overflow-y-auto">
 					<Card>
 						<CardHeader>
 							<CardTitle>
