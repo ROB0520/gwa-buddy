@@ -1632,14 +1632,38 @@ function ScoreInput({
 									}
 								</TableBody>
 							</Table>
-							<p className="text-sm text-muted-foreground italic mt-2">
-								Note: This table will only update after you click &quot;Calculate Class Standing&quot;. It provides a breakdown of how each category contributes to your overall grade based on the scores you entered.
-							</p>
+							{
+								!autoCalcuTable && (
+									<p className="text-sm text-muted-foreground italic mt-2">
+										Note: This table will only update after you click &quot;Calculate Class Standing&quot;. It provides a breakdown of how each category contributes to your overall grade based on the scores you entered.
+									</p>
+								)
+							}
+							<Field orientation="horizontal" className="mt-4">
+								<Checkbox
+									id="auto-calculate-table"
+									checked={autoCalcuTable}
+									onCheckedChange={checked => setAutoCalcuTable(Boolean(checked))}
+								/>
+								<FieldLabel htmlFor="auto-calculate-table">
+									Auto-update category breakdown table on score change
+								</FieldLabel>
+							</Field>
+						</CardContent>
+					</Card>
+					<Card>
+						<CardHeader>
+							<CardTitle>Goal Grade Analysis</CardTitle>
+							<CardDescription>
+								Optionally set a target grade to compare against your calculated class standing and identify key areas for improvement.
+							</CardDescription>
+						</CardHeader>
+						<CardContent>
 							<Controller
 								control={scoreInputForm.control}
 								name="goalGrade"
 								render={({ field, fieldState }) => (
-									<Field data-invalid={fieldState.invalid} className="mt-4">
+									<Field data-invalid={fieldState.invalid}>
 										<FieldLabel htmlFor={field.name}>Goal Grade (Optional)</FieldLabel>
 										<Combobox
 											items={["1.00", "1.25", "1.50", "1.75", "2.00", "2.25", "2.50", "2.75", "3.00", "5.00"]}
@@ -1667,16 +1691,6 @@ function ScoreInput({
 									</Field>
 								)}
 							/>
-							<Field orientation="horizontal" className="mt-4">
-								<Checkbox
-									id="auto-calculate-table"
-									checked={autoCalcuTable}
-									onCheckedChange={checked => setAutoCalcuTable(Boolean(checked))}
-								/>
-								<FieldLabel htmlFor="auto-calculate-table">
-									Auto-update category breakdown table on score change
-								</FieldLabel>
-							</Field>
 						</CardContent>
 						<CardFooter className="flex-col gap-2 items-center justify-center md:flex-row md:justify-start">
 							<Button
@@ -2190,8 +2204,9 @@ function RecordInput({
 					<AddRecordButton handleAppendRecord={handleAppendRecord} />
 					<ClearAllButton handleClearAll={handleClearRecords} category={category.name} disabled={currentRecords.length <= 1} />
 				</div>
-				<div className="grid grid-cols-[1fr_1fr_auto] @sm:grid-cols-[1fr_auto_auto_auto] gap-4 @md:gap-2 my-4">
-					<div className="grid grid-cols-subgrid col-span-4 gap-2 @max-sm:hidden">
+				<div className="grid grid-cols-[auto_1fr_1fr_auto] @md:grid-cols-[auto_1fr_auto_auto_auto] gap-4 @md:gap-2 my-4">
+					<div className="grid grid-cols-subgrid col-span-4 @md:col-span-5 gap-2 @max-md:hidden">
+						<span></span>
 						<span className="text-sm text-muted-foreground">Record Name</span>
 						<span className="text-sm text-muted-foreground text-right">Score</span>
 						<span className="text-sm text-muted-foreground text-right">Max Score</span>
@@ -2204,12 +2219,16 @@ function RecordInput({
 							const isNameOnlyInvalid = Boolean(recordNameError && !recordScoreError);
 
 							return (
-								<div key={field.id} className="grid grid-cols-subgrid col-span-4 gap-2">
+								<div key={field.id} className="grid grid-cols-subgrid col-span-5 gap-2">
+									<span className="text-xs text-muted-foreground content-center @max-md:col-span-4">
+										<span className="@sm:hidden">Record </span>
+										#{recordIndex + 1}
+									</span>
 									<Controller
 										control={scoreInputForm.control}
 										name={`categories.${index}.records.${recordIndex}.name`}
 										render={({ field, fieldState }) => (
-											<Field data-invalid={fieldState.invalid} className={cn("grid grid-rows-subgrid @max-sm:col-span-3", fieldState.invalid && "row-span-2")}>
+											<Field data-invalid={fieldState.invalid} className={cn("grid grid-rows-subgrid @max-md:col-span-5", fieldState.invalid && "row-span-2")}>
 												<Input
 													{...field}
 													id={field.name}
@@ -2225,7 +2244,7 @@ function RecordInput({
 										)}
 									/>
 									<div className={cn(
-										"grid grid-cols-2 col-span-2 grid-rows-subgrid gap-2 @sm:max-w-56",
+										"grid grid-cols-2 col-span-4 @md:col-span-2 grid-rows-subgrid gap-2 @md:max-w-56",
 										recordScoreError && "row-span-2",
 									)}>
 										<Controller
@@ -2296,7 +2315,7 @@ function RecordInput({
 									<div className={cn(
 										"grid grid-rows-subgrid gap-2",
 										isRecordInvalid && "row-span-2",
-										isNameOnlyInvalid && "@max-sm:row-span-1",
+										isNameOnlyInvalid && "@max-md:row-span-1",
 									)}>
 										<Tooltip>
 											<TooltipTrigger asChild>
@@ -2374,35 +2393,42 @@ function AddRecordButton({
 					}
 					setIsOpen(open);
 				}}>
-				<PopoverTrigger asChild>
-					<Button variant="outline" size="icon">
-						<ChevronDownIcon />
-					</Button>
-				</PopoverTrigger>
-				<PopoverContent align="end" collisionPadding={15}>
-					<h2 className="text-sm font-semibold mb-2">Bulk Add Records</h2>
-					<Field data-invalid={!!error}>
-						<FieldLabel>Number of records to add</FieldLabel>
-						<Input
-							type="number"
-							min={1}
-							value={bulkAmount}
-							onChange={e => setBulkAmount(Number(e.target.value))}
-							onKeyDown={e => {
-								if (e.key === "Enter") {
-									e.preventDefault();
-									handleBulkAdd();
-								}
-							}}
-							aria-invalid={!!error}
-						/>
-						{error && (<FieldError errors={[{ message: error }]} />)}
-					</Field>
-					<Button onClick={handleBulkAdd} type="button">
-						<PlusIcon />
-						Add
-					</Button>
-				</PopoverContent>
+				<Tooltip>
+					<TooltipTrigger asChild>
+						<PopoverTrigger asChild>
+							<Button variant="outline" size="icon">
+								<ChevronDownIcon />
+							</Button>
+						</PopoverTrigger>
+					</TooltipTrigger>
+					<PopoverContent collisionPadding={15}>
+						<h2 className="text-sm font-semibold mb-2">Bulk Add Records</h2>
+						<Field data-invalid={!!error}>
+							<FieldLabel>Number of records to add</FieldLabel>
+							<Input
+								type="number"
+								min={1}
+								value={bulkAmount}
+								onChange={e => setBulkAmount(Number(e.target.value))}
+								onKeyDown={e => {
+									if (e.key === "Enter") {
+										e.preventDefault();
+										handleBulkAdd();
+									}
+								}}
+								aria-invalid={!!error}
+							/>
+							{error && (<FieldError errors={[{ message: error }]} />)}
+						</Field>
+						<Button onClick={handleBulkAdd} type="button">
+							<PlusIcon />
+							Add
+						</Button>
+					</PopoverContent>
+					<TooltipContent collisionPadding={15}>
+						Bulk add records.
+					</TooltipContent>
+				</Tooltip>
 			</Popover>
 		</ButtonGroup>
 	)
