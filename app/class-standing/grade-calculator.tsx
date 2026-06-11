@@ -41,6 +41,7 @@ import { Combobox, ComboboxContent, ComboboxEmpty, ComboboxInput, ComboboxItem, 
 import { DrawTableOptions, TableDimensions } from "pdf-lib-draw-table-beta/build/types";
 import { Checkbox } from "@/components/ui/checkbox";
 import { confirm } from "@/components/confirm-dialog";
+import { useDebounce } from 'use-debounce';
 
 type CourseDetails = {
 	name: string;
@@ -1323,6 +1324,7 @@ function ScoreInput({
 	const [includeFormulaBreakdown, setIncludeFormulaBreakdown] = useState<boolean>(false);
 	const [isExportingPdf, setIsExportingPdf] = useState<boolean>(false);
 	const [lastCalculatedSnapshot, setLastCalculatedSnapshot] = useState<CalculationSnapshot | null>(null);
+	const [autoCalcuTable, setAutoCalcuTable] = useState<boolean>(false);
 	const [goalAnalysis, setGoalAnalysis] = useState<{
 		targetPercentage: number;
 		gap: number;
@@ -1373,7 +1375,76 @@ function ScoreInput({
 		control: scoreInputForm.control,
 		exact: false,
 	});
-	const categorySummaries = course.categories.map(calculateCategorySummary);
+
+	// 	const watchedCategories = useWatch({
+	//   control: scoreInputForm.control,
+	//   name: "categories",
+	// });
+
+	// const liveCategorySummaries = useMemo(() => {
+	//   if (!watchedCategories) return [];
+
+	//   return watchedCategories.map(category => {
+	//     const validRecords = category.records.filter(record =>
+	//       record.maxScore > 0 &&
+	//       record.score >= 0 &&
+	//       record.score <= record.maxScore
+	//     );
+
+	//     return calculateCategorySummary({
+	//       ...category,
+	//       records: validRecords,
+	//     });
+	//   });
+	// }, [watchedCategories]);
+
+	// 	const categorySummaries = course.categories.map(calculateCategorySummary);
+
+	// 	const displayedCategorySummaries = autoCalcuTable
+	//   ? liveCategorySummaries
+	//   : course.categories.map(calculateCategorySummary);
+
+	const watchedCategories = useWatch({
+		control: scoreInputForm.control,
+		name: "categories",
+	});
+
+	const [debouncedCategories] = useDebounce(watchedCategories, 300);
+
+	const { isValid } = useFormState({
+		control: scoreInputForm.control,
+	});
+
+	useEffect(() => {
+		if (!autoCalcuTable) return;
+		if (!isValid) return;
+
+		setCourse(prev => {
+			if (!prev) return prev;
+
+			return {
+				...prev,
+				categories: debouncedCategories.map(category => ({
+					name: category.name,
+					weight: category.weight,
+					records: category.records.map(record => ({
+						name: record.name,
+						score: record.score,
+						maxScore: record.maxScore,
+					})),
+				})),
+			};
+		});
+	}, [
+		autoCalcuTable,
+		isValid,
+		debouncedCategories,
+		setCourse,
+	]);
+
+
+	const categorySummaries =
+		course.categories.map(calculateCategorySummary);
 
 	const handleFieldChange = () => {
 		setShowResults(false);
@@ -1517,6 +1588,7 @@ function ScoreInput({
 							scoreInputForm={scoreInputForm}
 							errors={errors}
 							handleFieldChange={handleFieldChange}
+							autoCalcuTable={autoCalcuTable}
 						/>
 					))}
 				</section>
@@ -1595,6 +1667,16 @@ function ScoreInput({
 									</Field>
 								)}
 							/>
+							<Field orientation="horizontal" className="mt-4">
+								<Checkbox
+									id="auto-calculate-table"
+									checked={autoCalcuTable}
+									onCheckedChange={checked => setAutoCalcuTable(Boolean(checked))}
+								/>
+								<FieldLabel htmlFor="auto-calculate-table">
+									Auto-update category breakdown table on score change
+								</FieldLabel>
+							</Field>
 						</CardContent>
 						<CardFooter className="flex-col gap-2 items-center justify-center md:flex-row md:justify-start">
 							<Button
@@ -2031,12 +2113,14 @@ function RecordInput({
 	scoreInputForm,
 	errors,
 	handleFieldChange,
+	autoCalcuTable,
 }: {
 	category: z.infer<typeof scoreInputSchema>["categories"][number];
 	index: number;
 	scoreInputForm: ReturnType<typeof useForm<z.infer<typeof scoreInputSchema>>>;
 	errors: UseFormStateReturn<z.infer<typeof scoreInputSchema>>["errors"];
 	handleFieldChange: () => void;
+	autoCalcuTable: boolean;
 }) {
 	const currentRecords = useWatch({
 		control: scoreInputForm.control,
@@ -2131,9 +2215,20 @@ function RecordInput({
 													id={field.name}
 													aria-invalid={fieldState.invalid}
 													placeholder={`Record #${recordIndex + 1} Name`}
-													onChange={e => {
-														handleFieldChange();
-														field.onChange(e.target.value);
+													onChange={(e) => {
+														const value =
+															e.target.value === ""
+																? ""
+																: Number(e.target.value);
+
+														field.onChange(value);
+
+														if (autoCalcuTable) {
+															scoreInputForm.trigger([
+																`categories.${index}.records.${recordIndex}.score`,
+																`categories.${index}.records.${recordIndex}.maxScore`,
+															]);
+														}
 													}}
 												/>
 												{fieldState.error && (<FieldError errors={[fieldState.error]} />)}
@@ -2155,9 +2250,20 @@ function RecordInput({
 														aria-invalid={fieldState.invalid}
 														placeholder="Score"
 														className="text-right"
-														onChange={e => {
-															handleFieldChange();
-															field.onChange(e.target.value === "" ? "" : Number(e.target.value))
+														onChange={(e) => {
+															const value =
+																e.target.value === ""
+																	? ""
+																	: Number(e.target.value);
+
+															field.onChange(value);
+
+															if (autoCalcuTable) {
+																scoreInputForm.trigger([
+																	`categories.${index}.records.${recordIndex}.score`,
+																	`categories.${index}.records.${recordIndex}.maxScore`,
+																]);
+															}
 														}}
 													/>
 													{fieldState.error && (<FieldError errors={[fieldState.error]} />)}
