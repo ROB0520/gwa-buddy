@@ -1678,7 +1678,7 @@ function ScoreInput({
 			</div>
 			<Separator />
 			<form className="gap-4 flex flex-col md:flex-row items-start" onSubmit={scoreInputForm.handleSubmit(onSubmit)}>
-				<section className="space-y-4 w-full">
+				<section className="space-y-4 w-full drop-shadow-xs">
 					{categoryFields.map((category, index) => (
 						<RecordInput
 							key={category.id}
@@ -1692,8 +1692,8 @@ function ScoreInput({
 					))}
 				</section>
 				<Separator className="sm:hidden" />
-				<section className="sticky top-16 xl:top-4 w-full md:w-4xl space-y-4 md:max-h-[calc(100vh-5rem)] xl:max-h-[calc(100vh-2rem)] overflow-y-auto">
-					<Card>
+				<section className="sticky top-16 xl:top-4 w-full md:w-4xl space-y-4 md:max-h-[calc(100vh-5rem)] xl:max-h-[calc(100vh-2rem)] overflow-y-auto drop-shadow-xs">
+					<Card className="border ring-0">
 						<CardHeader>
 							<CardTitle>
 								Category Breakdown
@@ -1750,7 +1750,7 @@ function ScoreInput({
 							</Field>
 						</CardContent>
 					</Card>
-					<Card>
+					<Card className="border ring-0">
 						<CardHeader>
 							<CardTitle>Goal Grade Analysis</CardTitle>
 							<CardDescription>
@@ -2042,7 +2042,7 @@ function ScoreInput({
 			</form>
 			{
 				(showResults && calculatedGrade !== null && showCalculationDetails) && (
-					<Card ref={calcuDetailsRef}>
+					<Card ref={calcuDetailsRef} className="border ring-0">
 						<CardHeader>
 							<CardTitle>Calculation Details</CardTitle>
 							<CardDescription>
@@ -2274,7 +2274,7 @@ function RecordInput({
 	}
 
 	return (
-		<Collapsible className="bg-card text-card-foreground rounded-lg p-4 @container" defaultOpen>
+		<Collapsible className="bg-card text-card-foreground border rounded-xl p-4 @container" defaultOpen>
 			<CollapsibleTrigger className="flex items-center gap-2 w-full">
 				<div className="flex items-center justify-between gap-2 flex-1 overflow-hidden">
 					<div className="flex items-baseline gap-1 overflow-hidden">
