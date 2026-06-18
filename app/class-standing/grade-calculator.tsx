@@ -2172,7 +2172,7 @@ function getNextSequentialRecordName(
 	);
 
 	if (!lastParsed) {
-		return `${lastRecord.name} 1`;
+		return `${lastRecord.name.trimEnd()} 1`;
 	}
 
 	let step = 1;
