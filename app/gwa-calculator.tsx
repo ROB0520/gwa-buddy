@@ -22,6 +22,7 @@ import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/component
 import { Separator } from "@/components/ui/separator"
 import { toast } from "sonner"
 import { Combobox, ComboboxContent, ComboboxEmpty, ComboboxInput, ComboboxItem, ComboboxList } from "@/components/ui/combobox"
+import { compressSync, decompressSync } from "fflate";
 
 type Course = {
 	code?: string;
@@ -34,13 +35,6 @@ type Course = {
 
 type SharedLinkPayload = number[];
 
-function randomByte() {
-	const cryptoSource = globalThis.crypto;
-	if (cryptoSource?.getRandomValues) {
-		return cryptoSource.getRandomValues(new Uint8Array(1))[0] ?? 0;
-	}
-	return Math.floor(Math.random() * 256);
-}
 
 function encodeVarint(value: number) {
 	const bytes: number[] = [];
@@ -84,28 +78,63 @@ function fromBase64Url(value: string) {
 	return Uint8Array.from(binary, (char) => char.charCodeAt(0));
 }
 
-function xorBytes(bytes: Uint8Array, seed: number) {
-	let state = seed >>> 0;
-	return bytes.map((byte) => {
-		state = (state * 1664525 + 1013904223) >>> 0;
-		return byte ^ (state & 0xff);
-	});
+function encodeRanges(
+	indexes: number[]
+) {
+
+	if (indexes.length === 0) {
+		return [];
+	}
+
+	const sorted = [...indexes].sort((a, b) => a - b);
+
+	const ranges: Array<[number, number]> = [];
+
+	let start = sorted[0];
+	let previous = sorted[0];
+	let length = 1;
+
+	for (let i = 1; i < sorted.length; i++) {
+		const current = sorted[i];
+
+		if (current === previous + 1) {
+			length++;
+		} else {
+			ranges.push([
+				start,
+				length
+			]);
+
+			start = current;
+			length = 1;
+		}
+
+		previous = current;
+	}
+
+	ranges.push([
+		start,
+		length
+	]);
+
+	return ranges;
 }
 
-function parseCompactSharedLinkPayload(value: string): SharedLinkPayload | null {
-	if (!value) return null;
-	const [seedPart, encodedPart] = value.split(".");
-	if (!seedPart || !encodedPart) return null;
-	const seed = parseInt(seedPart, 16);
-	if (!Number.isInteger(seed) || seed < 0 || seed > 255) return null;
-	try {
-		const decoded = fromBase64Url(encodedPart);
-		const payloadBytes = xorBytes(decoded, seed);
-		const indexes = decodeVarints(payloadBytes);
-		return indexes;
-	} catch {
-		return null;
+function rangesToBytes(
+	ranges: Array<
+		[number, number]
+	>
+) {
+	const bytes: number[] = [];
+
+	for (const [ start, length ] of ranges) {
+		bytes.push(...encodeVarint(start));
+		bytes.push(...encodeVarint(length));
 	}
+
+	return Uint8Array.from(
+		bytes
+	);
 }
 
 function snapshotForCourses(courses?: Array<{ code?: string }>) {
@@ -133,14 +162,67 @@ function hydrateSharedCourses(payload: SharedLinkPayload, curriculumData: Curric
 }
 
 const sharePayloadParser = createParser<SharedLinkPayload>({
-	parse: (value: string) => parseCompactSharedLinkPayload(value),
-	serialize: (payload: SharedLinkPayload) => {
-		const seed = randomByte();
-		const rawBytes = payload.flatMap((index) => encodeVarint(index));
-		const xored = xorBytes(Uint8Array.from(rawBytes), seed);
-		return `${seed.toString(16).padStart(2, "0")}.${toBase64Url(xored)}`;
+	parse: value => {
+		try {
+			const mode = value[0];
+
+			const encoded = value.slice(1);
+
+			const payload = fromBase64Url(encoded);
+
+			const bytes = 
+				mode === "C"
+					? decompressSync(payload)
+					: payload;
+
+			const numbers = decodeVarints(bytes);
+
+			if (!numbers) {
+				return null;
+			}
+
+			if (numbers.length % 2 !== 0) {
+				return null;
+			}
+
+			const ranges: Array<[number, number]> = [];
+
+			for (let i = 0; i < numbers.length; i += 2) {
+				ranges.push([
+					numbers[i],
+					numbers[i + 1]
+				]);
+			}
+
+			const indexes: number[] = [];
+
+			for (const [start, length] of ranges) {
+				for (let i = 0; i < length; i++) {
+					indexes.push(start + i);
+				}
+			}
+
+			return indexes;
+		} catch {
+			return null;
+		}
 	},
+	serialize: payload => {
+
+		const ranges = encodeRanges(payload);
+
+		const binary = rangesToBytes(ranges);
+
+		if (binary.length < 32) {
+			return "R" + toBase64Url(binary);
+		}
+
+		const compressed = compressSync(binary);
+
+		return "C" + toBase64Url(compressed);
+	}
 });
+
 const serializeSharePayload = createSerializer({ ss: sharePayloadParser });
 
 type GWACalculatorProps = {
@@ -676,12 +758,26 @@ export function GWACalculator({
 							if (!selectedProgram || !selectedCurriculum) return;
 							if (!curriculumData) return;
 							const allCourses = getFlattenedCurriculumCourses(curriculumData);
+							const hasPreset =
+								selectedYear !== null ||
+								selectedSemester !== null ||
+								selectedMajor !== null ||
+								filterCore;
 							const payload: SharedLinkPayload = includedCourses.flatMap((course) => {
 								if (!course.code) return [];
 								const index = allCourses.findIndex((item) => item.code === course.code && item.name === course.name);
 								return index >= 0 ? [index] : [];
 							});
-							const sharePath = serializeSharePayload(window.location.href, { ss: payload });
+							const sharePath =
+								hasPreset
+									? serializeSharePayload(
+										window.location.href,
+										{ ss: null }
+									)
+									: serializeSharePayload(
+										window.location.href,
+										{ ss: payload }
+									);
 							const shareUrl = `${sharePath}`;
 							try {
 								await navigator.clipboard.writeText(shareUrl);
@@ -912,7 +1008,6 @@ export function GWACalculator({
 					</div>
 				) : null
 			}
-
 		</>
 	)
 }
