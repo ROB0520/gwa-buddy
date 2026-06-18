@@ -1894,45 +1894,6 @@ function ScoreInput({
 									</AlertDescription>
 								</Alert>
 
-								<Card>
-									<CardHeader>
-										<CardTitle>
-											Export Results as PDF
-										</CardTitle>
-										<CardDescription>
-											Download a report — a summary page with course info and category grades, plus a detailed score records page.
-										</CardDescription>
-									</CardHeader>
-									<CardContent>
-										<FieldLabel htmlFor="formula-breakdown">
-											<Field orientation="horizontal">
-												<Checkbox
-													id="formula-breakdown"
-													checked={includeFormulaBreakdown}
-													onCheckedChange={checked => setIncludeFormulaBreakdown(checked === true)}
-												/>
-												<FieldContent>
-													<FieldTitle>Include Formula Breakdown</FieldTitle>
-													<FieldDescription>
-														Appends the weighted score computation for each category on the summary page.
-													</FieldDescription>
-												</FieldContent>
-											</Field>
-										</FieldLabel>
-									</CardContent>
-									<CardFooter>
-										<Button
-											type="button"
-											className="w-full"
-											onClick={handleExportPdf}
-											disabled={isExportingPdf || !lastCalculatedSnapshot}
-										>
-											<SaveIcon />
-											{isExportingPdf ? "Exporting PDF..." : "Export PDF"}
-										</Button>
-									</CardFooter>
-								</Card>
-
 								{
 									goalAnalysis && (
 										<Card>
@@ -1950,13 +1911,13 @@ function ScoreInput({
 											<CardContent className="space-y-4">
 												{
 													goalAnalysis.gap <= 0 ? (
-														<Alert>
+														<Alert className="text-primary">
 															<PartyPopperIcon />
 															<AlertTitle>Goal Achieved</AlertTitle>
 															<AlertDescription>You have already reached your target grade.</AlertDescription>
 														</Alert>
 													) : (
-														<Alert>
+														<Alert variant="destructive">
 															<TriangleAlertIcon />
 															<AlertTitle>Goal Progress</AlertTitle>
 															<AlertDescription>
@@ -2035,6 +1996,45 @@ function ScoreInput({
 										</Card>
 									)
 								}
+
+								<Card>
+									<CardHeader>
+										<CardTitle>
+											Export Results as PDF
+										</CardTitle>
+										<CardDescription>
+											Download a report — a summary page with course info and category grades, plus a detailed score records page.
+										</CardDescription>
+									</CardHeader>
+									<CardContent>
+										<FieldLabel htmlFor="formula-breakdown">
+											<Field orientation="horizontal">
+												<Checkbox
+													id="formula-breakdown"
+													checked={includeFormulaBreakdown}
+													onCheckedChange={checked => setIncludeFormulaBreakdown(checked === true)}
+												/>
+												<FieldContent>
+													<FieldTitle>Include Formula Breakdown</FieldTitle>
+													<FieldDescription>
+														Appends the weighted score computation for each category on the summary page.
+													</FieldDescription>
+												</FieldContent>
+											</Field>
+										</FieldLabel>
+									</CardContent>
+									<CardFooter>
+										<Button
+											type="button"
+											className="w-full"
+											onClick={handleExportPdf}
+											disabled={isExportingPdf || !lastCalculatedSnapshot}
+										>
+											<SaveIcon />
+											{isExportingPdf ? "Exporting PDF..." : "Export PDF"}
+										</Button>
+									</CardFooter>
+								</Card>
 							</>
 						) : null
 					}
