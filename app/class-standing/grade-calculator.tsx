@@ -995,7 +995,7 @@ export function GradeCalculator({
 /**
  * Course Setup Form
  * - Course Name
- * - Grading Categories
+ * - Grading Categories/Criteria
  */
 
 const courseSetupSchema = z.object({
@@ -1147,7 +1147,7 @@ function CourseDetailsForm({
 									)}
 								>
 									<div className="flex items-start justify-between gap-2">
-										<FieldLabel className={cn(fieldState.invalid && "text-destructive")}>Grading Categories</FieldLabel>
+										<FieldLabel className={cn(fieldState.invalid && "text-destructive")}>Grading Categories/Criteria</FieldLabel>
 										<Button
 											size="sm"
 											onClick={() => appendCategory({ name: "", weight: 0 })}
