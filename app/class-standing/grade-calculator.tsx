@@ -32,7 +32,6 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import Link from "next/link";
-import LZString from "lz-string";
 import { toast } from "sonner";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { ButtonGroup } from "@/components/ui/button-group";
@@ -42,6 +41,7 @@ import { DrawTableOptions, TableDimensions } from "pdf-lib-draw-table-beta/build
 import { Checkbox } from "@/components/ui/checkbox";
 import { confirm } from "@/components/confirm-dialog";
 import { useDebounce } from 'use-debounce';
+import { compressSync } from "fflate";
 
 type CourseDetails = {
 	name: string;
@@ -80,86 +80,148 @@ type CalculationSnapshot = {
 }
 
 
-type SharedCourse = {
-	n: string;
-	c: SharedCategory[];
-};
+export type EncodedCourse = [
+	string,
+	EncodedCategory[]
+];
 
-type SharedCategory = {
-	n: string;
-	w: number;
-	p?: string; // detected prefix
-	r: SharedRecord[];
-};
+type EncodedCategory = [
+	string,
+	number,
+	string[],
+	EncodedRecord[]
+];
 
-type SharedRecord =
-	| number
-	| [number, number]
-	| [string, number];
+type EncodedRecord =
+	| [0, number]
+	| [1, number, number, number]
+	| [2, string, number];
 
-function serializeCourse(course: CourseDetails): string {
-	const data: SharedCourse = {
-		n: course.name,
-		c: course.categories.map(category => {
-			const parsedRecords = category.records.map(record =>
-				parseSequentialName(record.name)
-			);
+function extractSequentialName(name: string) {
+	const match =
+		name.trim().match(/^(.+?)\s+(\d+)$/);
 
-			const prefixCounts = new Map<string, number>();
+	if (!match) {
+		return null;
+	}
 
-			for (const parsed of parsedRecords) {
-				if (!parsed) continue;
-
-				prefixCounts.set(
-					parsed.prefix,
-					(prefixCounts.get(parsed.prefix) ?? 0) + 1
-				);
-			}
-
-			const detectedPrefix =
-				[...prefixCounts.entries()]
-					.sort((a, b) => b[1] - a[1])[0]?.[0];
-
-			return {
-				n: category.name,
-				w: category.weight,
-				p: detectedPrefix,
-				r: category.records.map((record, index) => {
-					const parsed = parseSequentialName(record.name);
-
-					// Original expected name
-					const defaultName =
-						`${category.name} ${index + 1}`;
-
-					if (record.name === defaultName) {
-						return record.maxScore;
-					}
-
-					// Same prefix but custom numbering
-					if (
-						detectedPrefix &&
-						parsed &&
-						parsed.prefix === detectedPrefix
-					) {
-						return [
-							parsed.number,
-							record.maxScore,
-						] as [number, number];
-					}
-
-					// Fully custom
-					return [
-						record.name,
-						record.maxScore,
-					] as [string, number];
-				}),
-			};
-		}),
+	return {
+		prefix: match[1].trim(),
+		number: Number(match[2]),
 	};
+}
 
-	return LZString.compressToEncodedURIComponent(
-		JSON.stringify(data)
-	);
+function serializeCourse(
+  course: CourseDetails
+): string {
+
+  const data: EncodedCourse = [
+    course.name,
+
+    course.categories.map(category => {
+
+      const prefixMap =
+        new Map<string, number>();
+
+      for (const record of category.records) {
+        const parsed =
+          extractSequentialName(
+            record.name
+          );
+
+        if (!parsed) continue;
+
+        const normalized =
+          parsed.prefix.trim();
+
+        if (!prefixMap.has(normalized)) {
+          prefixMap.set(
+            normalized,
+            prefixMap.size
+          );
+        }
+      }
+
+      const prefixes =
+        [...prefixMap.keys()];
+
+      const records: EncodedRecord[] =
+        category.records.map(
+          (record, index) => {
+
+            const defaultName =
+              `${category.name} ${index + 1}`;
+
+            if (
+              record.name === defaultName
+            ) {
+              return [
+                0,
+                record.maxScore,
+              ];
+            }
+
+            const parsed =
+              extractSequentialName(
+                record.name
+              );
+
+            if (parsed) {
+              const prefixIndex =
+                prefixMap.get(
+                  parsed.prefix
+                );
+
+              if (
+                prefixIndex !== undefined
+              ) {
+                return [
+                  1,
+                  prefixIndex,
+                  parsed.number,
+                  record.maxScore,
+                ];
+              }
+            }
+
+            return [
+              2,
+              record.name,
+              record.maxScore,
+            ];
+          }
+        );
+
+      return [
+        category.name,
+        category.weight,
+        prefixes,
+        records,
+      ];
+    }),
+  ];
+
+  const json =
+    JSON.stringify(data);
+
+  const compressed =
+    compressSync(
+      new TextEncoder().encode(
+        json
+      ),
+      {
+        level: 9,
+      }
+    );
+
+  return btoa(
+    String.fromCharCode(
+      ...compressed
+    )
+  )
+    .replace(/\+/g, "-")
+    .replace(/\//g, "_")
+    .replace(/=+$/, "");
 }
 
 function calculateCategorySummary(category: CourseCategory): CategorySummary {
@@ -1084,7 +1146,18 @@ function CourseDetailsForm({
 										fieldState.invalid ? "border-destructive" : ""
 									)}
 								>
-									<FieldLabel className={cn(fieldState.invalid && "text-destructive")}>Grading Categories</FieldLabel>
+									<div className="flex items-start justify-between gap-2">
+										<FieldLabel className={cn(fieldState.invalid && "text-destructive")}>Grading Categories</FieldLabel>
+										<Button
+										size="sm"
+										onClick={() => appendCategory({ name: "", weight: 0 })}
+										type="button"
+										variant="outline"
+									>
+										<PlusIcon />
+										Add Category
+									</Button>
+									</div>
 									<div className="mt-2 grid grid-cols-[1fr_auto] sm:grid-cols-[1fr_auto_auto] gap-2">
 										{categoryFields.map((category, index) => (
 											(() => {
@@ -1667,7 +1740,7 @@ function ScoreInput({
 										<FieldLabel htmlFor={field.name}>Goal Grade (Optional)</FieldLabel>
 										<Combobox
 											items={["1.00", "1.25", "1.50", "1.75", "2.00", "2.25", "2.50", "2.75", "3.00", "5.00"]}
-											value={field.value ?? ""}
+											value={field.value ?? null}
 											onValueChange={value => field.onChange(value ?? undefined)}
 											id={field.name}
 											aria-invalid={fieldState.invalid}
