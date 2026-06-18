@@ -112,116 +112,116 @@ function extractSequentialName(name: string) {
 }
 
 function serializeCourse(
-  course: CourseDetails
+	course: CourseDetails
 ): string {
 
-  const data: EncodedCourse = [
-    course.name,
+	const data: EncodedCourse = [
+		course.name,
 
-    course.categories.map(category => {
+		course.categories.map(category => {
 
-      const prefixMap =
-        new Map<string, number>();
+			const prefixMap =
+				new Map<string, number>();
 
-      for (const record of category.records) {
-        const parsed =
-          extractSequentialName(
-            record.name
-          );
+			for (const record of category.records) {
+				const parsed =
+					extractSequentialName(
+						record.name
+					);
 
-        if (!parsed) continue;
+				if (!parsed) continue;
 
-        const normalized =
-          parsed.prefix.trim();
+				const normalized =
+					parsed.prefix.trim();
 
-        if (!prefixMap.has(normalized)) {
-          prefixMap.set(
-            normalized,
-            prefixMap.size
-          );
-        }
-      }
+				if (!prefixMap.has(normalized)) {
+					prefixMap.set(
+						normalized,
+						prefixMap.size
+					);
+				}
+			}
 
-      const prefixes =
-        [...prefixMap.keys()];
+			const prefixes =
+				[...prefixMap.keys()];
 
-      const records: EncodedRecord[] =
-        category.records.map(
-          (record, index) => {
+			const records: EncodedRecord[] =
+				category.records.map(
+					(record, index) => {
 
-            const defaultName =
-              `${category.name} ${index + 1}`;
+						const defaultName =
+							`${category.name} ${index + 1}`;
 
-            if (
-              record.name === defaultName
-            ) {
-              return [
-                0,
-                record.maxScore,
-              ];
-            }
+						if (
+							record.name === defaultName
+						) {
+							return [
+								0,
+								record.maxScore,
+							];
+						}
 
-            const parsed =
-              extractSequentialName(
-                record.name
-              );
+						const parsed =
+							extractSequentialName(
+								record.name
+							);
 
-            if (parsed) {
-              const prefixIndex =
-                prefixMap.get(
-                  parsed.prefix
-                );
+						if (parsed) {
+							const prefixIndex =
+								prefixMap.get(
+									parsed.prefix
+								);
 
-              if (
-                prefixIndex !== undefined
-              ) {
-                return [
-                  1,
-                  prefixIndex,
-                  parsed.number,
-                  record.maxScore,
-                ];
-              }
-            }
+							if (
+								prefixIndex !== undefined
+							) {
+								return [
+									1,
+									prefixIndex,
+									parsed.number,
+									record.maxScore,
+								];
+							}
+						}
 
-            return [
-              2,
-              record.name,
-              record.maxScore,
-            ];
-          }
-        );
+						return [
+							2,
+							record.name,
+							record.maxScore,
+						];
+					}
+				);
 
-      return [
-        category.name,
-        category.weight,
-        prefixes,
-        records,
-      ];
-    }),
-  ];
+			return [
+				category.name,
+				category.weight,
+				prefixes,
+				records,
+			];
+		}),
+	];
 
-  const json =
-    JSON.stringify(data);
+	const json =
+		JSON.stringify(data);
 
-  const compressed =
-    compressSync(
-      new TextEncoder().encode(
-        json
-      ),
-      {
-        level: 9,
-      }
-    );
+	const compressed =
+		compressSync(
+			new TextEncoder().encode(
+				json
+			),
+			{
+				level: 9,
+			}
+		);
 
-  return btoa(
-    String.fromCharCode(
-      ...compressed
-    )
-  )
-    .replace(/\+/g, "-")
-    .replace(/\//g, "_")
-    .replace(/=+$/, "");
+	return btoa(
+		String.fromCharCode(
+			...compressed
+		)
+	)
+		.replace(/\+/g, "-")
+		.replace(/\//g, "_")
+		.replace(/=+$/, "");
 }
 
 function calculateCategorySummary(category: CourseCategory): CategorySummary {
@@ -1149,14 +1149,14 @@ function CourseDetailsForm({
 									<div className="flex items-start justify-between gap-2">
 										<FieldLabel className={cn(fieldState.invalid && "text-destructive")}>Grading Categories</FieldLabel>
 										<Button
-										size="sm"
-										onClick={() => appendCategory({ name: "", weight: 0 })}
-										type="button"
-										variant="outline"
-									>
-										<PlusIcon />
-										Add Category
-									</Button>
+											size="sm"
+											onClick={() => appendCategory({ name: "", weight: 0 })}
+											type="button"
+											variant="outline"
+										>
+											<PlusIcon />
+											Add Category
+										</Button>
 									</div>
 									<div className="mt-2 grid grid-cols-[1fr_auto] sm:grid-cols-[1fr_auto_auto] gap-2">
 										{categoryFields.map((category, index) => (
@@ -1196,15 +1196,25 @@ function CourseDetailsForm({
 															control={courseSetupForm.control}
 															name={`categories.${index}.weight`}
 															render={({ field, fieldState }) => (
-																<Field data-invalid={fieldState.invalid} className={cn("w-full sm:w-44 grid grid-rows-subgrid", fieldState.error ? "row-span-3" : "row-span-2")}>
+																<Field data-invalid={fieldState.invalid} className={cn("w-full sm:w-28 grid grid-rows-subgrid", fieldState.error ? "row-span-3" : "row-span-2")}>
 																	<FieldLabel htmlFor={field.name}>Weight (%)</FieldLabel>
 																	<InputGroup aria-invalid={fieldState.invalid}>
 																		<InputGroupInput
 																			value={(field.value || 0).toString()}
-																			onChange={e => field.onChange(e.target.value === "" ? "" : Number(e.target.value))}
+																			onChange={e => field.onChange(
+																				e.target.value.trim() === ""
+																					? ""
+																					: (
+																						isNaN(Number(e.target.value))
+																							? field.value
+																							: Number(e.target.value)
+																					))
+																			}
 																			id={field.name}
 																			aria-invalid={fieldState.invalid}
 																			ref={field.ref}
+																			className="text-right [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+																			type="number"
 																		/>
 																		<InputGroupAddon align="inline-end">
 																			<PercentIcon />
@@ -1246,15 +1256,6 @@ function CourseDetailsForm({
 											})()
 										))}
 									</div>
-									<Button
-										className="w-full mt-4"
-										onClick={() => appendCategory({ name: "", weight: 0 })}
-										type="button"
-										variant="outline"
-									>
-										<PlusIcon />
-										Add Category
-									</Button>
 									<p className="text-sm text-muted-foreground mt-2">
 										Total Weight: <span
 											className={cn(
@@ -1680,10 +1681,10 @@ function ScoreInput({
 							<Table>
 								<TableHeader>
 									<TableRow>
-										<TableHead>Category</TableHead>
-										<TableHead className="text-right">Total <span className="text-muted-foreground text-sm">/</span> Max Total</TableHead>
-										<TableHead className="text-right">Weight</TableHead>
-										<TableHead className="text-right max-sm:w-28 max-sm:whitespace-normal">Weighted Impact (%)</TableHead>
+										<TableHead className=" py-1">Category</TableHead>
+										<TableHead className="text-right py-1">Total <span className="text-muted-foreground text-sm">/</span> Max Total</TableHead>
+										<TableHead className="text-right py-1">Weight</TableHead>
+										<TableHead className="text-right max-sm:w-28 max-sm:whitespace-normal py-1">Weighted Impact (%)</TableHead>
 									</TableRow>
 								</TableHeader>
 								<TableBody>
@@ -2262,7 +2263,14 @@ function RecordInput({
 					<Badge variant={currentRecords.length > 0 ? "default" : "destructive"}>
 						{
 							currentRecords.length > 0
-								? `${currentRecords.reduce((sum, record) => sum + record.score, 0).toLocaleString()} / ${currentRecords.reduce((sum, record) => sum + record.maxScore, 0).toLocaleString()}`
+								? `${currentRecords
+									.filter(record => !isNaN(record.score) && !isNaN(record.maxScore) && record.score.toString() !== "" && record.maxScore.toString() !== "")
+									.reduce((sum, record) => sum + record.score, 0)
+									.toLocaleString()} / ${currentRecords
+										.filter(record => !isNaN(record.score) && !isNaN(record.maxScore) && record.score.toString() !== "" && record.maxScore.toString() !== "")
+										.reduce((sum, record) => sum + record.maxScore, 0)
+										.toLocaleString()
+								}`
 								: "No scores yet"
 						}
 					</Badge>
@@ -2294,7 +2302,7 @@ function RecordInput({
 							return (
 								<div key={field.id} className="grid grid-cols-subgrid col-span-5 gap-2">
 									<span className="text-xs text-muted-foreground content-center @max-md:col-span-4">
-										<span className="@sm:hidden">Record </span>
+										<span className="@md:hidden">Record </span>
 										#{recordIndex + 1}
 									</span>
 									<Controller
@@ -2330,13 +2338,18 @@ function RecordInput({
 														id={field.name}
 														aria-invalid={fieldState.invalid}
 														placeholder="Score"
-														className="text-right"
+														className="text-right [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+														type="number"
 														onChange={(e) => {
 															handleFieldChange();
 															const value =
 																e.target.value === ""
 																	? ""
-																	: Number(e.target.value);
+																	: (
+																		isNaN(Number(e.target.value))
+																			? field.value
+																			: Number(e.target.value)
+																	);
 
 															field.onChange(value);
 
@@ -2362,13 +2375,18 @@ function RecordInput({
 														id={field.name}
 														aria-invalid={fieldState.invalid}
 														placeholder="Max Score"
-														className="text-right"
+														className="text-right [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+														type="number"
 														onChange={(e) => {
 															handleFieldChange();
 															const value =
 																e.target.value === ""
 																	? ""
-																	: Number(e.target.value);
+																	: (
+																		isNaN(Number(e.target.value))
+																			? field.value
+																			: Number(e.target.value)
+																	);
 
 															field.onChange(value);
 
