@@ -56,7 +56,7 @@ type CourseCategory = {
 
 type CourseCategoryRecord = {
 	name: string;
-	score: number;
+	score?: number;
 	maxScore: number;
 }
 
@@ -225,7 +225,9 @@ function serializeCourse(
 }
 
 function calculateCategorySummary(category: CourseCategory): CategorySummary {
-	const totalScore = category.records.reduce((sum, record) => sum + record.score, 0);
+	const totalScore = category.records
+		.filter(record => record.score !== undefined)
+		.reduce((sum, record) => sum + record.score!, 0);
 	const totalMaxScore = category.records.reduce((sum, record) => sum + record.maxScore, 0);
 	const percentageScore = totalMaxScore > 0 ? totalScore / totalMaxScore : 0;
 	const weightedImpact = percentageScore * category.weight;
@@ -595,7 +597,7 @@ function chunkRecordsAccurately(
 
 	for (const record of records) {
 		const col1Lines = wrapTextToLines(record.name, font, fontSize, overrideWidths[0] - 8).length;
-		const col2Lines = wrapTextToLines(formatScoreValue(record.score), font, fontSize, overrideWidths[1] - 8).length;
+		const col2Lines = wrapTextToLines(formatScoreValue(record.score!), font, fontSize, overrideWidths[1] - 8).length;
 		const col3Lines = wrapTextToLines(formatScoreValue(record.maxScore), font, fontSize, overrideWidths[2] - 8).length;
 
 		const maxLines = Math.max(1, col1Lines, col2Lines, col3Lines);
@@ -928,7 +930,7 @@ async function exportClassStandingPdf(
 				["Record Name", "Score", "Max Score"],
 				...chunk.map(record => ([
 					record.name,
-					{ text: formatScoreValue(record.score), align: "right", type: "text" } as CustomStyledText,
+					{ text: formatScoreValue(record.score!), align: "right", type: "text" } as CustomStyledText,
 					{ text: formatScoreValue(record.maxScore), align: "right", type: "text" } as CustomStyledText,
 				])),
 			];
@@ -943,9 +945,6 @@ async function exportClassStandingPdf(
 			) as TableDimensions;
 
 			const actualDrawnHeight = tableDimensions?.height
-			// ?? tableDimensions?.tableHeight
-			// ?? (tableDimensions?.y && tableDimensions?.bottom ? Math.abs(tableDimensions.y - tableDimensions.bottom) : calculateExactTableHeight(chunk, regularFont, 10, tableOptions.column!.overrideWidths as number[]));
-
 			currentY -= actualDrawnHeight + SECTION_GAP;
 		}
 	}
@@ -1095,7 +1094,7 @@ function CourseDetailsForm({
 				weight: category.weight,
 				records: [{
 					name: category.name + " 1",
-					score: 0,
+					score: undefined,
 					maxScore: 100,
 				}],
 			})),
@@ -1200,7 +1199,7 @@ function CourseDetailsForm({
 																	<FieldLabel htmlFor={field.name}>Weight (%)</FieldLabel>
 																	<InputGroup aria-invalid={fieldState.invalid}>
 																		<InputGroupInput
-																			value={(field.value || 0).toString()}
+																			value={(field.value ?? 0).toString()}
 																			onChange={e => field.onChange(
 																				e.target.value.trim() === ""
 																					? ""
@@ -1319,9 +1318,12 @@ const scoreInputSchema = z.object({
 		}).min(1, "Weight must at least 1").max(100, "Weight cannot exceed 100"),
 		records: z.array(z.object({
 			name: z.string().min(1, "Record name is required"),
-			score: z.number({
-				error: "Score must be a number",
-			}).min(0, "Score cannot be negative"),
+			score: z
+				.number({
+					error: "Score must be a number",
+				})
+				.min(0, "Score cannot be negative")
+				.optional(),
 			maxScore: z.number({
 				error: "Max score must be a number",
 			}).min(1, "Max score must be at least 1"),
@@ -1347,18 +1349,27 @@ const scoreInputSchema = z.object({
 					path: [firstIndex, "name"],
 				});
 			}
-		}).superRefine((records, context) => {
-			// Ensure that scores do not exceed max scores
-			records.forEach((record, index) => {
-				if (record.score > record.maxScore) {
-					context.addIssue({
-						code: "custom",
-						message: "Score cannot exceed max score",
-						path: [index, "score"],
-					});
-				}
-			});
-		}),
+		})
+			.superRefine((records, context) => {
+				records.forEach((record, index) => {
+					if (record.score === undefined) {
+						context.addIssue({
+							code: "custom",
+							message: "Score is required",
+							path: [index, "score"],
+						});
+						return;
+					}
+
+					if (record.score > record.maxScore) {
+						context.addIssue({
+							code: "custom",
+							message: "Score cannot exceed max score",
+							path: [index, "score"],
+						});
+					}
+				});
+			}),
 	})),
 	goalGrade: z.enum(["1.00", "1.25", "1.50", "1.75", "2.00", "2.25", "2.50", "2.75", "3.00", "5.00"], { error: "Invalid goal grade" }).optional(),
 });
@@ -1427,7 +1438,7 @@ function ScoreInput({
 				weight: category.weight,
 				records: category.records.map(record => ({
 					name: record.name,
-					score: record.score,
+					score: undefined,
 					maxScore: record.maxScore,
 				})),
 			})),
@@ -1503,7 +1514,7 @@ function ScoreInput({
 					weight: category.weight,
 					records: category.records.map(record => ({
 						name: record.name,
-						score: record.score,
+						score: record.score!,
 						maxScore: record.maxScore,
 					})),
 				})),
@@ -1534,7 +1545,7 @@ function ScoreInput({
 				...category,
 				records: data.categories[categoryIndex].records.map(record => ({
 					name: record.name,
-					score: record.score,
+					score: record.score!,
 					maxScore: record.maxScore,
 				})),
 			})),
@@ -1555,9 +1566,13 @@ function ScoreInput({
 				updatedCourse.categories
 					.map(category => {
 						const totalScore =
-							category.records.reduce((sum, record) => sum + record.score, 0);
+							category.records
+								.filter(record => record.score !== undefined && record.maxScore > 0)
+								.reduce((sum, record) => sum + record.score!, 0);
 
-						const totalMaxScore = category.records.reduce((sum, record) => sum + record.maxScore, 0);
+						const totalMaxScore = category.records
+							.filter(record => record.score !== undefined && record.maxScore > 0)
+							.reduce((sum, record) => sum + record.maxScore, 0);
 
 						const currentPercentage = totalMaxScore > 0 ? (totalScore / totalMaxScore) * 100 : 0;
 
@@ -1575,16 +1590,20 @@ function ScoreInput({
 			const recordInsights =
 				updatedCourse.categories
 					.flatMap(category => {
-						const categoryTotal = category.records.reduce((sum, record) => sum + record.maxScore, 0);
+						const categoryTotal = category.records
+							.filter(record => record.score !== undefined && record.maxScore > 0)
+							.reduce((sum, record) => sum + record.maxScore, 0);
 
-						return category.records.map(
-							record => ({
-								category: category.name,
-								record: record.name,
-								missingPoints: record.maxScore - record.score,
-								impact: ((record.maxScore - record.score) / categoryTotal) * category.weight,
-							})
-						);
+						return category.records
+							.filter(record => record.score !== undefined && record.maxScore > 0)
+							.map(
+								record => ({
+									category: category.name,
+									record: record.name,
+									missingPoints: record.maxScore - record.score!,
+									impact: ((record.maxScore - record.score!) / categoryTotal) * category.weight,
+								})
+							);
 					})
 					.sort((a, b) => b.impact - a.impact)
 					.slice(0, 5);
@@ -1627,7 +1646,13 @@ function ScoreInput({
 
 		const encoded = serializeCourse({
 			name: course.name,
-			categories: data.categories
+			categories: data.categories.map(category => ({
+				...category,
+				records: category.records.map(record => ({
+					...record,
+					score: record.score ?? 0,
+				})),
+			})),
 		})
 
 		const url = new URL(window.location.href)
@@ -1746,7 +1771,7 @@ function ScoreInput({
 											id={field.name}
 											aria-invalid={fieldState.invalid}
 										>
-											<ComboboxInput showClear />
+											<ComboboxInput showClear placeholder="e.g. 1.00, 2.25, etc." />
 											<ComboboxContent>
 												<ComboboxEmpty>No grade found.</ComboboxEmpty>
 												<ComboboxList>
@@ -2224,13 +2249,13 @@ function RecordInput({
 		if (amount < 1) return;
 
 		// Generate new records with sequential names based on the last record and amount to add
-		const newRecords: { name: string; score: number; maxScore: number }[] = [];
+		const newRecords: { name: string; maxScore: number }[] = [];
 		for (let i = 0; i < amount; i++) {
 			const name = getNextSequentialRecordName(
 				category.name,
 				[...currentRecords, ...newRecords]
 			);
-			newRecords.push({ name, score: 0, maxScore: 100 });
+			newRecords.push({ name, maxScore: 100 });
 		}
 
 		appendRecord(newRecords, { shouldFocus: false });
@@ -2242,7 +2267,7 @@ function RecordInput({
 		removeRecord(currentRecords.map((_, idx) => idx));
 		appendRecord({
 			name: `${category.name} 1`,
-			score: 0,
+			score: undefined,
 			maxScore: 100,
 		})
 		handleFieldChange();
@@ -2264,10 +2289,9 @@ function RecordInput({
 						{
 							currentRecords.length > 0
 								? `${currentRecords
-									.filter(record => !isNaN(record.score) && !isNaN(record.maxScore) && record.score.toString() !== "" && record.maxScore.toString() !== "")
-									.reduce((sum, record) => sum + record.score, 0)
+									.filter(record => record.score && !isNaN(record.score) && !isNaN(record.maxScore) && record.score.toString() !== "" && record.maxScore.toString() !== "")
+									.reduce((sum, record) => sum + record.score!, 0)
 									.toLocaleString()} / ${currentRecords
-										.filter(record => !isNaN(record.score) && !isNaN(record.maxScore) && record.score.toString() !== "" && record.maxScore.toString() !== "")
 										.reduce((sum, record) => sum + record.maxScore, 0)
 										.toLocaleString()
 								}`
@@ -2343,7 +2367,7 @@ function RecordInput({
 														onChange={(e) => {
 															handleFieldChange();
 															const value =
-																e.target.value === ""
+																e.target.value.trim() === ""
 																	? ""
 																	: (
 																		isNaN(Number(e.target.value))
@@ -2360,6 +2384,7 @@ function RecordInput({
 																]);
 															}
 														}}
+														value={field.value ?? ""}
 													/>
 													{fieldState.error && (<FieldError errors={[fieldState.error]} />)}
 												</Field>
@@ -2397,6 +2422,7 @@ function RecordInput({
 																]);
 															}
 														}}
+														value={field.value ?? ""}
 													/>
 													{fieldState.error && (<FieldError errors={[fieldState.error]} />)}
 												</Field>
