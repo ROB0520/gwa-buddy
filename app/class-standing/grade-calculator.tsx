@@ -2364,6 +2364,7 @@ function RecordInput({
 														placeholder="Score"
 														className="text-right [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
 														type="number"
+														tabIndex={1}
 														onChange={(e) => {
 															handleFieldChange();
 															const value =
