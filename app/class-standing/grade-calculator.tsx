@@ -2255,7 +2255,7 @@ function RecordInput({
 				category.name,
 				[...currentRecords, ...newRecords]
 			);
-			newRecords.push({ name, maxScore: 100 });
+			newRecords.push({ name, maxScore: currentRecords[currentRecords.length - 1].maxScore ?? 100 });
 		}
 
 		appendRecord(newRecords, { shouldFocus: false });
@@ -2461,10 +2461,14 @@ function RecordInput({
 						})
 					}
 				</div>
-				<div className="flex justify-end gap-2 flex-wrap">
-					<AddRecordButton handleAppendRecord={handleAppendRecord} />
-					<ClearAllButton handleClearAll={handleClearRecords} category={category.name} disabled={currentRecords.length <= 1} />
-				</div>
+				{
+					recordFields.length > 15 && (
+						<div className="flex justify-end gap-2 flex-wrap">
+							<AddRecordButton handleAppendRecord={handleAppendRecord} />
+							<ClearAllButton handleClearAll={handleClearRecords} category={category.name} disabled={currentRecords.length <= 1} />
+						</div>
+					)
+				}
 			</CollapsibleContent>
 		</Collapsible>
 	)
