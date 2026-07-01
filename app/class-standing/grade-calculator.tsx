@@ -42,6 +42,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { confirm } from "@/components/confirm-dialog";
 import { useDebounce } from 'use-debounce';
 import { compressSync } from "fflate";
+import { Scroller } from "@/components/ui/scroller"
 
 type CourseDetails = {
 	name: string;
@@ -1692,7 +1693,7 @@ function ScoreInput({
 					))}
 				</section>
 				<Separator className="sm:hidden" />
-				<section className="sticky top-16 xl:top-4 w-full md:w-4xl space-y-4 md:max-h-[calc(100dvh-5rem)] xl:max-h-[calc(100dvh-2rem)] overflow-y-auto drop-shadow-xs">
+				<Scroller className="sticky top-16 xl:top-4 w-full md:w-4xl space-y-4 md:max-h-[calc(100dvh-5rem)] xl:max-h-[calc(100dvh-2rem)] drop-shadow-xs">
 					<Card className="border ring-0">
 						<CardHeader>
 							<CardTitle>
@@ -1896,7 +1897,7 @@ function ScoreInput({
 
 								{
 									goalAnalysis && (
-										<Card>
+										<Card className="border ring-0">
 											<CardHeader>
 												<CardTitle>
 													Goal Grade Analysis
@@ -1946,7 +1947,7 @@ function ScoreInput({
 														These categories have the highest potential to boost your grade and help you reach your target.
 													</p>
 
-													<ul className="list-disc ml-5">
+													<ol className="list-decimal ml-5">
 														{goalAnalysis.categoryInsights
 															.slice(0, 3)
 															.map(category => (
@@ -1954,7 +1955,7 @@ function ScoreInput({
 																	{category.name} (+{category.potentialGain.toFixed(2)}%)
 																</li>
 															))}
-													</ul>
+													</ol>
 												</div>
 
 												<div>
@@ -1997,7 +1998,7 @@ function ScoreInput({
 									)
 								}
 
-								<Card>
+								<Card className="border ring-0">
 									<CardHeader>
 										<CardTitle>
 											Export Results as PDF
@@ -2038,7 +2039,7 @@ function ScoreInput({
 							</>
 						) : null
 					}
-				</section>
+				</Scroller>
 			</form>
 			{
 				(showResults && calculatedGrade !== null && showCalculationDetails) && (
