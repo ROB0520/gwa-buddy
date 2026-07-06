@@ -262,9 +262,12 @@ export default async function HomePage({ searchParams }: { searchParams?: Search
 			<Alert className="max-w-2xl">
 				<AlertCircleIcon />
 				<AlertTitle>Contribute</AlertTitle>
-				<AlertDescription className="md:text-wrap">
+				<AlertDescription className="md:text-wrap space-y-2">
 					<p>
 						Want to add your program to GWA Buddy or have suggestions for improvements? I&apos;d love to hear from you!
+					</p>
+					<p>
+						If there are specific programs, semesters, or courses missing or wrong in the system, you can provide your COR (Certificate of Registration) or Course Prospectus in the email.
 					</p>
 					<p>
 						Email me at{" "}

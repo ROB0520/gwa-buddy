@@ -67,10 +67,12 @@ function deserializeCourse(
 	const [
 		courseName,
 		categories,
+		allowExtraCredit,
 	] = JSON.parse(json) as EncodedCourse;
 
 	return {
 		name: courseName,
+		allowExtraCredit: allowExtraCredit ?? false,
 		categories:
 			categories.map(
 				([
@@ -95,7 +97,6 @@ function deserializeCourse(
 									return {
 										name:
 											`${categoryName} ${index + 1}`,
-										score: 0,
 										maxScore:
 											record[1],
 									};
@@ -113,7 +114,6 @@ function deserializeCourse(
 									return {
 										name:
 											`${prefixes[prefixIndex]} ${number}`,
-										score: 0,
 										maxScore,
 									};
 								}
@@ -126,7 +126,6 @@ function deserializeCourse(
 
 								return {
 									name,
-									score: 0,
 									maxScore,
 								};
 							}
@@ -141,6 +140,7 @@ function deserializeCourse(
 type CourseDetails = {
 	name: string;
 	categories: CourseCategory[];
+	allowExtraCredit?: boolean;
 }
 
 type CourseCategory = {
@@ -151,6 +151,6 @@ type CourseCategory = {
 
 type CourseCategoryRecord = {
 	name: string;
-	score: number;
+	score?: number;
 	maxScore: number;
 }
