@@ -2564,7 +2564,7 @@ function ScoreInput({
                 <div className="flex items-center gap-2 flex-wrap">
                     <h1 className="text-2xl font-bold">{course.name}</h1>
                     {templateId && (
-                        <Badge variant="outline" className="font-mono text-xs">
+                        <Badge variant="outline" className="font-mono text-xs" suppressHydrationWarning>
                             ID: {templateId}
                         </Badge>
                     )}
