@@ -1,4 +1,3 @@
-import Logo from "@/components/logo";
 import { Metadata } from "next";
 import Link from "next/link";
 import { EncodedCourse, GradeCalculator } from "./grade-calculator";
@@ -38,17 +37,9 @@ export default async function ClassStandingPage({
     return (
         <main className="space-y-4 p-4 min-h-dvh">
             <div className="flex flex-col items-center">
-                <Link href="/">
-                    <Logo className="size-16 drop-shadow" />
-                </Link>
-                <Link href="/">
-                    <h1 className="text-4xl font-extrabold tracking-tight text-balance">
-                        GWA Buddy
-                    </h1>
-                </Link>
-                <h2 className="text-2xl font-semibold text-accent">
+                <h1 className="text-3xl font-bold text-accent">
                     Class Standing Calculator
-                </h2>
+                </h1>
                 <p className="text-center text-muted-foreground max-w-2xl leading-7">
                     Calculate your class standing based on grading criteria and
                     activity scores. Track your performance in real time and

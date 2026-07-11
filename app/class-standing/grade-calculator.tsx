@@ -269,7 +269,7 @@ function serializeCourse(course: CourseDetails): string {
 function simpleHash(str: string): string {
     let hash = 5381;
     for (let i = 0; i < str.length; i++) {
-        hash = ((hash << 5) + hash) + str.charCodeAt(i);
+        hash = (hash << 5) + hash + str.charCodeAt(i);
         hash |= 0;
     }
     return Math.abs(hash).toString(36).toUpperCase().padStart(4, "0");
@@ -2597,15 +2597,21 @@ function ScoreInput({
                             errors={errors}
                             handleFieldChange={handleFieldChange}
                             autoCalcuTable={autoCalcuTable}
-                            id={index === 0 ? "tour-collapse-category" : undefined}
+                            id={
+                                index === 0
+                                    ? "tour-collapse-category"
+                                    : undefined
+                            }
                         />
                     ))}
                 </section>
                 <Separator className="sm:hidden" />
-                <Scroller className={cn(
-                    "sticky top-16 xl:top-4 w-full md:w-4xl space-y-4 drop-shadow-xs",
-                    !isTourOpen && "md:max-h-[calc(100dvh-5rem)] xl:max-h-[calc(100dvh-2rem)]"
-                    )}>
+                <Scroller
+                    className={cn(
+                        "sticky top-20.5 w-full md:w-4xl space-y-4 drop-shadow-xs",
+                        !isTourOpen && "md:max-h-[calc(100dvh-6.10rem)]",
+                    )}
+                >
                     <Card id="tour-breakdown" className="border ring-0">
                         <CardHeader>
                             <CardTitle>Category Breakdown</CardTitle>
@@ -3592,7 +3598,10 @@ function RecordInput({
             className="bg-card text-card-foreground border rounded-xl p-4 @container"
             defaultOpen={index === 0}
         >
-            <CollapsibleTrigger id={id} className="flex items-center gap-2 w-full">
+            <CollapsibleTrigger
+                id={id}
+                className="flex items-center gap-2 w-full"
+            >
                 <div className="flex items-center justify-between gap-2 flex-1 overflow-hidden">
                     <div className="flex items-baseline gap-1 overflow-hidden">
                         <h2 className="text-lg font-semibold line-clamp-1 truncate block">

@@ -4,7 +4,7 @@ import "./globals.css";
 import { NuqsAdapter } from "nuqs/adapters/next";
 import { ThemeProvider } from "@/components/theme-provider";
 import { Toaster } from "@/components/ui/sonner";
-import { ThemeSwitcher } from "@/components/theme-switcher";
+import { Header } from "@/components/header";
 import Script from "next/script";
 import { Suspense } from "react";
 
@@ -60,6 +60,7 @@ export default function RootLayout({
         >
           <NuqsAdapter>
             <Suspense>
+              <Header />
               {children}
             </Suspense>
             <Toaster
@@ -67,11 +68,6 @@ export default function RootLayout({
               closeButton
               richColors
             />
-            <div
-              className="fixed top-4 right-4"
-            >
-              <ThemeSwitcher />
-            </div>
           </NuqsAdapter>
         </ThemeProvider>
       </body>
