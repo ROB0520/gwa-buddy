@@ -266,6 +266,15 @@ function serializeCourse(course: CourseDetails): string {
         .replace(/=+$/, "");
 }
 
+function simpleHash(str: string): string {
+    let hash = 5381;
+    for (let i = 0; i < str.length; i++) {
+        hash = ((hash << 5) + hash) + str.charCodeAt(i);
+        hash |= 0;
+    }
+    return Math.abs(hash).toString(36).toUpperCase().padStart(4, "0");
+}
+
 function calculateCategorySummary(category: CourseCategory): CategorySummary {
     const totalScore = category.records
         .filter((record) => record.score !== undefined)
@@ -1132,6 +1141,17 @@ const tourSteps: TourStepType[] = [
         ],
     },
     {
+        id: "collapse-category",
+        target: () => document.getElementById("tour-collapse-category"),
+        title: "Collapsible Category Sections",
+        description:
+            "Each category section can be collapsed or expanded by clicking its header. This helps keep the interface clean and lets you focus on one category at a time, especially when you have many grading criteria.",
+        actions: [
+            { label: "Back", action: "prev" },
+            { label: "Next", action: "next" },
+        ],
+    },
+    {
         id: "breakdown",
         target: () => document.getElementById("tour-breakdown"),
         title: "Category Breakdown Summary",
@@ -1298,6 +1318,25 @@ export function GradeCalculator({ template }: { template?: CourseDetails }) {
         ((values: ScoreInputValues) => void) | null
     >(null);
 
+    const wasTemplateLoaded = !!template;
+    const [templateId, setTemplateId] = useState("");
+    const [originalSerialized, setOriginalSerialized] = useState("");
+
+    if (course && !templateId) {
+        const serialized = serializeCourse(course);
+        setTemplateId(simpleHash(serialized));
+        setOriginalSerialized(serialized);
+    }
+    if (!course && templateId) {
+        setTemplateId("");
+        setOriginalSerialized("");
+    }
+
+    const isModified = useMemo(() => {
+        if (!course || !originalSerialized) return false;
+        return originalSerialized !== serializeCourse(course);
+    }, [course, originalSerialized]);
+
     const handleStartTour = () => {
         const currentCourse = course;
 
@@ -1411,6 +1450,9 @@ export function GradeCalculator({ template }: { template?: CourseDetails }) {
                     setCourse={setCourse}
                     getFormValuesRef={getScoreFormValuesRef}
                     restoreFormRef={restoreScoreFormRef}
+                    isTourOpen={isTourOpen}
+                    templateId={wasTemplateLoaded ? templateId : undefined}
+                    isModified={wasTemplateLoaded ? isModified : undefined}
                     key={
                         course?.name +
                         "-" +
@@ -2140,6 +2182,9 @@ function ScoreInput({
     setCourse,
     getFormValuesRef,
     restoreFormRef,
+    isTourOpen,
+    templateId,
+    isModified,
 }: {
     className?: string;
     course: CourseDetails;
@@ -2148,6 +2193,9 @@ function ScoreInput({
     restoreFormRef?: React.RefObject<
         ((values: ScoreInputValues) => void) | null
     >;
+    isTourOpen?: boolean;
+    templateId?: string;
+    isModified?: boolean;
 }) {
     const [showResults, setShowResults] = useState<boolean>(false);
     const [calculatedGrade, setCalculatedGrade] = useState<number | null>(null);
@@ -2513,7 +2561,19 @@ function ScoreInput({
     return (
         <div className={className}>
             <div className="space-y-1">
-                <h1 className="text-2xl font-bold">{course.name}</h1>
+                <div className="flex items-center gap-2 flex-wrap">
+                    <h1 className="text-2xl font-bold">{course.name}</h1>
+                    {templateId && (
+                        <Badge variant="outline" className="font-mono text-xs">
+                            ID: {templateId}
+                        </Badge>
+                    )}
+                    {isModified && (
+                        <Badge variant="secondary" className="text-xs">
+                            Modified
+                        </Badge>
+                    )}
+                </div>
                 <p className="text-sm text-muted-foreground">
                     Input your scores for each category to calculate your
                     current class standing.
@@ -2537,11 +2597,15 @@ function ScoreInput({
                             errors={errors}
                             handleFieldChange={handleFieldChange}
                             autoCalcuTable={autoCalcuTable}
+                            id={index === 0 ? "tour-collapse-category" : undefined}
                         />
                     ))}
                 </section>
                 <Separator className="sm:hidden" />
-                <Scroller className="sticky top-16 xl:top-4 w-full md:w-4xl space-y-4 md:max-h-[calc(100dvh-5rem)] xl:max-h-[calc(100dvh-2rem)] drop-shadow-xs">
+                <Scroller className={cn(
+                    "sticky top-16 xl:top-4 w-full md:w-4xl space-y-4 drop-shadow-xs",
+                    !isTourOpen && "md:max-h-[calc(100dvh-5rem)] xl:max-h-[calc(100dvh-2rem)]"
+                    )}>
                     <Card id="tour-breakdown" className="border ring-0">
                         <CardHeader>
                             <CardTitle>Category Breakdown</CardTitle>
@@ -3467,6 +3531,7 @@ function RecordInput({
     errors,
     handleFieldChange,
     autoCalcuTable,
+    id,
 }: {
     category: ScoreInputValues["categories"][number];
     index: number;
@@ -3474,6 +3539,7 @@ function RecordInput({
     errors: UseFormStateReturn<ScoreInputValues>["errors"];
     handleFieldChange: () => void;
     autoCalcuTable: boolean;
+    id?: string;
 }) {
     const currentRecords = useWatch({
         control: scoreInputForm.control,
@@ -3524,9 +3590,9 @@ function RecordInput({
     return (
         <Collapsible
             className="bg-card text-card-foreground border rounded-xl p-4 @container"
-            defaultOpen
+            defaultOpen={index === 0}
         >
-            <CollapsibleTrigger className="flex items-center gap-2 w-full">
+            <CollapsibleTrigger id={id} className="flex items-center gap-2 w-full">
                 <div className="flex items-center justify-between gap-2 flex-1 overflow-hidden">
                     <div className="flex items-baseline gap-1 overflow-hidden">
                         <h2 className="text-lg font-semibold line-clamp-1 truncate block">
