@@ -67,6 +67,28 @@ export default async function ClassStandingPage({
                 </AlertDescription>
             </Alert>
 
+            <Alert className="max-w-2xl mx-auto">
+                <AlertCircleIcon />
+                <AlertTitle>Disclaimer</AlertTitle>
+                <AlertDescription className="md:text-wrap space-y-2">
+                    <p>
+                        This calculator is intended for educational and
+                        estimation purposes only. While every effort has been
+                        made to ensure the accuracy of its calculations, the
+                        results may differ from your official grade. Actual
+                        grades may be affected by instructor-specific grading
+                        policies, incentives, additional requirements, grade
+                        adjustments, and other academic considerations not
+                        accounted for by this calculator. The results should
+                        only be used as a guide and should not be considered an
+                        official grade or a substitute for consultation with
+                        your instructor. The developer is not responsible for
+                        any discrepancies or errors in the calculated results.
+                        Use at your own discretion.
+                    </p>
+                </AlertDescription>
+            </Alert>
+
             <GradeCalculator template={course} />
 
             <footer className="italic text-xs text-center text-muted-foreground max-w-lg md:max-w-3xl mx-auto">
