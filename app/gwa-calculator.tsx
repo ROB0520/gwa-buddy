@@ -126,7 +126,7 @@ import {
     DialogFooter,
     DialogHeader,
     DialogTitle,
-} from "@/components/ui/dialog";
+} from "@/components/ui/dialog-shadcn";
 
 type Course = {
     code?: string;
@@ -1638,7 +1638,7 @@ export function GWACalculator({
                     </CollapsibleContent>
                 </Collapsible>
             ) : null}
-            <Dialog open={isShareDialogOpen} onOpenChange={(details) => setIsShareDialogOpen(details.open)}>
+            <Dialog open={isShareDialogOpen} onOpenChange={(open) => setIsShareDialogOpen(open)}>
                 <DialogContent>
                     <form onSubmit={shareForm.handleSubmit(async (values) => {
                         if (!selectedProgram || !selectedCurriculum) return;
@@ -1697,7 +1697,7 @@ export function GWACalculator({
                         control={shareForm.control}
                         name="templateId"
                         render={({ field, fieldState }) => (
-                            <Field className="px-(--space) pb-(--space)" data-invalid={fieldState.invalid}>
+                            <Field className="my-4" data-invalid={fieldState.invalid}>
                                 <FieldLabel htmlFor={field.name}>Template ID</FieldLabel>
                                 <Input
                                     {...field}

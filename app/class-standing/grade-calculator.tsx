@@ -103,7 +103,7 @@ import {
     DialogFooter,
     DialogHeader,
     DialogTitle,
-} from "@/components/ui/dialog";
+} from "@/components/ui/dialog-shadcn";
 import Link from "next/link";
 import { toast } from "sonner";
 import {
@@ -3526,7 +3526,7 @@ function ScoreInput({
                         </CardContent>
                     </Card>
                 )}
-            <Dialog open={isShareDialogOpen} onOpenChange={(details) => setIsShareDialogOpen(details.open)}>
+            <Dialog open={isShareDialogOpen} onOpenChange={(open) => setIsShareDialogOpen(open)}>
                 <DialogContent>
                     <form onSubmit={shareForm.handleSubmit(handleConfirmShare)}>
                     <DialogHeader>
@@ -3539,7 +3539,7 @@ function ScoreInput({
                         control={shareForm.control}
                         name="templateId"
                         render={({ field, fieldState }) => (
-                            <Field className="px-(--space) pb-(--space)" data-invalid={fieldState.invalid}>
+                            <Field className="my-4" data-invalid={fieldState.invalid}>
                                 <FieldLabel htmlFor={field.name}>Template ID</FieldLabel>
                                 <Input
                                     {...field}
