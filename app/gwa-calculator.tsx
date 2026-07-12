@@ -1220,8 +1220,8 @@ export function GWACalculator({
                 </div>
                 {templateId && (
                     <div className="flex items-center gap-2 flex-wrap max-w-2xl">
-                        <Badge variant="outline" className="font-mono text-xs" suppressHydrationWarning>
-                            ID: {templateId}
+                        <Badge variant="outline" className="font-mono text-xs whitespace-normal" suppressHydrationWarning>
+                            Template ID: {templateId}
                         </Badge>
                         {isModified && (
                             <Badge variant="secondary" className="text-xs">
