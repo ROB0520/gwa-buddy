@@ -96,6 +96,14 @@ import {
     AlertDialogHeader,
     AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import {
+    Dialog,
+    DialogContent,
+    DialogDescription,
+    DialogFooter,
+    DialogHeader,
+    DialogTitle,
+} from "@/components/ui/dialog";
 import Link from "next/link";
 import { toast } from "sonner";
 import {
@@ -251,7 +259,7 @@ function serializeCourse(course: CourseDetails): string {
 
             return [category.name, category.weight, prefixes, records];
         }),
-        course.allowExtraCredit,
+        course.allowExtraCredit ?? false,
     ];
 
     const json = JSON.stringify(data);
@@ -1287,7 +1295,11 @@ type ScoreInputValues = {
     goalGrade?: GoalGradeType;
 };
 
-export function GradeCalculator({ template }: { template?: CourseDetails }) {
+export function GradeCalculator({ template, tFromUrl, tidFromUrl }: {
+    template?: CourseDetails;
+    tFromUrl?: string;
+    tidFromUrl?: string;
+}) {
     const [course, setCourse] = useState<CourseDetails | null>(
         template ?? null,
     );
@@ -1319,18 +1331,18 @@ export function GradeCalculator({ template }: { template?: CourseDetails }) {
     >(null);
 
     const wasTemplateLoaded = !!template;
-    const [templateId, setTemplateId] = useState("");
-    const [originalSerialized, setOriginalSerialized] = useState("");
 
-    if (course && !templateId) {
-        const serialized = serializeCourse(course);
-        setTemplateId(simpleHash(serialized));
-        setOriginalSerialized(serialized);
-    }
-    if (!course && templateId) {
-        setTemplateId("");
-        setOriginalSerialized("");
-    }
+    const [templateId, setTemplateId] = useState(() => {
+        if (tidFromUrl) return tidFromUrl;
+        if (tFromUrl) return simpleHash(tFromUrl);
+        if (course) return simpleHash(serializeCourse(course));
+        return "";
+    });
+
+    const [originalSerialized, setOriginalSerialized] = useState(() => {
+        if (course) return serializeCourse(course);
+        return "";
+    });
 
     const isModified = useMemo(() => {
         if (!course || !originalSerialized) return false;
@@ -1381,6 +1393,9 @@ export function GradeCalculator({ template }: { template?: CourseDetails }) {
         }
 
         setCourse(DEMO_COURSE);
+        const demoSerialized = serializeCourse(DEMO_COURSE);
+        setTemplateId(simpleHash(demoSerialized));
+        setOriginalSerialized(demoSerialized);
         setIsTourOpen(true);
     };
 
@@ -1389,11 +1404,22 @@ export function GradeCalculator({ template }: { template?: CourseDetails }) {
         if (savedState) {
             if (savedState.course === null) {
                 setCourse(null);
+                setTemplateId("");
+                setOriginalSerialized("");
                 setTimeout(() => {
                     restoreSetupFormRef.current?.(savedState.setupFormValues);
                 }, 50);
             } else {
-                setCourse(savedState.setupFormValues.course);
+                const restoredCourse = savedState.setupFormValues.course;
+                setCourse(restoredCourse);
+                if (restoredCourse) {
+                    const serialized = serializeCourse(restoredCourse);
+                    setTemplateId(tidFromUrl || simpleHash(serialized));
+                    setOriginalSerialized(serialized);
+                } else {
+                    setTemplateId("");
+                    setOriginalSerialized("");
+                }
             }
         }
         setSavedState(null);
@@ -1437,11 +1463,23 @@ export function GradeCalculator({ template }: { template?: CourseDetails }) {
             </div>
 
             <CourseDetailsForm
+                key={
+                    course
+                        ? "setup-" +
+                          course.name +
+                          "-" +
+                          course.categories
+                              .map((cc) => cc.name + "_" + cc.weight)
+                              .join(",")
+                        : "setup-empty"
+                }
                 className="max-w-3xl mx-auto"
                 setCourse={setCourse}
                 course={course}
                 getFormValuesRef={getSetupFormValuesRef}
                 restoreFormRef={restoreSetupFormRef}
+                setTemplateId={setTemplateId}
+                setOriginalSerialized={setOriginalSerialized}
             />
             {course && (
                 <ScoreInput
@@ -1452,6 +1490,7 @@ export function GradeCalculator({ template }: { template?: CourseDetails }) {
                     restoreFormRef={restoreScoreFormRef}
                     isTourOpen={isTourOpen}
                     templateId={wasTemplateLoaded ? templateId : undefined}
+                    setTemplateId={setTemplateId}
                     isModified={wasTemplateLoaded ? isModified : undefined}
                     key={
                         course?.name +
@@ -1554,6 +1593,8 @@ function CourseDetailsForm({
     setCourse,
     getFormValuesRef,
     restoreFormRef,
+    setTemplateId,
+    setOriginalSerialized,
 }: {
     className?: string;
     course: CourseDetails | null;
@@ -1562,13 +1603,15 @@ function CourseDetailsForm({
     restoreFormRef?: React.RefObject<
         ((values: CourseSetupValues) => void) | null
     >;
+    setTemplateId: (id: string) => void;
+    setOriginalSerialized: (serialized: string) => void;
 }) {
     const [openWarning, setOpenWarning] = useState<boolean>(false);
 
     const courseSetupForm = useForm<CourseSetupValues>({
         resolver: zodResolver(courseSetupSchema),
         reValidateMode: "onSubmit",
-        values: course
+        defaultValues: course
             ? {
                   name: course.name,
                   allowExtraCredit: course.allowExtraCredit ?? false,
@@ -1577,17 +1620,16 @@ function CourseDetailsForm({
                       weight: category.weight,
                   })),
               }
-            : undefined,
-        defaultValues: {
-            name: "",
-            allowExtraCredit: false,
-            categories: [
-                {
-                    name: "",
-                    weight: 0,
-                },
-            ],
-        },
+            : {
+                  name: "",
+                  allowExtraCredit: false,
+                  categories: [
+                      {
+                          name: "",
+                          weight: 0,
+                      },
+                  ],
+              },
     });
 
     useEffect(() => {
@@ -1633,7 +1675,7 @@ function CourseDetailsForm({
     const handleCourseDetailsChange = () => {
         const data = courseSetupForm.getValues();
 
-        setCourse({
+        const newCourse: CourseDetails = {
             name: data.name,
             allowExtraCredit: data.allowExtraCredit,
             categories: data.categories.map((category) => ({
@@ -1647,7 +1689,11 @@ function CourseDetailsForm({
                     },
                 ],
             })),
-        });
+        };
+        const serialized = serializeCourse(newCourse);
+        setCourse(newCourse);
+        setTemplateId(simpleHash(serialized));
+        setOriginalSerialized(serialized);
     };
 
     const onSubmit = () => {
@@ -2184,6 +2230,7 @@ function ScoreInput({
     restoreFormRef,
     isTourOpen,
     templateId,
+    setTemplateId,
     isModified,
 }: {
     className?: string;
@@ -2195,6 +2242,7 @@ function ScoreInput({
     >;
     isTourOpen?: boolean;
     templateId?: string;
+    setTemplateId: Dispatch<SetStateAction<string>>;
     isModified?: boolean;
 }) {
     const [showResults, setShowResults] = useState<boolean>(false);
@@ -2207,6 +2255,20 @@ function ScoreInput({
     const [lastCalculatedSnapshot, setLastCalculatedSnapshot] =
         useState<CalculationSnapshot | null>(null);
     const [autoCalcuTable, setAutoCalcuTable] = useState<boolean>(false);
+    const [isShareDialogOpen, setIsShareDialogOpen] = useState(false);
+
+    const shareSchema = useMemo(() => z.object({
+        templateId: z
+            .string()
+            .trim()
+            .min(1, "Template ID is required")
+            .max(15, "Template ID must be 15 characters or less"),
+    }), []);
+
+    const shareForm = useForm<z.infer<typeof shareSchema>>({
+        resolver: zodResolver(shareSchema),
+        defaultValues: { templateId: "" },
+    });
     const [goalAnalysis, setGoalAnalysis] = useState<{
         targetPercentage: number;
         gap: number;
@@ -2531,11 +2593,17 @@ function ScoreInput({
     };
 
     const handleShare = async () => {
+        shareForm.reset({ templateId: "" });
+        setIsShareDialogOpen(true);
+    };
+
+    const handleConfirmShare = async () => {
+        const { templateId } = shareForm.getValues();
         const data = scoreInputForm.getValues();
 
         const encoded = serializeCourse({
             name: course.name,
-            allowExtraCredit: course.allowExtraCredit,
+            allowExtraCredit: course.allowExtraCredit ?? false,
             categories: data.categories.map((category) => ({
                 ...category,
                 records: category.records.map((record) => ({
@@ -2545,13 +2613,18 @@ function ScoreInput({
             })),
         });
 
-        console.log(course.allowExtraCredit);
-
         const url = new URL(window.location.href);
 
         url.searchParams.set("t", encoded);
 
+        if (templateId.trim()) {
+            url.searchParams.set("tid", templateId.trim());
+            setTemplateId(templateId.trim());
+        }
+
         await navigator.clipboard.writeText(url.toString());
+
+        setIsShareDialogOpen(false);
 
         toast.success("Share link copied to clipboard.", {
             icon: <Share2Icon className="size-4" />,
@@ -3453,6 +3526,50 @@ function ScoreInput({
                         </CardContent>
                     </Card>
                 )}
+            <Dialog open={isShareDialogOpen} onOpenChange={(details) => setIsShareDialogOpen(details.open)}>
+                <DialogContent>
+                    <form onSubmit={shareForm.handleSubmit(handleConfirmShare)}>
+                    <DialogHeader>
+                        <DialogTitle>Share Template</DialogTitle>
+                        <DialogDescription>
+                            Optionally define an ID for this template (max 15 characters).
+                        </DialogDescription>
+                    </DialogHeader>
+                    <Controller
+                        control={shareForm.control}
+                        name="templateId"
+                        render={({ field, fieldState }) => (
+                            <Field className="px-(--space) pb-(--space)" data-invalid={fieldState.invalid}>
+                                <FieldLabel htmlFor={field.name}>Template ID</FieldLabel>
+                                <Input
+                                    {...field}
+                                    id={field.name}
+                                    placeholder="e.g. MyTemplate"
+                                    maxLength={15}
+                                    aria-invalid={fieldState.invalid}
+                                />
+                                {fieldState.error && (
+                                    <FieldError errors={[fieldState.error]} />
+                                )}
+                            </Field>
+                        )}
+                    />
+                    <DialogFooter>
+                        <Button
+                            variant="outline"
+                            type="button"
+                            onClick={() => setIsShareDialogOpen(false)}
+                        >
+                            Cancel
+                        </Button>
+                        <Button type="submit">
+                            <Share2Icon />
+                            Copy Link
+                        </Button>
+                    </DialogFooter>
+                    </form>
+                </DialogContent>
+            </Dialog>
         </div>
     );
 }

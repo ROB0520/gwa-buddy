@@ -50,6 +50,7 @@ import {
     useState,
     useEffect,
     useRef,
+    useMemo,
     Dispatch,
     SetStateAction,
     Fragment,
@@ -109,6 +110,23 @@ import {
     ComboboxList,
 } from "@/components/ui/combobox";
 import { compressSync, decompressSync } from "fflate";
+import { z } from "zod";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { Controller } from "react-hook-form";
+import {
+    Field,
+    FieldError,
+    FieldLabel,
+} from "@/components/ui/field";
+import {
+    Dialog,
+    DialogContent,
+    DialogDescription,
+    DialogFooter,
+    DialogHeader,
+    DialogTitle,
+} from "@/components/ui/dialog";
 
 type Course = {
     code?: string;
@@ -215,6 +233,15 @@ function snapshotForCourses(courses?: Array<{ code?: string }>) {
         .map((course) => course.code)
         .filter((code): code is string => typeof code === "string")
         .sort();
+}
+
+function simpleHash(str: string): string {
+    let hash = 5381;
+    for (let i = 0; i < str.length; i++) {
+        hash = (hash << 5) + hash + str.charCodeAt(i);
+        hash |= 0;
+    }
+    return Math.abs(hash).toString(36).toUpperCase().padStart(4, "0");
 }
 
 function getFlattenedCurriculumCourses(curriculumData: Curriculum) {
@@ -418,12 +445,16 @@ type GWACalculatorProps = {
     initialCurriculumData?: Curriculum | null;
     initialIncludedCourses?: Course[];
     initialLastIncludedSnapshot?: string[] | null;
+    ssFromUrl?: string;
+    tidFromUrl?: string;
 };
 
 export function GWACalculator({
     initialCurriculumData = null,
     initialIncludedCourses = [],
     initialLastIncludedSnapshot = null,
+    ssFromUrl,
+    tidFromUrl,
 }: GWACalculatorProps) {
     const [
         {
@@ -458,6 +489,60 @@ export function GWACalculator({
         number | null
     >(null);
     const [finalGwa, setFinalGwa] = useState<number | null>(null);
+    const [isShareDialogOpen, setIsShareDialogOpen] = useState(false);
+
+    const shareSchema = useMemo(() => z.object({
+        templateId: z
+            .string()
+            .trim()
+            .min(1, "Template ID is required")
+            .max(15, "Template ID must be 15 characters or less"),
+    }), []);
+
+    const shareForm = useForm<z.infer<typeof shareSchema>>({
+        resolver: zodResolver(shareSchema),
+        defaultValues: { templateId: "" },
+    });
+
+    const serializedCourses = useMemo(() => {
+        if (includedCourses.length === 0) return "";
+        const sorted = [...includedCourses]
+            .filter((c) => c.code)
+            .sort((a, b) => (a.code ?? "").localeCompare(b.code ?? ""));
+        return JSON.stringify(sorted.map((c) => ({ code: c.code, grade: c.grade })));
+    }, [includedCourses]);
+
+    const [templateId, setTemplateId] = useState(() => {
+        if (tidFromUrl) return tidFromUrl;
+        if (ssFromUrl) return simpleHash(ssFromUrl);
+        if (serializedCourses) return simpleHash(serializedCourses);
+        return "";
+    });
+
+    const [originalSerialized, setOriginalSerialized] = useState(() => {
+        return serializedCourses || "";
+    });
+
+    const isModified = useMemo(() => {
+        if (!serializedCourses || !originalSerialized) return false;
+        return originalSerialized !== serializedCourses;
+    }, [serializedCourses, originalSerialized]);
+
+    const prevSerializedCourses = useRef(serializedCourses);
+    if (serializedCourses !== prevSerializedCourses.current) {
+        prevSerializedCourses.current = serializedCourses;
+        if (serializedCourses) {
+            if (!ssFromUrl && !tidFromUrl) {
+                setTemplateId(simpleHash(serializedCourses));
+            }
+            if (!originalSerialized) {
+                setOriginalSerialized(serializedCourses);
+            }
+        } else {
+            setTemplateId("");
+            setOriginalSerialized("");
+        }
+    }
 
     type SavedTourState = {
         includedCourses: Course[];
@@ -1133,6 +1218,18 @@ export function GWACalculator({
                         </Button>
                     </div>
                 </div>
+                {templateId && (
+                    <div className="flex items-center gap-2 flex-wrap max-w-2xl">
+                        <Badge variant="outline" className="font-mono text-xs" suppressHydrationWarning>
+                            ID: {templateId}
+                        </Badge>
+                        {isModified && (
+                            <Badge variant="secondary" className="text-xs">
+                                Modified
+                            </Badge>
+                        )}
+                    </div>
+                )}
                 {includedCourses.length > 0 ? (
                     <div
                         id="tour-courses-container"
@@ -1218,45 +1315,9 @@ export function GWACalculator({
                             includedCourses.length == 0
                         }
 						suppressHydrationWarning
-                        onClick={async () => {
-                            if (!selectedProgram || !selectedCurriculum) return;
-                            if (!curriculumData) return;
-                            const allCourses =
-                                getFlattenedCurriculumCourses(curriculumData);
-                            const hasPreset =
-                                selectedYear !== null ||
-                                selectedSemester !== null ||
-                                selectedMajor !== null ||
-                                filterCore;
-                            const payload: SharedLinkPayload =
-                                includedCourses.flatMap((course) => {
-                                    if (!course.code) return [];
-                                    const index = allCourses.findIndex(
-                                        (item) =>
-                                            item.code === course.code &&
-                                            item.name === course.name,
-                                    );
-                                    return index >= 0 ? [index] : [];
-                                });
-                            const sharePath = hasPreset
-                                ? serializeSharePayload(window.location.href, {
-                                      ss: null,
-                                  })
-                                : serializeSharePayload(window.location.href, {
-                                      ss: payload,
-                                  });
-                            const shareUrl = `${sharePath}`;
-                            try {
-                                await navigator.clipboard.writeText(shareUrl);
-                                toast.success(
-                                    "Share link copied to clipboard.",
-                                    {
-                                        icon: <Share2Icon className="size-4" />,
-                                    },
-                                );
-                            } catch {
-                                toast.error("Could not copy the share link.");
-                            }
+                        onClick={() => {
+                            shareForm.reset({ templateId: "" });
+                            setIsShareDialogOpen(true);
                         }}
                     >
                         <Share2Icon />
@@ -1577,6 +1638,96 @@ export function GWACalculator({
                     </CollapsibleContent>
                 </Collapsible>
             ) : null}
+            <Dialog open={isShareDialogOpen} onOpenChange={(details) => setIsShareDialogOpen(details.open)}>
+                <DialogContent>
+                    <form onSubmit={shareForm.handleSubmit(async (values) => {
+                        if (!selectedProgram || !selectedCurriculum) return;
+                        if (!curriculumData) return;
+                        const allCourses =
+                            getFlattenedCurriculumCourses(curriculumData);
+                        const hasPreset =
+                            selectedYear !== null ||
+                            selectedSemester !== null ||
+                            selectedMajor !== null ||
+                            filterCore;
+                        const payload: SharedLinkPayload =
+                            includedCourses.flatMap((course) => {
+                                if (!course.code) return [];
+                                const index = allCourses.findIndex(
+                                    (item) =>
+                                        item.code === course.code &&
+                                        item.name === course.name,
+                                );
+                                return index >= 0 ? [index] : [];
+                            });
+                        const sharePath = hasPreset
+                            ? serializeSharePayload(window.location.href, {
+                                  ss: null,
+                              })
+                            : serializeSharePayload(window.location.href, {
+                                  ss: payload,
+                              });
+                        let shareUrl = `${sharePath}`;
+                        if (values.templateId.trim()) {
+                            const url = new URL(shareUrl);
+                            url.searchParams.set("tid", values.templateId.trim());
+                            shareUrl = url.toString();
+                            setTemplateId(values.templateId.trim());
+                        }
+                        try {
+                            await navigator.clipboard.writeText(shareUrl);
+                            toast.success(
+                                "Share link copied to clipboard.",
+                                {
+                                    icon: <Share2Icon className="size-4" />,
+                                },
+                            );
+                        } catch {
+                            toast.error("Could not copy the share link.");
+                        }
+                        setIsShareDialogOpen(false);
+                    })}>
+                    <DialogHeader>
+                        <DialogTitle>Share Template</DialogTitle>
+                        <DialogDescription>
+                            Optionally define an ID for this template (max 15 characters).
+                        </DialogDescription>
+                    </DialogHeader>
+                    <Controller
+                        control={shareForm.control}
+                        name="templateId"
+                        render={({ field, fieldState }) => (
+                            <Field className="px-(--space) pb-(--space)" data-invalid={fieldState.invalid}>
+                                <FieldLabel htmlFor={field.name}>Template ID</FieldLabel>
+                                <Input
+                                    {...field}
+                                    id={field.name}
+                                    placeholder="e.g. MyTemplate"
+                                    maxLength={15}
+                                    aria-invalid={fieldState.invalid}
+                                />
+                                {fieldState.error && (
+                                    <FieldError errors={[fieldState.error]} />
+                                )}
+                            </Field>
+                        )}
+                    />
+                    <DialogFooter>
+                        <Button
+                            variant="outline"
+                            type="button"
+                            onClick={() => setIsShareDialogOpen(false)}
+                        >
+                            Cancel
+                        </Button>
+                        <Button type="submit">
+                            <Share2Icon />
+                            Copy Link
+                        </Button>
+                    </DialogFooter>
+                    </form>
+                </DialogContent>
+            </Dialog>
         </>
     );
 }
