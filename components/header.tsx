@@ -24,8 +24,6 @@ const navLinks = [
 export function Header() {
     const pathname = usePathname();
 
-    if (pathname === "/") return null;
-
     return (
         <header className="sticky top-0 z-50 w-full shadow-sm bg-background/95 backdrop-blur supports-backdrop-filter:bg-background/60">
             <div className="flex h-16 items-center px-4 max-w-7xl mx-auto">

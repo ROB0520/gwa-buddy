@@ -21,7 +21,7 @@ export function AcadsInfo() {
 				offset={isMobile ? 120 : 80}
 				orientation={isMobile ? 'vertical' : 'horizontal'}
 			>
-				<ScrollSpyNav className="sticky top-15 md:top-20 h-fit z-50 bg-card text-card-foreground p-2 rounded-lg border shadow *:data-[state=active]:text-accent-foreground overflow-x-auto *:max-md:whitespace-nowrap md:max-w-48 *:[&_svg]:size-4 *:[&_svg]:shrink-0 *:flex *:items-center *:justify-start *:gap-2">
+				<ScrollSpyNav className="sticky top-20 h-fit z-50 bg-card text-card-foreground p-2 rounded-lg border shadow *:data-[state=active]:text-accent-foreground overflow-x-auto *:max-md:whitespace-nowrap md:max-w-48 *:[&_svg]:size-4 *:[&_svg]:shrink-0 *:flex *:items-center *:justify-start *:gap-2">
 					<ScrollSpyLink value="system-of-grading"><CalculatorIcon /> System of Grading</ScrollSpyLink>
 					<ScrollSpyLink value="latin-honors"><GraduationCapIcon /> Latin Honors</ScrollSpyLink>
 					<ScrollSpyLink value="academic-distinction"><ScrollTextIcon /> Academic Distinction Award</ScrollSpyLink>
@@ -39,7 +39,7 @@ export function AcadsInfo() {
 						</AlertDescription>
 					</Alert>
 
-					<ScrollSpySection value="system-of-grading" className="scroll-mt-15 md:scroll-mt-20">
+					<ScrollSpySection value="system-of-grading" className="scroll-mt-20">
 						<h3 className="text-2xl font-semibold tracking-tight">
 							System of Grading
 						</h3>
@@ -119,7 +119,7 @@ export function AcadsInfo() {
 						</p>
 					</ScrollSpySection>
 
-					<ScrollSpySection value="latin-honors" className="scroll-mt-15 md:scroll-mt-20">
+					<ScrollSpySection value="latin-honors" className="scroll-mt-20">
 						<h3 className="text-2xl font-semibold tracking-tight">
 							Latin Honors
 						</h3>
@@ -168,7 +168,7 @@ export function AcadsInfo() {
 						</ul>
 					</ScrollSpySection>
 
-					<ScrollSpySection value="academic-distinction" className="scroll-mt-15 md:scroll-mt-20">
+					<ScrollSpySection value="academic-distinction" className="scroll-mt-20">
 						<h3 className="text-2xl font-semibold tracking-tight">
 							Academic Distinction Award
 						</h3>
@@ -182,7 +182,7 @@ export function AcadsInfo() {
 						</ul>
 					</ScrollSpySection>
 
-					<ScrollSpySection value="awards-comparison" className="scroll-mt-15 md:scroll-mt-20">
+					<ScrollSpySection value="awards-comparison" className="scroll-mt-20">
 						<h3 className="text-2xl font-semibold tracking-tight">
 							Awards Comparison
 						</h3>
@@ -250,7 +250,7 @@ export function AcadsInfo() {
 						</Table>
 					</ScrollSpySection>
 
-					<ScrollSpySection value="retention" className="scroll-mt-15 md:scroll-mt-20">
+					<ScrollSpySection value="retention" className="scroll-mt-20">
 						<h3 className="text-2xl font-semibold tracking-tight">
 							Retention
 						</h3>
@@ -265,7 +265,7 @@ export function AcadsInfo() {
 						</p>
 					</ScrollSpySection>
 
-					<ScrollSpySection value="changing-of-grades" className="scroll-mt-15 md:scroll-mt-20">
+					<ScrollSpySection value="changing-of-grades" className="scroll-mt-20">
 						<h3 className="text-2xl font-semibold tracking-tight">
 							Changing of Grades
 						</h3>

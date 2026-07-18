@@ -1,6 +1,6 @@
 import Logo from "@/components/logo";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { AlertCircleIcon, GlobeIcon } from "lucide-react";
+import { AlertCircleIcon, GlobeIcon, MegaphoneIcon } from "lucide-react";
 import Link from "next/link";
 
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
@@ -250,6 +250,8 @@ export default async function HomePage({ searchParams }: { searchParams?: Search
 	const initialCurriculumData = await resolveInitialCurriculum(resolvedSearchParams);
 	const initialIncludedCourses = deriveInitialIncludedCourses(resolvedSearchParams, initialCurriculumData);
 	const initialSnapshot = snapshotForCourses(initialIncludedCourses);
+	const ssFromUrl = resolvedSearchParams.ss as string | undefined;
+	const tidFromUrl = resolvedSearchParams.tid as string | undefined;
 	return (
 		<main className="p-4 flex flex-col items-center gap-4 min-h-dvh">
 			<div className="flex flex-col items-center">
@@ -281,10 +283,25 @@ export default async function HomePage({ searchParams }: { searchParams?: Search
 				</AlertDescription>
 			</Alert>
 
+			<Alert className="max-w-2xl">
+				<MegaphoneIcon />
+				<AlertTitle>New Feature: Class Standing Calculator</AlertTitle>
+				<AlertDescription className="md:text-wrap space-y-2">
+					<p>
+						You can now calculate your class standing based on grading criteria and activity scores. Track your performance in real time and instantly estimate your subject grade.
+					</p>
+					<p>
+						Check it out in the <Link href="/class-standing" className="text-primary hover:text-primary/80!">Class Standing Calculator</Link> page.
+					</p>
+				</AlertDescription>
+			</Alert>
+
 			<GWACalculator
 				initialCurriculumData={initialCurriculumData}
 				initialIncludedCourses={initialIncludedCourses}
 				initialLastIncludedSnapshot={initialSnapshot}
+				ssFromUrl={ssFromUrl}
+				tidFromUrl={tidFromUrl}
 			/>
 
 			<Card className="max-w-2xl">
