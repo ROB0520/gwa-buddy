@@ -33,7 +33,6 @@ export default async function ClassStandingPage({
 }) {
     const template = (await searchParams).t as string | undefined;
     const course = template ? deserializeCourse(template) : undefined;
-    const tidFromUrl = (await searchParams).tid as string | undefined;
 
     return (
         <main className="space-y-4 p-4 min-h-dvh">
@@ -90,7 +89,7 @@ export default async function ClassStandingPage({
                 </AlertDescription>
             </Alert>
 
-            <GradeCalculator template={course} tFromUrl={template} tidFromUrl={tidFromUrl} />
+            <GradeCalculator template={course} tFromUrl={template} />
 
             <footer className="italic text-xs text-center text-muted-foreground max-w-lg md:max-w-3xl mx-auto">
                 Developed by <span className="font-mono">alecz.r</span>.

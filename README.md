@@ -1,158 +1,184 @@
 # GWA Buddy
 
-A sleek, modern web application that helps Nueva Ecija University of Science and Technology (NEUST) students easily calculate their General Weighted Average (GWA) based on their course grades and units.
+A modern web application that helps Nueva Ecija University of Science and Technology (NEUST) students calculate their General Weighted Average (GWA) and class standing based on course grades and scoring criteria.
 
-> **Note**: This is an unofficial, student-run platform created to help fellow NEUST students calculate their GWA more efficiently. It is not affiliated with or endorsed by Nueva Ecija University of Science and Technology.
+> **Note**: This is an unofficial, student-run platform created to help fellow NEUST students. It is not affiliated with or endorsed by Nueva Ecija University of Science and Technology.
 
-## 🎓 Overview
+## Features
 
-GWA Buddy is an unofficial web-based calculator platform designed specifically for NEUST students. It streamlines the process of calculating General Weighted Average by providing an intuitive interface with preset course selections for different academic programs, making GWA calculation quick, accurate, and hassle-free.
+### GWA Calculator
+- **Program & Curriculum Selection** — Choose from a comprehensive database of NEUST programs with dynamically loaded curriculum data
+- **Smart Preset System** — Quick-select entire semesters, years, major-specific courses, or core-only courses with a single click
+- **Dynamic Course Management** — Add, remove, and modify courses through curriculum picker or custom rows
+- **Real-time GWA Computation** — Calculate your GWA using the formula Σ(Units × Grade) / Σ(Units) with detailed step-by-step breakdown
+- **Grade Input Validation** — Standard 1.00–5.00 grade scale with proper validation
+- **Course Filtering** — Filter by major/specialization, core courses, year level, and semester
 
-## ✨ Features
+### Class Standing Calculator
+- **Custom Grading Criteria** — Define categories with custom percentage weights that must total 100%
+- **Activity Score Tracking** — Input scores for individual assignments, quizzes, exams, and other graded activities
+- **Real-time Computation** — Instantly calculates overall percentage and transmutated grade
+- **Transmutation Scale** — Maps percentage scores to the standard 1.00–5.00 grade system
+- **Goal Grade Analysis** — Set a target grade and get insights on gaps, improvement opportunities, and specific activities with the most lost points
+- **Extra Credit Support** — Toggle to allow scores exceeding maximum points for bonus/extra credit
+- **PDF Export** — Generate a detailed PDF report with course info, formula breakdown, category summaries, and grade breakdown
+- **Collapsible Categories** — Organize grading sections for cleaner navigation
 
-### Core Functionality
-- **GWA Calculator**: Calculate your General Weighted Average using the standard formula: Σ(Units × Grade) / Σ(Units)
-- **Program-Specific Course Selection**: Choose from a comprehensive database of NEUST programs and their respective courses
-- **Smart Preset System**: Quick-select entire semesters, years, or major-specific courses with a single click
-- **Dynamic Course Management**: Add, remove, and modify courses with real-time GWA updates
-- **Grade Input Validation**: Supports standard grade scales (1.00-5.00) with proper validation
+### Shared Features
+- **URL Template Sharing** — Share course configurations and grades via compressed, encoded URL parameters (compressed with fflate, encoded with nuqs)
+- **Template ID System** — Optional custom template IDs for identifying shared templates, embedded directly in the share payload
+- **Interactive Tour System** — Guided walkthrough for both calculators to help new users get started
+- **Responsive Design** — Optimized for desktop, tablet, and mobile with adaptive layouts using drawers for mobile and popovers for desktop
+- **Dark/Light Theme** — System preference detection with manual toggle, persisted in localStorage
+- **Confirmation Dialogs** — Prevent accidental data loss with confirm-before-action dialogs (using react-confirm)
+- **Toast Notifications** — Feedback for copy, export, and error actions (using sonner)
+- **Accessible Interface** — Keyboard navigation, screen reader support, and semantic HTML
+- **Academic Information Section** — Reference guide to NEUST grading system, Latin honors, retention policies, and more with scroll-spy navigation
 
-### User Experience
-- **Dark/Light Theme Toggle**: Seamless theme switching with system preference detection and localStorage persistence
-- **Responsive Design**: Optimized for desktop, tablet, and mobile devices with adaptive layouts
-- **Fast Performance**: Built with Next.js for optimal loading speeds and smooth interactions
-- **Accessible Interface**: WCAG compliant design with keyboard navigation and screen reader support
-- **Interactive Calculations**: Real-time GWA calculation with detailed formula breakdown
+## Tech Stack
 
-### Technical Features
-- **Modern UI Components**: Built with shadcn/ui and Radix UI for consistent, beautiful interfaces
-- **Type Safety**: Full TypeScript implementation for robust error handling
-- **Mobile-First Design**: Responsive components that work seamlessly across all device sizes
-- **Progressive Enhancement**: Core functionality works even with JavaScript disabled
-- **SEO Optimized**: Complete meta tags and Open Graph integration for better discoverability
+- **Framework**: Next.js 16 (App Router) — React server components with client-side interactivity
+- **Language**: TypeScript — Full type safety across the codebase
+- **Styling**: Tailwind CSS v4 — Utility-first CSS with PostCSS configuration
+- **Typography**: Figtree (sans) + Fira Code (mono) — Variable fonts
+- **UI Components**: Custom shadcn/ui-inspired components built on Radix UI and Ark UI primitives
+- **Icons**: Lucide React — Consistent icon library
+- **Forms**: react-hook-form + Zod — Type-safe form validation and handling
+- **State**: nuqs — Type-safe URL query parameter state management
+- **PDF Generation**: pdf-lib + pdf-lib-draw-table-beta — Serverless PDF export with custom tables
+- **Compression**: fflate — Lightweight compression for share URL payloads
+- **Theme**: next-themes — Dark/light mode with system preference support
+- **Navigation**: Vaul (drawer), Radix UI (popover, dialog, sheet)
+- **Analytics**: Umami — Self-hosted, privacy-focused analytics (optional, env-controlled)
+- **Deployment**: Static site hosting (VPS)
 
-### Academic Features
-- **Multi-Program Support**: Supports various NEUST academic programs with accurate course data
-- **Major-Specific Filtering**: Filter courses by major/specialization within programs
-- **Core Course Recognition**: Distinguishes between core program courses and major-specific courses
-- **Semester Organization**: Courses organized by year and semester for easy navigation
-- **Unit Calculation**: Automatic unit calculation and validation for accurate GWA computation
+## Project Structure
 
-## 🛠 Tech Stack
+```
+├── app/
+│   ├── layout.tsx              # Root layout: theme, fonts, header, toaster
+│   ├── page.tsx                # Homepage — GWA calculator + acads info
+│   ├── gwa-calculator.tsx      # GWA calculator component (client)
+│   ├── acads-info.tsx          # Academic information reference section
+│   ├── globals.css             # Global styles + Tailwind v4 imports
+│   ├── sitemap.ts              # Dynamic sitemap generation
+│   ├── manifest.json           # PWA manifest
+│   ├── robots.txt              # SEO robots configuration
+│   ├── class-standing/
+│   │   ├── page.tsx            # Class standing page (server)
+│   │   └── grade-calculator.tsx # Class standing calculator (client)
+│   └── ...                     # Static assets (icons, favicon)
+├── components/
+│   ├── ui/                     # 33 reusable UI primitives
+│   │   ├── accordion.tsx       # Collapsible accordion
+│   │   ├── alert-dialog.tsx    # Confirmation/alert dialogs
+│   │   ├── badge.tsx           # Status badge
+│   │   ├── button.tsx          # Button variants
+│   │   ├── button-group.tsx    # Grouped buttons
+│   │   ├── card.tsx            # Card container
+│   │   ├── checkbox.tsx        # Checkbox input
+│   │   ├── collapsible.tsx     # Expandable sections
+│   │   ├── combobox.tsx        # Autocomplete dropdown
+│   │   ├── command.tsx         # Command palette / searchable list
+│   │   ├── dialog-shadcn.tsx   # Modal dialog
+│   │   ├── drawer.tsx          # Mobile drawer (Vaul)
+│   │   ├── dropdown-menu.tsx   # Dropdown menu
+│   │   ├── empty.tsx           # Empty state placeholder
+│   │   ├── field.tsx           # Form field wrapper
+│   │   ├── input.tsx           # Text input
+│   │   ├── input-group.tsx     # Input with addons
+│   │   ├── label.tsx           # Form label
+│   │   ├── popover.tsx         # Floating popover
+│   │   ├── scroll-area.tsx     # Scrollable container
+│   │   ├── scroll-spy.tsx      # Scroll-based navigation
+│   │   ├── scroller.tsx        # Horizontal scroll container
+│   │   ├── select.tsx          # Native select
+│   │   ├── separator.tsx       # Visual divider
+│   │   ├── sheet.tsx           # Side sheet (mobile nav)
+│   │   ├── sonner.tsx          # Toast notifications
+│   │   ├── spinner.tsx         # Loading spinner
+│   │   ├── table.tsx           # Data table
+│   │   ├── textarea.tsx        # Multi-line input
+│   │   ├── tooltip.tsx         # Hover tooltip
+│   │   └── tour.tsx            # Interactive feature tour
+│   ├── confirm-dialog.tsx      # Helper for confirmable dialogs
+│   ├── header.tsx              # Navigation header with mobile sheet
+│   ├── logo.tsx                # SVG logo component
+│   ├── theme-provider.tsx      # next-themes provider wrapper
+│   └── theme-switcher.tsx      # Dark/light toggle button
+├── data/
+│   ├── types.ts                # Curriculum, Course, Term, Major types
+│   ├── programs.ts             # Program definitions with curriculum refs
+│   └── curriculums/            # 27 program curriculum data files
+│       ├── bsit/latest.ts
+│       ├── bsds/latest.ts
+│       ├── bsce/latest.ts
+│       └── ...                 # 24 more programs
+├── hooks/
+│   ├── use-mobile.ts           # Mobile detection hook
+│   ├── use-as-ref.ts           # Ref forwarding helper
+│   └── ...                     # Utility hooks
+├── lib/
+│   ├── utils.ts                # cn() and other helpers
+│   └── compose-refs.ts         # Ref composition utility
+└── public/
+    ├── fonts/                  # Figtree + Fira Code font files
+    └── ...                     # Icons, OG image, favicon
+```
 
-- **Framework**: Next.js 15 - React framework with App Router
-- **Styling**: Tailwind CSS 4 - Utility-first CSS framework
-- **UI Components**: shadcn/ui + Radix UI - Modern component library
-- **Icons**: Lucide React - Beautiful, customizable icons
-- **Typography**: Geist font family - Modern, readable typography
-- **Language**: TypeScript - Type-safe JavaScript
-- **Theme System**: next-themes - Advanced dark/light mode implementation
-- **Build Tool**: Turbopack - Ultra-fast bundler for development
-- **Deployment**: Static site hosting ready
-
-## 🚀 Getting Started
+## Getting Started
 
 ### Prerequisites
 
-- Node.js 18+ 
-- npm, yarn, or pnpm package manager
+- Node.js 20+
+- npm, yarn, or pnpm
 
-## 📁 Project Structure
+### Installation
 
-```
-├── next.config.ts               # Next.js configuration
-├── components.json              # shadcn/ui configuration
-├── tsconfig.json                # TypeScript configuration
-├── tailwind.config.js           # Tailwind CSS configuration
-├── eslint.config.mjs           # ESLint configuration
-├── app/
-│   ├── data.json               # Course and program data
-│   ├── layout.tsx              # Root layout with theme provider
-│   ├── page.tsx                # Homepage with GWA calculator
-│   ├── globals.css             # Global styles and Tailwind imports
-│   └── manifest.json           # PWA manifest
-├── components/
-│   ├── gwa-calculator.tsx      # Main GWA calculator component
-│   ├── theme-provider.tsx      # Theme context provider
-│   ├── theme-toggle.tsx        # Theme switcher component
-│   └── ui/                     # shadcn/ui components
-│       ├── badge.tsx           # Badge component
-│       ├── button.tsx          # Button component
-│       ├── card.tsx            # Card component
-│       ├── command.tsx         # Command palette component
-│       ├── dialog.tsx          # Dialog/modal component
-│       ├── drawer.tsx          # Mobile drawer component
-│       ├── input.tsx           # Input field component
-│       ├── popover.tsx         # Popover component
-│       ├── select.tsx          # Select dropdown component
-│       ├── separator.tsx       # Separator component
-│       └── ...                 # Additional UI components
-├── hooks/
-│   └── use-mobile.ts           # Mobile device detection hook
-├── lib/
-│   ├── types.ts                # TypeScript type definitions
-│   └── utils.ts                # Utility functions and cn helper
-└── public/
-    ├── logo.svg                # Application logo
-    ├── og-image.png            # Open Graph image
-    └── ...                     # Additional static assets
+```bash
+git clone https://github.com/aleczr/gwa-buddy.git
+cd gwa-buddy
+npm install
 ```
 
-## 🎨 Theming & Customization
+### Development
 
-The application features a theming system:
-
-### Theme Toggle
-- **System Detection**: Automatically respects user's system preference (dark/light)
-- **Manual Override**: Toggle between dark and light modes
-
-### Course Data Management
-- **JSON Configuration**: Course and program data stored in `app/data.json`
-- **Type Safety**: Strongly typed course and program interfaces
-- **Easy Updates**: Simple JSON structure for adding new programs or courses
-- **Flexible Structure**: Supports multiple majors, semesters, and year levels
-
-## 🔧 Configuration
-
-### Adding New Programs/Courses
-Update the `app/data.json` file with new program data:
-
-```json
-{
-  "programs": {
-    "PROGRAM_CODE": {
-      "code": "PROGRAM_CODE",
-      "name": "Program Name",
-      "majors": [
-        {
-          "code": "MAJOR_CODE",
-          "name": "Major Name"
-        }
-      ]
-    }
-  },
-  "courses": {
-    "PROGRAM_CODE": [
-      {
-        "code": "COURSE_CODE",
-        "name": "Course Name",
-        "units": 3,
-        "year": 1,
-        "semester": 1,
-        "major": "MAJOR_CODE"
-      }
-    ]
-  }
-}
+```bash
+npm run dev
 ```
 
-### SEO Configuration
-Update meta tags in `app/layout.tsx`:
-- **Title and Description**: Update site metadata
-- **Open Graph Images**: Replace with your branded assets
-- **Domain Configuration**: Update metadataBase URL or `NEXT_PUBLIC_SITE_URL` environment variable
+Open [http://localhost:3000](http://localhost:3000) in your browser.
 
-## 🤝 Contributing
+### Build
+
+```bash
+npm run build
+npm start
+```
+
+## Configuration
+
+### Environment Variables
+
+| Variable | Required | Description |
+|---|---|---|
+| `NEXT_PUBLIC_SITE_URL` | No | Canonical site URL (defaults to `https://gwa.vps.aleczr.link`) |
+| `NEXT_PUBLIC_UMAMI_SCRIPT_URL` | No | Umami analytics script URL |
+| `NEXT_PUBLIC_UMAMI_WEBSITE_ID` | No | Umami website ID |
+
+### Adding a New Program/Curriculum
+
+1. Create a curriculum file at `data/curriculums/<internal-name>/latest.ts` following the `Curriculum` type from `data/types.ts`
+2. Add the program entry to `data/programs.ts` with its internal name and curriculum reference
+
+## Sharing Templates
+
+Both calculators support sharing via compressed URL parameters:
+
+- **GWA Calculator** — Course selections are encoded as varint-compressed range indexes in the `ss` parameter. Template IDs are embedded within the same payload.
+- **Class Standing Calculator** — Course setup, categories, and scores are JSON-serialized, compressed with fflate, and base64-encoded in the `t` parameter. Template IDs are stored as part of the encoded course tuple.
+
+## Contributing
 
 1. Fork the repository
 2. Create a feature branch (`git checkout -b feature/amazing-feature`)
@@ -160,21 +186,13 @@ Update meta tags in `app/layout.tsx`:
 4. Push to the branch (`git push origin feature/amazing-feature`)
 5. Open a Pull Request
 
-## 📈 Future Enhancements
-
-- **Grade Analytics**: Visual charts and GWA trends over time
-- **Goal Setting**: Target GWA calculator and required grades
-- **Export Features**: PDF generation of grade reports
-- **Multi-Language Support**: Support for Filipino and other languages
-- **Advanced Filtering**: More sophisticated course filtering options
-
-## 📝 License
+## License
 
 This project is open source and available under the [MIT License](LICENSE).
 
-## 📧 Contact
+## Contact
 
-For questions, suggestions, or course additions, please email: [gwabuddy@aleczr.link](mailto:gwabuddy@aleczr.link)
+For questions, suggestions, or course additions: [gwabuddy@aleczr.link](mailto:gwabuddy@aleczr.link)
 
 ---
 

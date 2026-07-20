@@ -137,7 +137,10 @@ type Course = {
     grade?: number | null;
 };
 
-type SharedLinkPayload = number[];
+type SharedLinkPayload = {
+    indexes: number[];
+    templateId?: string;
+};
 
 function encodeVarint(value: number) {
     const bytes: number[] = [];
@@ -253,7 +256,7 @@ function hydrateSharedCourses(
     curriculumData: Curriculum,
 ): Course[] {
     const allCourses = getFlattenedCurriculumCourses(curriculumData);
-    return payload.flatMap((index) => {
+    return payload.indexes.flatMap((index) => {
         const matched = allCourses[index];
         if (!matched) return [];
         return [
@@ -274,7 +277,24 @@ const sharePayloadParser = createParser<SharedLinkPayload>({
         try {
             const mode = value[0];
 
-            const encoded = value.slice(1);
+            if (mode === "T") {
+                const encoded = value.slice(1);
+                const bytes = fromBase64Url(encoded);
+                const templateId = new TextDecoder().decode(bytes);
+                return { indexes: [], templateId };
+            }
+
+            const rest = value.slice(1);
+            const colonIdx = rest.lastIndexOf(":");
+            let encoded: string;
+            let templateId: string | undefined;
+            if (colonIdx >= 0) {
+                encoded = rest.slice(0, colonIdx);
+                const tidEncoded = rest.slice(colonIdx + 1);
+                templateId = new TextDecoder().decode(fromBase64Url(tidEncoded));
+            } else {
+                encoded = rest;
+            }
 
             const payload = fromBase64Url(encoded);
 
@@ -304,23 +324,36 @@ const sharePayloadParser = createParser<SharedLinkPayload>({
                 }
             }
 
-            return indexes;
+            return { indexes, templateId };
         } catch {
             return null;
         }
     },
     serialize: (payload) => {
-        const ranges = encodeRanges(payload);
+        let base64: string;
 
-        const binary = rangesToBytes(ranges);
+        if (payload.indexes.length > 0) {
+            const ranges = encodeRanges(payload.indexes);
+            const binary = rangesToBytes(ranges);
 
-        if (binary.length < 32) {
-            return "R" + toBase64Url(binary);
+            if (binary.length < 32) {
+                base64 = "R" + toBase64Url(binary);
+            } else {
+                const compressed = compressSync(binary);
+                base64 = "C" + toBase64Url(compressed);
+            }
+        } else {
+            base64 = "T";
         }
 
-        const compressed = compressSync(binary);
+        if (payload.templateId) {
+            const tidEncoded = toBase64Url(
+                new TextEncoder().encode(payload.templateId),
+            );
+            base64 += ":" + tidEncoded;
+        }
 
-        return "C" + toBase64Url(compressed);
+        return base64;
     },
 });
 
@@ -446,7 +479,6 @@ type GWACalculatorProps = {
     initialIncludedCourses?: Course[];
     initialLastIncludedSnapshot?: string[] | null;
     ssFromUrl?: string;
-    tidFromUrl?: string;
 };
 
 export function GWACalculator({
@@ -454,7 +486,6 @@ export function GWACalculator({
     initialIncludedCourses = [],
     initialLastIncludedSnapshot = null,
     ssFromUrl,
-    tidFromUrl,
 }: GWACalculatorProps) {
     const [
         {
@@ -504,6 +535,8 @@ export function GWACalculator({
         defaultValues: { templateId: "" },
     });
 
+    const wasTemplateLoaded = !!ssFromUrl;
+
     const serializedCourses = useMemo(() => {
         if (includedCourses.length === 0) return "";
         const sorted = [...includedCourses]
@@ -513,8 +546,20 @@ export function GWACalculator({
     }, [includedCourses]);
 
     const [templateId, setTemplateId] = useState(() => {
-        if (tidFromUrl) return tidFromUrl;
-        if (ssFromUrl) return simpleHash(ssFromUrl);
+        if (ssFromUrl) {
+            try {
+                const rest = ssFromUrl.slice(1);
+                if (ssFromUrl[0] === "T") {
+                    const bytes = fromBase64Url(rest);
+                    return new TextDecoder().decode(bytes);
+                }
+                const colonIdx = rest.lastIndexOf(":");
+                if (colonIdx >= 0) {
+                    const tidEncoded = rest.slice(colonIdx + 1);
+                    return new TextDecoder().decode(fromBase64Url(tidEncoded));
+                }
+            } catch {}
+        }
         if (serializedCourses) return simpleHash(serializedCourses);
         return "";
     });
@@ -532,7 +577,7 @@ export function GWACalculator({
     if (serializedCourses !== prevSerializedCourses.current) {
         prevSerializedCourses.current = serializedCourses;
         if (serializedCourses) {
-            if (!ssFromUrl && !tidFromUrl) {
+            if (!ssFromUrl) {
                 setTemplateId(simpleHash(serializedCourses));
             }
             if (!originalSerialized) {
@@ -725,6 +770,10 @@ export function GWACalculator({
         if (signature === appliedSharedPayloadRef.current) return;
 
         appliedSharedPayloadRef.current = signature;
+
+        if (sharedState.templateId) {
+            setTemplateId(sharedState.templateId);
+        }
 
         pendingSharedPayloadRef.current = sharedState;
         setSelectedCourseIndex(null);
@@ -1218,7 +1267,7 @@ export function GWACalculator({
                         </Button>
                     </div>
                 </div>
-                {templateId && (
+                {wasTemplateLoaded && templateId && (
                     <div className="flex items-center gap-2 flex-wrap max-w-2xl">
                         <Badge variant="outline" className="font-mono text-xs whitespace-normal" suppressHydrationWarning>
                             Template ID: {templateId}
@@ -1650,8 +1699,9 @@ export function GWACalculator({
                             selectedSemester !== null ||
                             selectedMajor !== null ||
                             filterCore;
-                        const payload: SharedLinkPayload =
-                            includedCourses.flatMap((course) => {
+                        const templateIdString = values.templateId.trim() || undefined;
+                        const payload: SharedLinkPayload = {
+                            indexes: includedCourses.flatMap((course) => {
                                 if (!course.code) return [];
                                 const index = allCourses.findIndex(
                                     (item) =>
@@ -1659,20 +1709,19 @@ export function GWACalculator({
                                         item.name === course.name,
                                 );
                                 return index >= 0 ? [index] : [];
-                            });
-                        const sharePath = hasPreset
+                            }),
+                            templateId: templateIdString,
+                        };
+                        const sharePath = hasPreset && !templateIdString
                             ? serializeSharePayload(window.location.href, {
                                   ss: null,
                               })
                             : serializeSharePayload(window.location.href, {
                                   ss: payload,
                               });
-                        let shareUrl = `${sharePath}`;
-                        if (values.templateId.trim()) {
-                            const url = new URL(shareUrl);
-                            url.searchParams.set("tid", values.templateId.trim());
-                            shareUrl = url.toString();
-                            setTemplateId(values.templateId.trim());
+                        const shareUrl = `${sharePath}`;
+                        if (templateIdString) {
+                            setTemplateId(templateIdString);
                         }
                         try {
                             await navigator.clipboard.writeText(shareUrl);

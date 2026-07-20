@@ -251,7 +251,6 @@ export default async function HomePage({ searchParams }: { searchParams?: Search
 	const initialIncludedCourses = deriveInitialIncludedCourses(resolvedSearchParams, initialCurriculumData);
 	const initialSnapshot = snapshotForCourses(initialIncludedCourses);
 	const ssFromUrl = resolvedSearchParams.ss as string | undefined;
-	const tidFromUrl = resolvedSearchParams.tid as string | undefined;
 	return (
 		<main className="p-4 flex flex-col items-center gap-4 min-h-dvh">
 			<div className="flex flex-col items-center">
@@ -301,7 +300,6 @@ export default async function HomePage({ searchParams }: { searchParams?: Search
 				initialIncludedCourses={initialIncludedCourses}
 				initialLastIncludedSnapshot={initialSnapshot}
 				ssFromUrl={ssFromUrl}
-				tidFromUrl={tidFromUrl}
 			/>
 
 			<Card className="max-w-2xl">

@@ -135,7 +135,7 @@ import {
 import { Checkbox } from "@/components/ui/checkbox";
 import { confirm } from "@/components/confirm-dialog";
 import { useDebounce } from "use-debounce";
-import { compressSync } from "fflate";
+import { compressSync, decompressSync } from "fflate";
 import { Scroller } from "@/components/ui/scroller";
 import {
     Tour,
@@ -187,7 +187,7 @@ type CalculationSnapshot = {
     categorySummaries: CategorySummary[];
 };
 
-export type EncodedCourse = [string, EncodedCategory[], boolean?];
+export type EncodedCourse = [string, EncodedCategory[], boolean?, string?];
 
 type EncodedCategory = [string, number, string[], EncodedRecord[]];
 
@@ -209,7 +209,7 @@ function extractSequentialName(name: string) {
     };
 }
 
-function serializeCourse(course: CourseDetails): string {
+function serializeCourse(course: CourseDetails, templateId?: string): string {
     const data: EncodedCourse = [
         course.name,
 
@@ -261,6 +261,10 @@ function serializeCourse(course: CourseDetails): string {
         }),
         course.allowExtraCredit ?? false,
     ];
+
+    if (templateId) {
+        data.push(templateId);
+    }
 
     const json = JSON.stringify(data);
 
@@ -1295,10 +1299,9 @@ type ScoreInputValues = {
     goalGrade?: GoalGradeType;
 };
 
-export function GradeCalculator({ template, tFromUrl, tidFromUrl }: {
+export function GradeCalculator({ template, tFromUrl }: {
     template?: CourseDetails;
     tFromUrl?: string;
-    tidFromUrl?: string;
 }) {
     const [course, setCourse] = useState<CourseDetails | null>(
         template ?? null,
@@ -1333,8 +1336,18 @@ export function GradeCalculator({ template, tFromUrl, tidFromUrl }: {
     const wasTemplateLoaded = !!template;
 
     const [templateId, setTemplateId] = useState(() => {
-        if (tidFromUrl) return tidFromUrl;
-        if (tFromUrl) return simpleHash(tFromUrl);
+        if (tFromUrl) {
+            try {
+                const compressed = Uint8Array.from(
+                    atob(tFromUrl.replace(/-/g, "+").replace(/_/g, "/")),
+                    (c) => c.charCodeAt(0),
+                );
+                const json = new TextDecoder().decode(decompressSync(compressed));
+                const parsed = JSON.parse(json) as EncodedCourse;
+                if (parsed[3]) return parsed[3];
+            } catch {}
+            return simpleHash(tFromUrl);
+        }
         if (course) return simpleHash(serializeCourse(course));
         return "";
     });
@@ -1414,7 +1427,7 @@ export function GradeCalculator({ template, tFromUrl, tidFromUrl }: {
                 setCourse(restoredCourse);
                 if (restoredCourse) {
                     const serialized = serializeCourse(restoredCourse);
-                    setTemplateId(tidFromUrl || simpleHash(serialized));
+                    setTemplateId(simpleHash(serialized));
                     setOriginalSerialized(serialized);
                 } else {
                     setTemplateId("");
@@ -2611,14 +2624,13 @@ function ScoreInput({
                     score: record.score ?? 0,
                 })),
             })),
-        });
+        }, templateId.trim() || undefined);
 
         const url = new URL(window.location.href);
 
         url.searchParams.set("t", encoded);
 
         if (templateId.trim()) {
-            url.searchParams.set("tid", templateId.trim());
             setTemplateId(templateId.trim());
         }
 
